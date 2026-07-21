@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["frontend/node_modules/vite/bin/vite.js", "frontend", "--port", "5173", "--strictPort"],
+      "port": 5173
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "backend", "run", "start:dev"],
+      "port": 3000
+    },
+    {
+      "name": "ai-service",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--port", "8001", "--app-dir", "ai-service"],
+      "port": 8001
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: construction
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 5s
+      retries: 10
+
+  ai-service:
+    build: ./ai-service
+    ports: ["8001:8001"]
+
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: db
+      DB_USER: app
+      DB_PASS: app
+      DB_NAME: construction
+      AI_SERVICE_URL: http://ai-service:8001
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+    ports: ["3000:3000"]
+    depends_on:
+      db: { condition: service_healthy }
+      ai-service: { condition: service_started }
+
+volumes:
+  pgdata:

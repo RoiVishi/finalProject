@@ -1,0 +1,77 @@
+{
+  "config": {
+    "seed": 42,
+    "split": "GroupShuffleSplit by project, test_size=0.25",
+    "n_train": 7518,
+    "n_test": 4187,
+    "train_projects": [
+      "CCA R03 dt 24Oct11SC",
+      "Convention _ Exhibition Center Project Roads _ Utilities",
+      "Detailed Program",
+      "Enppi",
+      "MERGE PROJECTS",
+      "PORTO MATROUH",
+      "Petrofac",
+      "Update 01-09-2010",
+      "hela-2l",
+      "jumaira",
+      "rehab-2",
+      "update of jungle 20-07-2010"
+    ],
+    "test_projects": [
+      "129 trial",
+      "130 TRIAL",
+      "EBCF-4 070127 Forecast Original",
+      "cairo alex-road",
+      "trial for me"
+    ],
+    "features_num": [
+      "planned_duration_days",
+      "total_float_hr",
+      "free_float_hr",
+      "rel_position",
+      "proj_n_tasks",
+      "proj_span_days",
+      "n_pred",
+      "n_succ",
+      "upstream_cnt",
+      "downstream_cnt"
+    ],
+    "features_cat": [
+      "task_type"
+    ]
+  },
+  "classification": {
+    "dummy_majority": {
+      "accuracy": 0.5245,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5
+    },
+    "logistic_regression": {
+      "accuracy": 0.5281,
+      "precision": 0.5024,
+      "recall": 0.8046,
+      "f1": 0.6185,
+      "roc_auc": 0.552
+    },
+    "random_forest": {
+      "accuracy": 0.5183,
+      "precision": 0.4667,
+      "recall": 0.0914,
+      "f1": 0.1529,
+      "roc_auc": 0.5672
+    }
+  },
+  "regression": {
+    "dummy_median": {
+      "mae_days": 34.34,
+      "rmse_days": 59.14
+    },
+    "random_forest_reg": {
+      "mae_days": 66.11,
+      "rmse_days": 105.6
+    }
+  }
+}

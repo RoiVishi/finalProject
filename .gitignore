@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+__pycache__/
+*.pyc
+.venv/
+# large data & artifacts (regenerate with the pipeline)
+data-pipeline/data/
+data-pipeline/outputs/labeled_tasks.csv
+*.joblib
+.DS_Store

@@ -1,0 +1,67 @@
+{
+  "projects_read": 70,
+  "projects_skipped": [],
+  "dedup_dropped": [
+    {
+      "kept": "31 buidings",
+      "dropped": "building a-2",
+      "jaccard": 1.0
+    },
+    {
+      "kept": "CfC",
+      "dropped": "baseline of cfc",
+      "jaccard": 0.822
+    },
+    {
+      "kept": "Copy of JWM - Baseline Programme Rev 05A",
+      "dropped": "JWM - Baseline Programme Rev 05A",
+      "jaccard": 1.0
+    },
+    {
+      "kept": "ORIANA-3(RESOURCES)",
+      "dropped": "oriana-2",
+      "jaccard": 0.893
+    },
+    {
+      "kept": "Update 01-09-2010",
+      "dropped": "medor_003",
+      "jaccard": 1.0
+    },
+    {
+      "kept": "V30",
+      "dropped": "v 30",
+      "jaccard": 1.0
+    },
+    {
+      "kept": "baseline of jungle",
+      "dropped": "jungle recovery plan",
+      "jaccard": 0.975
+    },
+    {
+      "kept": "update of jungle 20-07-2010",
+      "dropped": "baseline of jungle",
+      "jaccard": 1.0
+    },
+    {
+      "kept": "building a",
+      "dropped": "one building",
+      "jaccard": 1.0
+    },
+    {
+      "kept": "hela-2l",
+      "dropped": "helal",
+      "jaccard": 0.802
+    },
+    {
+      "kept": "katamya air base",
+      "dropped": "katamya airbase",
+      "jaccard": 1.0
+    }
+  ],
+  "total_tasks": 126706,
+  "labeled_tasks": 11705,
+  "pct_late": 40.5,
+  "projects_after_dedup": 59,
+  "projects_with_labels": 17,
+  "median_delay_days": 0.0
+}
