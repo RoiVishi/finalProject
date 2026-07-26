@@ -23,6 +23,14 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install ruff
       - run: ruff check data-pipeline/src ai-service/app
+      - name: Model quality gate (PRED-6)
+        run: |
+          if [ -f data-pipeline/outputs/model_comparison.json ]; then
+            python data-pipeline/src/quality_gate.py
+          else
+            echo 'no model_comparison.json committed — gate skipped'
+          fi
+
 
   backend:
     runs-on: ubuntu-latest

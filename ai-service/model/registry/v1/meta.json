@@ -1,0 +1,50 @@
+{
+  "version": "v1",
+  "created_utc": "2026-07-26T13:51:35+00:00",
+  "champion_classifier": "random_forest",
+  "champion_regressor": "xgboost_reg",
+  "best_params": {
+    "model__max_features": 0.5,
+    "model__min_samples_leaf": 2,
+    "model__n_estimators": 300
+  },
+  "metrics_B_temporal": {
+    "classification": {
+      "accuracy": 0.8147,
+      "precision": 0.451,
+      "recall": 0.6053,
+      "f1": 0.5169,
+      "roc_auc": 0.8281
+    },
+    "regression": {
+      "mae_days": 25.73,
+      "rmse_days": 48.9
+    }
+  },
+  "metrics_A_cross_project": {
+    "classification": {
+      "accuracy": 0.507,
+      "precision": 0.4076,
+      "recall": 0.0809,
+      "f1": 0.135,
+      "roc_auc": 0.5427
+    }
+  },
+  "features_num": [
+    "planned_duration_days",
+    "total_float_hr",
+    "free_float_hr",
+    "rel_position",
+    "proj_n_tasks",
+    "proj_span_days",
+    "n_pred",
+    "n_succ",
+    "upstream_cnt",
+    "downstream_cnt"
+  ],
+  "features_cat": [
+    "task_type"
+  ],
+  "seed": 42,
+  "trained_on": "B_temporal train split (deployment scenario)"
+}
