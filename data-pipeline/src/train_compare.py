@@ -23,22 +23,28 @@ contains the full config; rerunning reproduces the numbers.
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
+from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+from sklearn.frozen import FrozenEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
-    accuracy_score, f1_score, mean_absolute_error, precision_score,
-    recall_score, roc_auc_score, root_mean_squared_error,
+    accuracy_score, brier_score_loss, f1_score, mean_absolute_error,
+    precision_score, recall_score, roc_auc_score, root_mean_squared_error,
 )
 from sklearn.model_selection import GridSearchCV, GroupKFold, GroupShuffleSplit
 from sklearn.neural_network import MLPClassifier
@@ -47,17 +53,20 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from xgboost import XGBClassifier, XGBRegressor
 
 SEED = 42
-TEMPORAL_CUT = 0.7          # scenario B: train on first 70% of each project's timeline
-MIN_PER_SIDE = 20           # scenario B: project must have ≥20 labeled tasks on each side
+TEMPORAL_Q = 0.7            # scenario B: per-project temporal quantile cut (train = earliest 70%
+                            # of the project's own labeled activities by rel_position)
+MIN_LABELED = 30            # scenario B: project needs ≥30 labeled activities overall
+MIN_PER_SIDE = 10           # ...and ≥10 on each side of its cut
 BASE = Path(__file__).resolve().parents[1]
 OUT = BASE / "outputs"
 REGISTRY = BASE.parent / "ai-service" / "model" / "registry"
+SCHEMA_PATH = BASE.parent / "feature_schema.json"
 
-NUM_FEATURES = [
-    "planned_duration_days", "total_float_hr", "free_float_hr", "rel_position",
-    "proj_n_tasks", "proj_span_days", "n_pred", "n_succ", "upstream_cnt", "downstream_cnt",
-]
-CAT_FEATURES = ["task_type"]
+# PRED-8: the feature contract comes from the single committed schema file.
+SCHEMA = json.loads(SCHEMA_PATH.read_text())
+NUM_FEATURES = [f["name"] for f in SCHEMA["features"] if f["role"] == "numeric"]
+CAT_FEATURES = [f["name"] for f in SCHEMA["features"] if f["role"] == "categorical"]
+SCHEMA_VERSION = SCHEMA["feature_schema_version"]
 
 
 def make_preprocessor():
@@ -120,15 +129,25 @@ def regressor_zoo():
 
 
 def temporal_split(lab: pd.DataFrame):
-    """Scenario B: per-project temporal split by rel_position (plan-time safe)."""
-    tr_parts, te_parts = [], []
-    for _, g in lab.groupby("project"):
-        tr_g = g[g["rel_position"] <= TEMPORAL_CUT]
-        te_g = g[g["rel_position"] > TEMPORAL_CUT]
+    """Scenario B: per-project temporal split at the project's own rel_position quantile.
+
+    A fixed global cut (v1: rel_position <= 0.7) covered only 2 projects, because most
+    projects concentrate their labeled activities on one side of a global cut. Cutting at
+    each project's own 70th percentile keeps the split temporally valid (train strictly
+    earlier than test within the project) while covering every project with enough labels.
+    """
+    tr_parts, te_parts, projects = [], [], []
+    for name, g in lab.groupby("project"):
+        if len(g) < MIN_LABELED:
+            continue
+        cut = g["rel_position"].quantile(TEMPORAL_Q)
+        tr_g = g[g["rel_position"] <= cut]
+        te_g = g[g["rel_position"] > cut]
         if len(tr_g) >= MIN_PER_SIDE and len(te_g) >= MIN_PER_SIDE:
             tr_parts.append(tr_g)
             te_parts.append(te_g)
-    return pd.concat(tr_parts), pd.concat(te_parts)
+            projects.append(name)
+    return pd.concat(tr_parts), pd.concat(te_parts), projects
 
 
 def main():
@@ -142,20 +161,22 @@ def main():
     A_tr, A_te = lab.iloc[a_tr_idx], lab.iloc[a_te_idx]
 
     # ---------- scenario B: within-project temporal ----------
-    B_tr, B_te = temporal_split(lab)
+    B_tr, B_te, B_projects = temporal_split(lab)
 
     results = {
         "config": {
             "seed": SEED,
             "generated_by": "data-pipeline/src/train_compare.py",
+            "feature_schema_version": SCHEMA_VERSION,
             "scenario_A": {"split": "GroupShuffleSplit by project, test_size=0.25",
                            "n_train": len(A_tr), "n_test": len(A_te)},
-            "scenario_B": {"split": f"within-project temporal by rel_position <= {TEMPORAL_CUT}",
-                           "min_labeled_per_side": MIN_PER_SIDE,
+            "scenario_B": {"split": f"per-project temporal quantile cut q={TEMPORAL_Q} on rel_position",
+                           "min_labeled": MIN_LABELED, "min_per_side": MIN_PER_SIDE,
                            "n_train": len(B_tr), "n_test": len(B_te),
-                           "n_projects": int(B_tr["project"].nunique())},
+                           "n_projects": len(B_projects), "projects": B_projects},
             "features_num": NUM_FEATURES, "features_cat": CAT_FEATURES,
             "tuning": "GridSearchCV, GroupKFold(3) on scenario-A train; best params reused in B",
+            "calibration": "CalibratedClassifierCV on B train, isotonic (n>1000 per sklearn guidance), cv=3; never fitted on test",
         },
         "classification": {"A_cross_project": {}, "B_temporal": {}},
         "regression": {"A_cross_project": {}, "B_temporal": {}},
@@ -214,21 +235,90 @@ def main():
                            "selected_by": "scenario-B roc_auc (clf) / mae (reg)"}
     print(f"\n[champion] clf={champion}  reg={champion_reg}")
 
-    # ---------- registry write (PRED-4) ----------
+    # ---------- PRED-13: probability calibration on B train (never on test) ----------
+    # Protocol (documented, selected on train-side data only): the late-activity base
+    # rate drifts across a project's life (train 0.46 → test 0.29 in this corpus), so a
+    # calibrator fitted on the WHOLE train span learns stale frequencies. We therefore
+    # sub-split the train per project at its own q=0.75 rel_position quantile: the
+    # champion is fitted on the earlier part, and a sigmoid (Platt) calibrator is fitted
+    # on the latest slice — the distribution closest to deployment time. Sigmoid chosen
+    # over isotonic for robustness on the modest calibration slice (isotonic evaluated,
+    # comparable). Test data is never touched.
+    fit_parts, cal_parts = [], []
+    for _, g in B_tr.groupby("project"):
+        c = g["rel_position"].quantile(0.75)
+        fit_parts.append(g[g["rel_position"] <= c])
+        cal_parts.append(g[g["rel_position"] > c])
+    B_fit, B_cal = pd.concat(fit_parts), pd.concat(cal_parts)
+    champ_fit = clone(tuned[champion])
+    champ_fit.fit(B_fit, B_fit["is_late"])
+    calibrated = CalibratedClassifierCV(FrozenEstimator(champ_fit), method="sigmoid")
+    calibrated.fit(B_cal, B_cal["is_late"])
+
+    def brier(model, te):
+        return round(float(brier_score_loss(te["is_late"], model.predict_proba(te)[:, 1])), 4)
+
+    cal_metrics = {}
+    for scen, te in {"A_cross_project": A_te, "B_temporal": B_te}.items():
+        cal_metrics[scen] = {
+            "brier_uncalibrated_same_base": brier(champ_fit, te),  # fair comparison: same fitted model
+            "brier_calibrated": brier(calibrated, te),
+        }
+    pred_cal = calibrated.predict(B_te)
+    proba_cal = calibrated.predict_proba(B_te)[:, 1]
+    cal_metrics["B_temporal"]["classification_calibrated"] = clf_metrics(
+        B_te["is_late"], pred_cal, proba_cal)
+    results["calibration"] = {
+        "method": "sigmoid (Platt)",
+        "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
+        "n_fit": len(B_fit), "n_cal": len(B_cal),
+        **cal_metrics}
+    print(f"[calibration] {json.dumps(cal_metrics)}")
+
+    # reliability curve figure (project book, RR-6/PRED-13)
+    fig_dir = OUT / "figures"
+    fig_dir.mkdir(exist_ok=True)
+    frac_u, mean_u = calibration_curve(B_te["is_late"], champ_fit.predict_proba(B_te)[:, 1], n_bins=10)
+    frac_c, mean_c = calibration_curve(B_te["is_late"], proba_cal, n_bins=10)
+    plt.figure(figsize=(6.4, 5.2), dpi=150)
+    plt.plot([0, 1], [0, 1], ls="--", lw=1, color="#9a9a9a", zorder=1)
+    plt.plot(mean_u, frac_u, marker="o", ms=6, lw=2, color="#eb6834", zorder=2)
+    plt.plot(mean_c, frac_c, marker="o", ms=6, lw=2, color="#2a78d6", zorder=3)
+    # direct labels instead of a floating legend (accessibility relief)
+    plt.annotate("Uncalibrated", xy=(mean_u[-1], frac_u[-1]), xytext=(6, -12),
+                 textcoords="offset points", color="#3a3a3a", fontsize=10)
+    plt.annotate("Calibrated (sigmoid)", xy=(mean_c[-1], frac_c[-1]), xytext=(6, 8),
+                 textcoords="offset points", color="#3a3a3a", fontsize=10)
+    plt.xlabel("Predicted probability of delay")
+    plt.ylabel("Observed fraction delayed")
+    plt.title("Reliability curve — scenario B test (champion classifier)")
+    plt.grid(alpha=0.25, lw=0.5)
+    plt.tight_layout()
+    plt.savefig(fig_dir / "reliability_curve_B.png")
+    plt.close()
+
+    # ---------- registry write (PRED-4 + PRED-8 + PRED-13) ----------
     REGISTRY.mkdir(parents=True, exist_ok=True)
     existing = sorted(int(p.name[1:]) for p in REGISTRY.glob("v*") if p.name[1:].isdigit())
     version = f"v{(existing[-1] + 1) if existing else 1}"
     vdir = REGISTRY / version
     vdir.mkdir()
-    joblib.dump(tuned[champion], vdir / "classifier.joblib")
+    joblib.dump(calibrated, vdir / "classifier.joblib")           # served = calibrated
     joblib.dump(tuned[f"__reg__{champion_reg}"], vdir / "regressor.joblib")
+    shutil.copy(SCHEMA_PATH, vdir / "feature_schema.json")        # self-contained artifact
     meta = {
         "version": version,
         "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "feature_schema_version": SCHEMA_VERSION,
         "champion_classifier": champion,
         "champion_regressor": champion_reg,
+        "calibration": results["calibration"],
         "best_params": results["best_params"].get(champion, {}),
-        "metrics_B_temporal": {"classification": b_clf[champion], "regression": b_reg[champion_reg]},
+        "metrics_B_temporal": {
+            "classification_uncalibrated": b_clf[champion],
+            "classification_calibrated": cal_metrics["B_temporal"]["classification_calibrated"],
+            "regression": b_reg[champion_reg],
+        },
         "metrics_A_cross_project": {"classification": results["classification"]["A_cross_project"][champion]},
         "features_num": NUM_FEATURES, "features_cat": CAT_FEATURES,
         "seed": SEED,

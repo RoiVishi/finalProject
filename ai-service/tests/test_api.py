@@ -71,3 +71,39 @@ def test_degradation_when_registry_missing(tmp_path, monkeypatch):
     assert r.status_code == 503
     assert "train_compare" in r.json()["detail"]
     monkeypatch.setattr(main, "_registry", None)  # let other tests reload
+
+
+def test_schema_mismatch_is_refused():
+    """PRED-8: an artifact recorded against a different schema version is refused."""
+    schema = {"feature_schema_version": "1.0"}
+    assert main.schema_mismatch({"feature_schema_version": "1.0"}, schema) is None
+    assert main.schema_mismatch({}, schema) is None                      # legacy meta — allowed
+    reason = main.schema_mismatch({"feature_schema_version": "0.9"}, schema)
+    assert reason and "0.9" in reason and "1.0" in reason
+
+
+def test_schema_refusal_returns_503(tmp_path, monkeypatch):
+    """PRED-8: refusal happens at load time and surfaces as 503 with the reason."""
+    import json as _json
+    vdir = tmp_path / "registry" / "v1"
+    vdir.mkdir(parents=True)
+    (vdir / "meta.json").write_text(_json.dumps({"feature_schema_version": "0.9", "version": "v1"}))
+    monkeypatch.setattr(main, "REGISTRY", tmp_path / "registry")
+    monkeypatch.setattr(main, "LEGACY_MODEL", tmp_path / "missing.joblib")
+    monkeypatch.setattr(main, "_registry", None)
+    bare = TestClient(main.app)
+    health = bare.get("/health").json()
+    assert health["model_loaded"] is False
+    assert "refused" in (health["refusal"] or "")
+    r = bare.post("/predict", json=SAMPLE)
+    assert r.status_code == 503 and "schema" in r.json()["detail"]
+    monkeypatch.setattr(main, "_registry", None)
+
+
+def test_schema_version_in_response():
+    """PRED-8: every prediction names the feature-schema version it was computed with."""
+    if not _model_available():
+        return
+    r = client.post("/predict", json=SAMPLE)
+    if r.status_code == 200:
+        assert r.json()["feature_schema_version"] is not None

@@ -1,0 +1,79 @@
+{
+  "version": "v2",
+  "created_utc": "2026-07-26T15:16:13+00:00",
+  "feature_schema_version": "1.0",
+  "champion_classifier": "random_forest",
+  "champion_regressor": "random_forest_reg",
+  "calibration": {
+    "method": "sigmoid (Platt)",
+    "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
+    "n_fit": 6398,
+    "n_cal": 1774,
+    "A_cross_project": {
+      "brier_uncalibrated_same_base": 0.143,
+      "brier_calibrated": 0.1354
+    },
+    "B_temporal": {
+      "brier_uncalibrated_same_base": 0.2236,
+      "brier_calibrated": 0.1895,
+      "classification_calibrated": {
+        "accuracy": 0.687,
+        "precision": 0.4753,
+        "recall": 0.6816,
+        "f1": 0.5601,
+        "roc_auc": 0.768
+      }
+    }
+  },
+  "best_params": {
+    "model__max_features": 0.5,
+    "model__min_samples_leaf": 2,
+    "model__n_estimators": 300
+  },
+  "metrics_B_temporal": {
+    "classification_uncalibrated": {
+      "accuracy": 0.7007,
+      "precision": 0.4904,
+      "recall": 0.6088,
+      "f1": 0.5432,
+      "roc_auc": 0.7542
+    },
+    "classification_calibrated": {
+      "accuracy": 0.687,
+      "precision": 0.4753,
+      "recall": 0.6816,
+      "f1": 0.5601,
+      "roc_auc": 0.768
+    },
+    "regression": {
+      "mae_days": 28.49,
+      "rmse_days": 52.33
+    }
+  },
+  "metrics_A_cross_project": {
+    "classification": {
+      "accuracy": 0.507,
+      "precision": 0.4076,
+      "recall": 0.0809,
+      "f1": 0.135,
+      "roc_auc": 0.5427
+    }
+  },
+  "features_num": [
+    "planned_duration_days",
+    "total_float_hr",
+    "free_float_hr",
+    "rel_position",
+    "proj_n_tasks",
+    "proj_span_days",
+    "n_pred",
+    "n_succ",
+    "upstream_cnt",
+    "downstream_cnt"
+  ],
+  "features_cat": [
+    "task_type"
+  ],
+  "seed": 42,
+  "trained_on": "B_temporal train split (deployment scenario)"
+}

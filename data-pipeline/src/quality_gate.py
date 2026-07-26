@@ -52,6 +52,12 @@ def main() -> int:
             failures.append(f"[{scen}] champion regressor {champ_reg} MAE "
                             f"{g[champ_reg]['mae_days']} >= dummy {g['dummy_median']['mae_days']}")
 
+    # PRED-13: calibration must not worsen Brier vs the same base model (scenario B)
+    cal = r.get("calibration", {}).get("B_temporal", {})
+    if cal and cal.get("brier_calibrated", 1) > cal.get("brier_uncalibrated_same_base", 0):
+        failures.append(f"[B_temporal] calibrated Brier {cal['brier_calibrated']} > "
+                        f"uncalibrated {cal['brier_uncalibrated_same_base']}")
+
     if failures:
         print("MODEL QUALITY GATE: FAILED")
         for f in failures:

@@ -25,6 +25,26 @@ from pydantic import BaseModel, Field
 BASE = Path(__file__).resolve().parents[1]
 REGISTRY = Path(os.environ.get("MODEL_REGISTRY", BASE / "model" / "registry"))
 LEGACY_MODEL = BASE / "model" / "model_rf_classifier.joblib"
+SCHEMA_PATH = Path(os.environ.get("FEATURE_SCHEMA", BASE.parent / "feature_schema.json"))
+
+
+def load_running_schema() -> dict | None:
+    """PRED-8: the feature schema this service instance runs with."""
+    if SCHEMA_PATH.exists():
+        return json.loads(SCHEMA_PATH.read_text())
+    return None
+
+
+def schema_mismatch(meta: dict, schema: dict | None) -> str | None:
+    """Return a refusal reason if the artifact's schema version differs from the running schema."""
+    if schema is None:
+        return None  # no running schema file — nothing to enforce against (dev fallback)
+    artifact_v = meta.get("feature_schema_version")
+    running_v = schema.get("feature_schema_version")
+    if artifact_v is not None and artifact_v != running_v:
+        return (f"artifact feature schema {artifact_v} != running schema {running_v}; "
+                "retrain (data-pipeline/src/train_compare.py) or update feature_schema.json")
+    return None
 
 app = FastAPI(title="Construction Delay Prediction Service", version="0.2.0")
 
@@ -38,24 +58,35 @@ class Registry:
         self.meta = {}
         self.clf = None
         self.reg = None
+        self.refusal = None      # PRED-8: set when an artifact was refused on schema mismatch
         self._load()
 
     def _load(self):
+        schema = load_running_schema()
         if REGISTRY.exists():
             versions = sorted((p for p in REGISTRY.glob("v*") if p.name[1:].isdigit()),
                               key=lambda p: int(p.name[1:]))
             if versions:
                 vdir = versions[-1]
+                meta_path = vdir / "meta.json"
+                meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+                reason = schema_mismatch(meta, schema)
+                if reason:  # PRED-8: refuse at load time, not per request
+                    self.refusal = f"registry {vdir.name} refused: {reason}"
+                    return
+                self.meta = meta
                 self.clf = joblib.load(vdir / "classifier.joblib")
                 reg_path = vdir / "regressor.joblib"
                 self.reg = joblib.load(reg_path) if reg_path.exists() else None
-                meta_path = vdir / "meta.json"
-                self.meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
                 self.version = self.meta.get("version", vdir.name)
                 return
         if LEGACY_MODEL.exists():  # backwards compatibility with the pre-registry artifact
             self.clf = joblib.load(LEGACY_MODEL)
             self.version = "legacy"
+
+    @property
+    def schema_version(self) -> str | None:
+        return self.meta.get("feature_schema_version")
 
     @property
     def ready(self) -> bool:
@@ -70,9 +101,10 @@ def get_registry() -> Registry:
     if _registry is None:
         _registry = Registry()
     if not _registry.ready:
-        raise HTTPException(503, detail=(
+        detail = _registry.refusal or (
             "No model available: the registry is empty and no legacy artifact exists. "
-            "Run data-pipeline/src/train_compare.py to train and register a model."))
+            "Run data-pipeline/src/train_compare.py to train and register a model.")
+        raise HTTPException(503, detail=detail)
     return _registry
 
 
@@ -94,11 +126,12 @@ class TaskFeatures(BaseModel):
 
 
 class Prediction(BaseModel):
-    late_probability: float
+    late_probability: float                      # calibrated (PRED-13)
     is_late: bool
     risk_level: str                              # low / medium / high — Twin coloring
     estimated_delay_days: float | None = None    # champion regressor (None if unavailable)
     model_version: str
+    feature_schema_version: str | None = None    # PRED-8
 
 
 class Contribution(BaseModel):
@@ -155,9 +188,22 @@ def _predict_core(reg: Registry, X: pd.DataFrame) -> list[Prediction]:
             risk_level=risk_level(float(p)),
             estimated_delay_days=(round(float(d), 1) if d is not None else None),
             model_version=reg.version,
+            feature_schema_version=reg.schema_version,
         )
         for p, d in zip(probas, delays)
     ]
+
+
+def _unwrap_pipeline(clf):
+    """Return the underlying (prep, model) pipeline, looking through a calibration wrapper.
+
+    PRED-13 note: SHAP explains the underlying tree model (margin space); the calibration
+    is a monotonic mapping on top, so contribution directions and ranking are unchanged.
+    """
+    pipeline = clf
+    if clf.__class__.__name__ == "CalibratedClassifierCV":
+        pipeline = clf.calibrated_classifiers_[0].estimator
+    return pipeline
 
 
 @lru_cache(maxsize=1)
@@ -165,8 +211,9 @@ def _explainer():
     """SHAP explainer over the champion classifier's final estimator."""
     import shap
     reg = get_registry()
-    prep = reg.clf.named_steps["prep"]
-    model = reg.clf.named_steps["model"]
+    pipeline = _unwrap_pipeline(reg.clf)
+    prep = pipeline.named_steps["prep"]
+    model = pipeline.named_steps["model"]
     names = list(prep.get_feature_names_out())
     if model.__class__.__name__ in {"RandomForestClassifier", "XGBClassifier",
                                     "GradientBoostingClassifier"}:
@@ -185,7 +232,9 @@ def health():
         _registry = Registry()
     return {"status": "ok", "model_loaded": _registry.ready,
             "model_version": _registry.version,
-            "champion": _registry.meta.get("champion_classifier")}
+            "feature_schema_version": _registry.schema_version,
+            "champion": _registry.meta.get("champion_classifier"),
+            "refusal": _registry.refusal}
 
 
 @app.post("/predict", response_model=Prediction)
