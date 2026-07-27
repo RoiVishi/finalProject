@@ -14,7 +14,19 @@ services:
 
   ai-service:
     build: ./ai-service
-    ports: ["8001:8001"]
+    # NFR-SEC-5: not published to the host — reachable only from the backend on the
+    # compose network. For local debugging uncomment:
+    # ports: ["8001:8001"]
+    environment:
+      FEATURE_SCHEMA: /srv/feature_schema.json          # PRED-8: running schema
+      RISK_BAND_T1: ${RISK_BAND_T1:-0.33}               # PRED-12: bands via config
+      RISK_BAND_T2: ${RISK_BAND_T2:-0.66}
+    volumes:
+      - ./feature_schema.json:/srv/feature_schema.json:ro
+    healthcheck:                                        # PRED-2: readiness, not liveness
+      test: ["CMD", "python", "-c", "import urllib.request,json,sys; d=json.load(urllib.request.urlopen('http://localhost:8001/health')); sys.exit(0 if d.get('model_loaded') else 1)"]
+      interval: 10s
+      retries: 12
 
   backend:
     build: ./backend
@@ -28,7 +40,7 @@ services:
     ports: ["3000:3000"]
     depends_on:
       db: { condition: service_healthy }
-      ai-service: { condition: service_started }
+      ai-service: { condition: service_healthy }   # PRED-2: wait on readiness
 
 volumes:
   pgdata:

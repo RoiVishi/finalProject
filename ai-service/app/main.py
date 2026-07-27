@@ -174,8 +174,17 @@ def base_feature(transformed_name: str) -> str:
     return name
 
 
+# PRED-12: risk-band boundaries are explicit configuration, never constants.
+# Defaults are placeholders until the banding protocol (validation-set quantiles or a
+# cost-weighted operating point) is approved by the advisor; they are injected via env
+# (NFR-DEMO-1 style) and echoed in /health so Twin colouring, DASH-4 escalation and the
+# DASH-5 index all consume one source.
+RISK_BAND_T1 = float(os.environ.get("RISK_BAND_T1", "0.33"))
+RISK_BAND_T2 = float(os.environ.get("RISK_BAND_T2", "0.66"))
+
+
 def risk_level(p: float) -> str:
-    return "high" if p >= 0.66 else "medium" if p >= 0.33 else "low"
+    return "high" if p >= RISK_BAND_T2 else "medium" if p >= RISK_BAND_T1 else "low"
 
 
 def _predict_core(reg: Registry, X: pd.DataFrame) -> list[Prediction]:
@@ -234,6 +243,7 @@ def health():
             "model_version": _registry.version,
             "feature_schema_version": _registry.schema_version,
             "champion": _registry.meta.get("champion_classifier"),
+            "risk_bands": {"t1": RISK_BAND_T1, "t2": RISK_BAND_T2},
             "refusal": _registry.refusal}
 
 
