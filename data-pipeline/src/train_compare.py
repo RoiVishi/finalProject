@@ -68,6 +68,23 @@ NUM_FEATURES = [f["name"] for f in SCHEMA["features"] if f["role"] == "numeric"]
 CAT_FEATURES = [f["name"] for f in SCHEMA["features"] if f["role"] == "categorical"]
 SCHEMA_VERSION = SCHEMA["feature_schema_version"]
 
+# DATA-2 hardening (26.7.26): containment dedup (src/dedup_containment.py) found that
+# Enppi ⊂ MERGE PROJECTS (100% of task code+name pairs, identical 548 labels) and
+# Enppi ⊂ hela-2l (86%, 0 label disagreements on 483 shared tasks) — one schedule
+# family present three times. We keep hela-2l (largest labeled superset, 660 incl.
+# 177 unique) and drop the two duplicates; without this, the same task could sit in
+# scenario-B train via one copy and in test via another (leakage).
+EXCLUDE_PROJECTS = {"MERGE PROJECTS", "Enppi"}
+
+
+def load_labeled() -> pd.DataFrame:
+    """Labeled corpus with duplicate projects removed — single entry point for all experiments."""
+    df = pd.read_csv(OUT / "labeled_tasks.csv")
+    df = df[~df["project"].isin(EXCLUDE_PROJECTS)]
+    lab = df[df["is_late"].notna()].copy()
+    lab["is_late"] = lab["is_late"].astype(int)
+    return lab
+
 
 def make_preprocessor():
     return ColumnTransformer([
@@ -151,9 +168,9 @@ def temporal_split(lab: pd.DataFrame):
 
 
 def main():
-    df = pd.read_csv(OUT / "labeled_tasks.csv")
-    lab = df[df["is_late"].notna()].copy()
-    lab["is_late"] = lab["is_late"].astype(int)
+    lab = load_labeled()
+    print(f"labeled corpus after dedup: {len(lab)} tasks, "
+          f"{lab['project'].nunique()} projects (excluded: {sorted(EXCLUDE_PROJECTS)})")
 
     # ---------- scenario A: cross-project ----------
     gss = GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=SEED)
@@ -303,8 +320,16 @@ def main():
     version = f"v{(existing[-1] + 1) if existing else 1}"
     vdir = REGISTRY / version
     vdir.mkdir()
-    joblib.dump(calibrated, vdir / "classifier.joblib")           # served = calibrated
-    joblib.dump(tuned[f"__reg__{champion_reg}"], vdir / "regressor.joblib")
+    joblib.dump(calibrated, vdir / "classifier.joblib", compress=3)   # served = calibrated
+    # PRED-11: the regressor is deployed ONLY while it clears its gate row (beats the
+    # dummy MAE on scenario B). If it fails, we ship classification-only — the service
+    # then returns estimated_delay_days = null and the UI omits the field.
+    reg_gate_passed = b_reg[champion_reg]["mae_days"] < b_reg["dummy_median"]["mae_days"]
+    if reg_gate_passed:
+        joblib.dump(tuned[f"__reg__{champion_reg}"], vdir / "regressor.joblib", compress=3)
+    else:
+        print(f"[PRED-11] regression gated OFF: {champion_reg} MAE "
+              f"{b_reg[champion_reg]['mae_days']} >= dummy {b_reg['dummy_median']['mae_days']}")
     shutil.copy(SCHEMA_PATH, vdir / "feature_schema.json")        # self-contained artifact
     meta = {
         "version": version,
@@ -323,6 +348,8 @@ def main():
         "features_num": NUM_FEATURES, "features_cat": CAT_FEATURES,
         "seed": SEED,
         "trained_on": "B_temporal train split (deployment scenario)",
+        "regression_deployed": reg_gate_passed,
+        "excluded_duplicate_projects": sorted(EXCLUDE_PROJECTS),
     }
     (vdir / "meta.json").write_text(json.dumps(meta, indent=2))
     (OUT / "model_comparison.json").write_text(json.dumps(results, indent=2))

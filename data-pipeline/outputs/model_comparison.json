@@ -5,16 +5,16 @@
     "feature_schema_version": "1.0",
     "scenario_A": {
       "split": "GroupShuffleSplit by project, test_size=0.25",
-      "n_train": 7518,
-      "n_test": 4187
+      "n_train": 8429,
+      "n_test": 2180
     },
     "scenario_B": {
       "split": "per-project temporal quantile cut q=0.7 on rel_position",
       "min_labeled": 30,
       "min_per_side": 10,
-      "n_train": 8172,
-      "n_test": 3428,
-      "n_projects": 13,
+      "n_train": 7396,
+      "n_test": 3108,
+      "n_projects": 11,
       "projects": [
         "129 trial",
         "130 TRIAL",
@@ -22,8 +22,6 @@
         "Convention _ Exhibition Center Project Roads _ Utilities",
         "Detailed Program",
         "EBCF-4 070127 Forecast Original",
-        "Enppi",
-        "MERGE PROJECTS",
         "PORTO MATROUH",
         "cairo alex-road",
         "hela-2l",
@@ -52,106 +50,106 @@
   "classification": {
     "A_cross_project": {
       "dummy_majority": {
-        "accuracy": 0.5245,
+        "accuracy": 0.8128,
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
         "roc_auc": 0.5
       },
       "logistic_regression": {
-        "accuracy": 0.5345,
-        "precision": 0.5066,
-        "recall": 0.8046,
-        "f1": 0.6218,
-        "roc_auc": 0.5534
+        "accuracy": 0.8128,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.8936
       },
       "random_forest": {
-        "accuracy": 0.507,
-        "precision": 0.4076,
-        "recall": 0.0809,
-        "f1": 0.135,
-        "roc_auc": 0.5427
+        "accuracy": 0.8078,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.1873
       },
       "xgboost": {
-        "accuracy": 0.5257,
-        "precision": 0.5048,
-        "recall": 0.1331,
-        "f1": 0.2107,
-        "roc_auc": 0.5544
+        "accuracy": 0.7743,
+        "precision": 0.0116,
+        "recall": 0.0025,
+        "f1": 0.004,
+        "roc_auc": 0.5653
       },
       "mlp": {
-        "accuracy": 0.539,
-        "precision": 0.5124,
-        "recall": 0.6344,
-        "f1": 0.5669,
-        "roc_auc": 0.5763
+        "accuracy": 0.7936,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.6699
       }
     },
     "B_temporal": {
       "dummy_majority": {
-        "accuracy": 0.7077,
+        "accuracy": 0.7021,
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
         "roc_auc": 0.5
       },
       "logistic_regression": {
-        "accuracy": 0.5595,
-        "precision": 0.3811,
-        "recall": 0.8124,
-        "f1": 0.5188,
-        "roc_auc": 0.6141
+        "accuracy": 0.5672,
+        "precision": 0.3985,
+        "recall": 0.8888,
+        "f1": 0.5503,
+        "roc_auc": 0.6004
       },
       "random_forest": {
-        "accuracy": 0.7007,
-        "precision": 0.4904,
-        "recall": 0.6088,
-        "f1": 0.5432,
-        "roc_auc": 0.7542
+        "accuracy": 0.6515,
+        "precision": 0.4512,
+        "recall": 0.784,
+        "f1": 0.5728,
+        "roc_auc": 0.7501
       },
       "xgboost": {
-        "accuracy": 0.6884,
-        "precision": 0.4727,
-        "recall": 0.5709,
-        "f1": 0.5172,
-        "roc_auc": 0.7428
+        "accuracy": 0.6876,
+        "precision": 0.481,
+        "recall": 0.6166,
+        "f1": 0.5405,
+        "roc_auc": 0.7505
       },
       "mlp": {
-        "accuracy": 0.6803,
-        "precision": 0.4133,
-        "recall": 0.2236,
-        "f1": 0.2902,
-        "roc_auc": 0.6617
+        "accuracy": 0.6416,
+        "precision": 0.3831,
+        "recall": 0.3326,
+        "f1": 0.3561,
+        "roc_auc": 0.653
       }
     }
   },
   "regression": {
     "A_cross_project": {
       "dummy_median": {
-        "mae_days": 34.34,
-        "rmse_days": 59.14
+        "mae_days": 9.61,
+        "rmse_days": 30.59
       },
       "random_forest_reg": {
-        "mae_days": 66.11,
-        "rmse_days": 105.6
+        "mae_days": 88.13,
+        "rmse_days": 109.34
       },
       "xgboost_reg": {
-        "mae_days": 43.34,
-        "rmse_days": 63.86
+        "mae_days": 64.79,
+        "rmse_days": 76.05
       }
     },
     "B_temporal": {
       "dummy_median": {
-        "mae_days": 28.94,
-        "rmse_days": 54.98
+        "mae_days": 28.81,
+        "rmse_days": 55.29
       },
       "random_forest_reg": {
-        "mae_days": 28.49,
-        "rmse_days": 52.33
+        "mae_days": 28.92,
+        "rmse_days": 53.32
       },
       "xgboost_reg": {
-        "mae_days": 31.87,
-        "rmse_days": 55.49
+        "mae_days": 31.58,
+        "rmse_days": 54.71
       }
     }
   },
@@ -160,44 +158,44 @@
       "model__C": 10.0
     },
     "random_forest": {
-      "model__max_features": 0.5,
-      "model__min_samples_leaf": 2,
+      "model__max_features": "sqrt",
+      "model__min_samples_leaf": 20,
       "model__n_estimators": 300
     },
     "xgboost": {
-      "model__learning_rate": 0.1,
-      "model__max_depth": 6,
+      "model__learning_rate": 0.05,
+      "model__max_depth": 3,
       "model__n_estimators": 300,
       "model__subsample": 0.8
     },
     "mlp": {
       "model__alpha": 0.0001,
-      "model__hidden_layer_sizes": "(64, 32)"
+      "model__hidden_layer_sizes": "(64,)"
     }
   },
   "champion": {
-    "classifier": "random_forest",
+    "classifier": "xgboost",
     "regressor": "random_forest_reg",
     "selected_by": "scenario-B roc_auc (clf) / mae (reg)"
   },
   "calibration": {
     "method": "sigmoid (Platt)",
     "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
-    "n_fit": 6398,
-    "n_cal": 1774,
+    "n_fit": 5810,
+    "n_cal": 1586,
     "A_cross_project": {
-      "brier_uncalibrated_same_base": 0.143,
-      "brier_calibrated": 0.1354
+      "brier_uncalibrated_same_base": 0.0858,
+      "brier_calibrated": 0.0765
     },
     "B_temporal": {
-      "brier_uncalibrated_same_base": 0.2236,
-      "brier_calibrated": 0.1895,
+      "brier_uncalibrated_same_base": 0.2344,
+      "brier_calibrated": 0.2071,
       "classification_calibrated": {
-        "accuracy": 0.687,
-        "precision": 0.4753,
-        "recall": 0.6816,
-        "f1": 0.5601,
-        "roc_auc": 0.768
+        "accuracy": 0.6384,
+        "precision": 0.4252,
+        "recall": 0.608,
+        "f1": 0.5004,
+        "roc_auc": 0.7228
       }
     }
   }

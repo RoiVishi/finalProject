@@ -1,0 +1,102 @@
+{
+  "label_bias": {
+    "n_labeled": 10609,
+    "n_unlabeled": 113657,
+    "share_labeled": 0.085,
+    "projects_with_zero_labels": 43,
+    "n_projects_total": 57,
+    "feature_medians": {
+      "planned_duration_days": {
+        "labeled_median": 9.0,
+        "unlabeled_median": 12.0,
+        "labeled_missing": 0.0,
+        "unlabeled_missing": 0.0
+      },
+      "total_float_hr": {
+        "labeled_median": 168.0,
+        "unlabeled_median": 608.0,
+        "labeled_missing": 0.681,
+        "unlabeled_missing": 0.0
+      },
+      "free_float_hr": {
+        "labeled_median": 0.0,
+        "unlabeled_median": 0.0,
+        "labeled_missing": 0.681,
+        "unlabeled_missing": 0.0
+      },
+      "rel_position": {
+        "labeled_median": 0.26,
+        "unlabeled_median": 0.56,
+        "labeled_missing": 0.0,
+        "unlabeled_missing": 0.0
+      },
+      "proj_n_tasks": {
+        "labeled_median": 4648.0,
+        "unlabeled_median": 16146.0,
+        "labeled_missing": 0.0,
+        "unlabeled_missing": 0.0
+      },
+      "proj_span_days": {
+        "labeled_median": 1272.0,
+        "unlabeled_median": 913.0,
+        "labeled_missing": 0.0,
+        "unlabeled_missing": 0.0
+      },
+      "n_pred": {
+        "labeled_median": 1.0,
+        "unlabeled_median": 2.0,
+        "labeled_missing": 0.0,
+        "unlabeled_missing": 0.0
+      },
+      "n_succ": {
+        "labeled_median": 1.0,
+        "unlabeled_median": 2.0,
+        "labeled_missing": 0.0,
+        "unlabeled_missing": 0.0
+      },
+      "upstream_cnt": {
+        "labeled_median": 24.0,
+        "unlabeled_median": 224.0,
+        "labeled_missing": 0.0,
+        "unlabeled_missing": 0.0
+      },
+      "downstream_cnt": {
+        "labeled_median": 249.0,
+        "unlabeled_median": 37.0,
+        "labeled_missing": 0.0,
+        "unlabeled_missing": 0.0
+      }
+    },
+    "note": "Labeling requires an actual finish date. Most unlabeled tasks sit in projects that never recorded actuals at all \u2014 a file-level property (which schedules were maintained), not a task-level one.",
+    "notable_gaps": [
+      "total_float_hr",
+      "proj_n_tasks",
+      "upstream_cnt",
+      "downstream_cnt"
+    ]
+  },
+  "alert_volume": {
+    "model_version": "v3",
+    "n_test": 3108,
+    "schemes": {
+      "placeholder_0.33_0.66": {
+        "t1": 0.33,
+        "t2": 0.66,
+        "median_high_per_project": 0,
+        "median_medium_per_project": 24,
+        "max_high_per_project": 349,
+        "share_high_overall": 0.215,
+        "precision_in_high_band": 0.54
+      },
+      "quantile_top10_high (t1=0.67, t2=0.74)": {
+        "t1": 0.672,
+        "t2": 0.744,
+        "median_high_per_project": 0,
+        "median_medium_per_project": 0,
+        "max_high_per_project": 181,
+        "share_high_overall": 0.1,
+        "precision_in_high_band": 0.582
+      }
+    }
+  }
+}

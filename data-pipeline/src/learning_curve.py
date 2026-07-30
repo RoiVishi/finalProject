@@ -33,7 +33,8 @@ from sklearn.metrics import f1_score, recall_score, roc_auc_score
 from sklearn.pipeline import Pipeline
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from train_compare import MIN_LABELED, MIN_PER_SIDE, SEED, TEMPORAL_Q, make_preprocessor
+from train_compare import (MIN_LABELED, MIN_PER_SIDE, SEED, TEMPORAL_Q,
+                           load_labeled, make_preprocessor)
 
 BASE = Path(__file__).resolve().parents[1]
 OUT = BASE / "outputs"
@@ -42,18 +43,23 @@ USABILITY_AUC = 0.70
 
 
 def champion():
-    return Pipeline([
-        ("prep", make_preprocessor()),
-        ("model", RandomForestClassifier(
-            n_estimators=300, min_samples_leaf=2, max_features=0.5,
-            class_weight="balanced", random_state=SEED, n_jobs=-1)),
-    ])
+    """Build the current champion from model_comparison.json (name + tuned params)."""
+    r = json.loads((OUT / "model_comparison.json").read_text())
+    name = r["champion"]["classifier"]
+    params = {k.replace("model__", ""): v for k, v in r.get("best_params", {}).get(name, {}).items()}
+    if name == "xgboost":
+        from xgboost import XGBClassifier
+        est = XGBClassifier(random_state=SEED, n_jobs=-1, eval_metric="logloss",
+                            tree_method="hist", **params)
+    else:
+        est = RandomForestClassifier(class_weight="balanced", random_state=SEED,
+                                     n_jobs=-1, **params)
+    print(f"champion for curve: {name} {params}")
+    return Pipeline([("prep", make_preprocessor()), ("model", est)])
 
 
 def main() -> int:
-    df = pd.read_csv(OUT / "labeled_tasks.csv")
-    lab = df[df["is_late"].notna()].copy()
-    lab["is_late"] = lab["is_late"].astype(int)
+    lab = load_labeled()   # dedup-hardened corpus (DATA-2)
 
     # qualifying projects + FIXED test set (identical rule to train_compare scenario B)
     tests, trains_by_project = [], {}

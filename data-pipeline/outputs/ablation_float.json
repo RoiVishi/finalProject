@@ -1,0 +1,36 @@
+{
+  "config": {
+    "seed": 42,
+    "scenario": "B temporal, dedup-hardened",
+    "n_train": 7396,
+    "n_test": 3108,
+    "n_projects": 11,
+    "champion_params": {
+      "learning_rate": 0.05,
+      "max_depth": 3,
+      "n_estimators": 300,
+      "subsample": 0.8
+    }
+  },
+  "results": {
+    "champion_full": {
+      "auc": 0.7505,
+      "f1": 0.5405,
+      "recall": 0.6166
+    },
+    "champion_no_float": {
+      "auc": 0.749,
+      "f1": 0.5469,
+      "recall": 0.6479
+    },
+    "cpm_heuristic": {
+      "auc": 0.4872,
+      "f1": 0.4461,
+      "recall": 0.9449,
+      "rule": "late if total_float_hr < 1128h (threshold chosen on train)",
+      "float_missing_share_test": 0.684
+    }
+  },
+  "delta_auc_full_vs_heuristic": 0.2633,
+  "delta_auc_full_vs_no_float": 0.0015
+}
