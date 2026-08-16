@@ -66,7 +66,12 @@ def main() -> int:
         "baselines_B": {"dummy": b["dummy_majority"], "logreg": b["logistic_regression"],
                         "random_forest": b.get("random_forest"), "mlp": b.get("mlp")},
         "scenario_A": {"champion_auc": r["classification"]["A_cross_project"][champ].get("roc_auc"),
-                       "note": "single split, unstable across models — repeated-splits pending"},
+                       "note": "single split — quote only alongside the RR-13 stability results"},
+        "scenario_A_stability_RR13": (lambda p: (
+            {"repeated_splits": {m: v for m, v in json.loads(p.read_text())["repeated_splits"].items()},
+             "lopo_champion_median_auc": json.loads(p.read_text())["lopo_champion"]["median_auc"],
+             "lopo_share_above_chance": json.loads(p.read_text())["lopo_champion"]["share_above_chance"]}
+            if p.exists() else None))(OUT / "scenario_a_stability.json"),
         "calibration": {"brier_uncal": cal["brier_uncalibrated_same_base"],
                         "brier_cal": cal["brier_calibrated"],
                         "n_fit": r["calibration"]["n_fit"], "n_cal": r["calibration"]["n_cal"],

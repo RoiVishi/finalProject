@@ -86,7 +86,53 @@
   },
   "scenario_A": {
     "champion_auc": 0.5653,
-    "note": "single split, unstable across models — repeated-splits pending"
+    "note": "single split — quote only alongside the RR-13 stability results"
+  },
+  "scenario_A_stability_RR13": {
+    "repeated_splits": {
+      "dummy_majority": {
+        "mean": 0.5,
+        "std": 0.0,
+        "min": 0.5,
+        "max": 0.5,
+        "share_above_chance": 0.0,
+        "n_splits": 20
+      },
+      "logistic_regression": {
+        "mean": 0.6002,
+        "std": 0.1526,
+        "min": 0.1913,
+        "max": 0.8703,
+        "share_above_chance": 0.7,
+        "n_splits": 20
+      },
+      "random_forest": {
+        "mean": 0.6035,
+        "std": 0.1916,
+        "min": 0.1847,
+        "max": 0.881,
+        "share_above_chance": 0.8,
+        "n_splits": 20
+      },
+      "xgboost": {
+        "mean": 0.5943,
+        "std": 0.1322,
+        "min": 0.3281,
+        "max": 0.7955,
+        "share_above_chance": 0.8,
+        "n_splits": 20
+      },
+      "mlp": {
+        "mean": 0.5513,
+        "std": 0.131,
+        "min": 0.3469,
+        "max": 0.8349,
+        "share_above_chance": 0.5,
+        "n_splits": 20
+      }
+    },
+    "lopo_champion_median_auc": 0.6597,
+    "lopo_share_above_chance": 0.818
   },
   "calibration": {
     "brier_uncal": 0.2344,

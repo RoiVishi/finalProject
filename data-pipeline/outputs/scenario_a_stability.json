@@ -1,0 +1,123 @@
+{
+  "config": {
+    "n_splits": 20,
+    "split": "GroupShuffleSplit by project, test 25%, seeds 0..19",
+    "models": "tuned params from model_comparison.json",
+    "champion": "xgboost"
+  },
+  "repeated_splits": {
+    "dummy_majority": {
+      "mean": 0.5,
+      "std": 0.0,
+      "min": 0.5,
+      "max": 0.5,
+      "share_above_chance": 0.0,
+      "n_splits": 20
+    },
+    "logistic_regression": {
+      "mean": 0.6002,
+      "std": 0.1526,
+      "min": 0.1913,
+      "max": 0.8703,
+      "share_above_chance": 0.7,
+      "n_splits": 20
+    },
+    "random_forest": {
+      "mean": 0.6035,
+      "std": 0.1916,
+      "min": 0.1847,
+      "max": 0.881,
+      "share_above_chance": 0.8,
+      "n_splits": 20
+    },
+    "xgboost": {
+      "mean": 0.5943,
+      "std": 0.1322,
+      "min": 0.3281,
+      "max": 0.7955,
+      "share_above_chance": 0.8,
+      "n_splits": 20
+    },
+    "mlp": {
+      "mean": 0.5513,
+      "std": 0.131,
+      "min": 0.3469,
+      "max": 0.8349,
+      "share_above_chance": 0.5,
+      "n_splits": 20
+    }
+  },
+  "lopo_champion": {
+    "projects": [
+      {
+        "project": "129 trial",
+        "n": 769,
+        "late_rate": 0.525,
+        "auc": 0.6597
+      },
+      {
+        "project": "130 TRIAL",
+        "n": 85,
+        "late_rate": 0.541,
+        "auc": 0.4613
+      },
+      {
+        "project": "CCA R03 dt 24Oct11SC",
+        "n": 1591,
+        "late_rate": 0.542,
+        "auc": 0.6712
+      },
+      {
+        "project": "Convention _ Exhibition Center Project Roads _ Utilities",
+        "n": 157,
+        "late_rate": 0.229,
+        "auc": 0.918
+      },
+      {
+        "project": "Detailed Program",
+        "n": 115,
+        "late_rate": 0.009,
+        "auc": 0.0
+      },
+      {
+        "project": "EBCF-4 070127 Forecast Original",
+        "n": 3272,
+        "late_rate": 0.47,
+        "auc": 0.5804
+      },
+      {
+        "project": "PORTO MATROUH",
+        "n": 422,
+        "late_rate": 0.05,
+        "auc": 0.8395
+      },
+      {
+        "project": "cairo alex-road",
+        "n": 46,
+        "late_rate": 0.087,
+        "auc": 0.9107
+      },
+      {
+        "project": "hela-2l",
+        "n": 660,
+        "late_rate": 0.303,
+        "auc": 0.5075
+      },
+      {
+        "project": "rehab-2",
+        "n": 2037,
+        "late_rate": 0.617,
+        "auc": 0.5696
+      },
+      {
+        "project": "update of jungle 20-07-2010",
+        "n": 73,
+        "late_rate": 0.151,
+        "auc": 0.7947
+      }
+    ],
+    "median_auc": 0.6597,
+    "share_above_chance": 0.818
+  },
+  "conclusion": "Cross-project transfer is unstable and weak regardless of model choice; single-split scenario-A numbers must never be quoted alone. Product framing (history-based prediction, PRED-10 abstention) unchanged."
+}
