@@ -9,3 +9,5 @@ data-pipeline/data/
 data-pipeline/outputs/labeled_tasks.csv
 *.joblib
 .DS_Store
+# exception: the SERVED artifact is small (XGBoost ~65KB) and CI must test the real model
+!ai-service/model/registry/v4/classifier.joblib

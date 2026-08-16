@@ -23,8 +23,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install ruff
-      - run: ruff check data-pipeline/src ai-service/app
+      # ruff pinned: CI must lint with the exact version the code was verified against,
+      # or a new release's new rules turn the build red without any code change.
+      - run: pip install ruff==0.15.11
+      - run: ruff --version && ruff check data-pipeline/src ai-service/app
 
   # Own job (not a step after lint): style noise must never mask a model-quality failure.
   model-quality-gate:
