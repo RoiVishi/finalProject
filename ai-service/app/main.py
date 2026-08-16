@@ -20,7 +20,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 BASE = Path(__file__).resolve().parents[1]
 REGISTRY = Path(os.environ.get("MODEL_REGISTRY", BASE / "model" / "registry"))
@@ -46,7 +46,15 @@ def schema_mismatch(meta: dict, schema: dict | None) -> str | None:
                 "retrain (data-pipeline/src/train_compare.py) or update feature_schema.json")
     return None
 
-app = FastAPI(title="Construction Delay Prediction Service", version="0.2.0")
+# KAN-103: numeric sanity ranges from the running schema (empty dict → checks disabled)
+_schema_for_ranges = load_running_schema() or {}
+SCHEMA_RANGES: dict[str, tuple[float, float]] = {
+    f["name"]: (f["range"][0], f["range"][1])
+    for f in _schema_for_ranges.get("features", [])
+    if f.get("role") == "numeric" and isinstance(f.get("range"), list) and len(f["range"]) == 2
+}
+
+app = FastAPI(title="Construction Delay Prediction Service", version="0.2.1")
 
 # ---------------------------------------------------------------- registry
 
@@ -139,6 +147,23 @@ class TaskFeatures(BaseModel):
     upstream_cnt: int = 0
     downstream_cnt: int = 0
     task_type: str | None = None
+
+    @model_validator(mode="after")
+    def _sanity_ranges(self):
+        """KAN-103 (PRED-8 extension): schema-derived sanity bounds per numeric feature.
+
+        Catches gross semantic errors that pass name/type checks — wrong units,
+        negative durations, rel_position outside [0,1]. Bounds live in
+        feature_schema.json ('range'); a feature without a range is unchecked.
+        Nulls remain legal (nullable semantics — the pipeline imputes them).
+        """
+        for name, (lo, hi) in SCHEMA_RANGES.items():
+            v = getattr(self, name, None)
+            if v is not None and not (lo <= v <= hi):
+                raise ValueError(
+                    f"{name}={v} outside sane range [{lo}, {hi}] "
+                    f"(schema sanity check — wrong units or corrupted input?)")
+        return self
 
 
 class Prediction(BaseModel):

@@ -1,20 +1,156 @@
 {
   "feature_schema_version": "1.0",
-  "description": "Single source of truth for the model feature contract (PRED-8). Consumed by data-pipeline/src/train_compare.py at training time and by ai-service/app/main.py at serving time. Any change requires a version bump and retraining.",
-  "target_classification": "is_late (bool) — actual finish later than planned finish",
-  "target_regression": "delay_days (float) — actual minus planned finish, calendar days",
+  "description": "Single source of truth for the model feature contract (PRED-8). Consumed by data-pipeline/src/train_compare.py at training time and by ai-service/app/main.py at serving time. Any change requires a version bump and retraining. Numeric 'range' bounds are serving-time sanity checks (KAN-103 extension of PRED-8): generous limits that catch unit mistakes and nonsense inputs; they are metadata and do not change the contract version.",
+  "target_classification": "is_late (bool) \u2014 actual finish later than planned finish",
+  "target_regression": "delay_days (float) \u2014 actual minus planned finish, calendar days",
   "features": [
-    { "name": "planned_duration_days", "dtype": "float", "unit": "days", "nullable": true, "role": "numeric", "description": "Planned finish minus planned start", "platform_source": "Activity.plannedFinish - Activity.plannedStart" },
-    { "name": "total_float_hr", "dtype": "float", "unit": "hours", "nullable": true, "role": "numeric", "description": "Total float from the schedule network", "platform_source": "CPM pass over Dependency graph (PRED-9, advisor decision pending)" },
-    { "name": "free_float_hr", "dtype": "float", "unit": "hours", "nullable": true, "role": "numeric", "description": "Free float from the schedule network", "platform_source": "CPM pass over Dependency graph (PRED-9, advisor decision pending)" },
-    { "name": "rel_position", "dtype": "float", "unit": "0-1", "nullable": true, "role": "numeric", "description": "Position of the activity start within the project planned span", "platform_source": "(Activity.plannedStart - Project.plannedStart) / Project.plannedSpan" },
-    { "name": "proj_n_tasks", "dtype": "int", "unit": "count", "nullable": true, "role": "numeric", "description": "Number of activities in the project", "platform_source": "count(Project.activities)" },
-    { "name": "proj_span_days", "dtype": "float", "unit": "days", "nullable": true, "role": "numeric", "description": "Project planned span", "platform_source": "Project.plannedFinish - Project.plannedStart" },
-    { "name": "n_pred", "dtype": "int", "unit": "count", "nullable": false, "role": "numeric", "description": "Direct predecessors", "platform_source": "count(Dependency where successor = activity)" },
-    { "name": "n_succ", "dtype": "int", "unit": "count", "nullable": false, "role": "numeric", "description": "Direct successors", "platform_source": "count(Dependency where predecessor = activity)" },
-    { "name": "upstream_cnt", "dtype": "int", "unit": "count", "nullable": false, "role": "numeric", "description": "Transitive upstream reach in the dependency DAG", "platform_source": "bounded traversal (PRED-9 adapter)" },
-    { "name": "downstream_cnt", "dtype": "int", "unit": "count", "nullable": false, "role": "numeric", "description": "Transitive downstream reach in the dependency DAG", "platform_source": "bounded traversal (PRED-9 adapter)" },
-    { "name": "task_type", "dtype": "str", "unit": null, "nullable": true, "role": "categorical", "description": "P6 task type (TT_Task, TT_Mile, ...)", "platform_source": "mapping table from platform activity type (PRED-9)" }
+    {
+      "name": "planned_duration_days",
+      "dtype": "float",
+      "unit": "days",
+      "nullable": true,
+      "role": "numeric",
+      "description": "Planned finish minus planned start",
+      "platform_source": "Activity.plannedFinish - Activity.plannedStart",
+      "range": [
+        0,
+        3650
+      ]
+    },
+    {
+      "name": "total_float_hr",
+      "dtype": "float",
+      "unit": "hours",
+      "nullable": true,
+      "role": "numeric",
+      "description": "Total float from the schedule network",
+      "platform_source": "not computed by the platform; RR-12 showed the model barely needs it (PRED-9 adapter sends null; imputed)",
+      "range": [
+        -87600,
+        87600
+      ]
+    },
+    {
+      "name": "free_float_hr",
+      "dtype": "float",
+      "unit": "hours",
+      "nullable": true,
+      "role": "numeric",
+      "description": "Free float from the schedule network",
+      "platform_source": "not computed by the platform; RR-12 showed the model barely needs it (PRED-9 adapter sends null; imputed)",
+      "range": [
+        -87600,
+        87600
+      ]
+    },
+    {
+      "name": "rel_position",
+      "dtype": "float",
+      "unit": "0-1",
+      "nullable": true,
+      "role": "numeric",
+      "description": "Position of the activity start within the project planned span",
+      "platform_source": "(Activity.plannedStart - Project.plannedStart) / Project.plannedSpan",
+      "range": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "proj_n_tasks",
+      "dtype": "int",
+      "unit": "count",
+      "nullable": true,
+      "role": "numeric",
+      "description": "Number of activities in the project",
+      "platform_source": "count(Project.activities)",
+      "range": [
+        1,
+        200000
+      ]
+    },
+    {
+      "name": "proj_span_days",
+      "dtype": "float",
+      "unit": "days",
+      "nullable": true,
+      "role": "numeric",
+      "description": "Project planned span",
+      "platform_source": "Project.plannedFinish - Project.plannedStart",
+      "range": [
+        0,
+        36500
+      ]
+    },
+    {
+      "name": "n_pred",
+      "dtype": "int",
+      "unit": "count",
+      "nullable": false,
+      "role": "numeric",
+      "description": "Direct predecessors",
+      "platform_source": "count(Dependency where successor = activity)",
+      "range": [
+        0,
+        10000
+      ]
+    },
+    {
+      "name": "n_succ",
+      "dtype": "int",
+      "unit": "count",
+      "nullable": false,
+      "role": "numeric",
+      "description": "Direct successors",
+      "platform_source": "count(Dependency where predecessor = activity)",
+      "range": [
+        0,
+        10000
+      ]
+    },
+    {
+      "name": "upstream_cnt",
+      "dtype": "int",
+      "unit": "count",
+      "nullable": false,
+      "role": "numeric",
+      "description": "Transitive upstream reach in the dependency DAG",
+      "platform_source": "bounded traversal (PRED-9 adapter)",
+      "range": [
+        0,
+        500000
+      ]
+    },
+    {
+      "name": "downstream_cnt",
+      "dtype": "int",
+      "unit": "count",
+      "nullable": false,
+      "role": "numeric",
+      "description": "Transitive downstream reach in the dependency DAG",
+      "platform_source": "bounded traversal (PRED-9 adapter)",
+      "range": [
+        0,
+        500000
+      ]
+    },
+    {
+      "name": "task_type",
+      "dtype": "str",
+      "unit": null,
+      "nullable": true,
+      "role": "categorical",
+      "description": "P6 task type (TT_Task, TT_Mile, ...)",
+      "platform_source": "mapping table from platform activity type (PRED-9)"
+    }
   ],
-  "blacklist_post_hoc": ["delay_days", "is_late", "extreme_delay", "actual_start", "actual_finish", "actual_duration", "status_code"]
+  "blacklist_post_hoc": [
+    "delay_days",
+    "is_late",
+    "extreme_delay",
+    "actual_start",
+    "actual_finish",
+    "actual_duration",
+    "status_code"
+  ]
 }

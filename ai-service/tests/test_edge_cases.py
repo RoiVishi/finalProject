@@ -101,3 +101,19 @@ def test_health_reports_degraded_not_500(tmp_path, monkeypatch):
     r2 = client.post("/predict", json=TASK)
     assert r2.status_code == 503
     monkeypatch.setattr(m, "_registry", None)  # restore lazy reload for other tests
+
+
+def test_range_validation_rejects_nonsense():
+    """KAN-103: schema-derived sanity bounds — gross unit/nonsense errors → 422."""
+    for field, bad in (("rel_position", 1.5), ("planned_duration_days", -5),
+                       ("rel_position", -0.1), ("proj_span_days", 999999)):
+        r = client.post("/predict", json={**TASK, field: bad})
+        assert r.status_code == 422, f"{field}={bad} must be rejected, got {r.status_code}"
+
+
+def test_range_validation_allows_nulls_and_valid():
+    if not _model_available():
+        return
+    ok = dict(TASK, total_float_hr=None, free_float_hr=-500)  # negative float is legal P6
+    r = client.post("/predict", json=ok)
+    assert r.status_code == 200
