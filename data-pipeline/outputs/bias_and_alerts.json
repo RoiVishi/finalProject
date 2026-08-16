@@ -1,20 +1,20 @@
 {
   "label_bias": {
     "n_labeled": 10609,
-    "n_unlabeled": 113657,
-    "share_labeled": 0.085,
-    "projects_with_zero_labels": 43,
-    "n_projects_total": 57,
+    "n_unlabeled": 111448,
+    "share_labeled": 0.087,
+    "projects_with_zero_labels": 37,
+    "n_projects_total": 51,
     "feature_medians": {
       "planned_duration_days": {
         "labeled_median": 9.0,
-        "unlabeled_median": 12.0,
+        "unlabeled_median": 13.0,
         "labeled_missing": 0.0,
         "unlabeled_missing": 0.0
       },
       "total_float_hr": {
         "labeled_median": 168.0,
-        "unlabeled_median": 608.0,
+        "unlabeled_median": 622.0,
         "labeled_missing": 0.681,
         "unlabeled_missing": 0.0
       },
@@ -56,7 +56,7 @@
       },
       "upstream_cnt": {
         "labeled_median": 24.0,
-        "unlabeled_median": 224.0,
+        "unlabeled_median": 234.0,
         "labeled_missing": 0.0,
         "unlabeled_missing": 0.0
       },
@@ -76,7 +76,7 @@
     ]
   },
   "alert_volume": {
-    "model_version": "v3",
+    "model_version": "v4",
     "n_test": 3108,
     "schemes": {
       "placeholder_0.33_0.66": {
@@ -88,14 +88,14 @@
         "share_high_overall": 0.215,
         "precision_in_high_band": 0.54
       },
-      "quantile_top10_high (t1=0.67, t2=0.74)": {
-        "t1": 0.672,
-        "t2": 0.744,
+      "quantile_top10_high (t1=0.68, t2=0.76)": {
+        "t1": 0.683,
+        "t2": 0.763,
         "median_high_per_project": 0,
         "median_medium_per_project": 0,
-        "max_high_per_project": 181,
-        "share_high_overall": 0.1,
-        "precision_in_high_band": 0.582
+        "max_high_per_project": 138,
+        "share_high_overall": 0.075,
+        "precision_in_high_band": 0.603
       }
     }
   }

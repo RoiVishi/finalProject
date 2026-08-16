@@ -74,9 +74,11 @@ def graph_stats(task_ids: set, edges: list[tuple]) -> dict:
 
 def process_project(proj_dir: Path) -> pd.DataFrame | None:
     tasks = read_table(proj_dir, "TASK")
-    if tasks is None or "task_id" not in tasks.columns:
+    if tasks is None:
         return None
-    tasks.columns = [c.strip().lower() for c in tasks.columns]
+    tasks.columns = [c.strip().lower() for c in tasks.columns]  # normalize BEFORE the id check
+    if "task_id" not in tasks.columns:
+        return None
 
     for col in ["target_start_date", "target_end_date", "act_start_date", "act_end_date"]:
         if col in tasks.columns:

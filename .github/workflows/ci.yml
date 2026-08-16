@@ -13,9 +13,11 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -r ai-service/requirements.txt
-      - run: cd ai-service && python -m pytest tests/ -q
+      # REQUIRE_MODEL=1: the committed registry model MUST load — without this the
+      # suite silently degrades to asserting 503s and stays green while testing nothing.
+      - run: cd ai-service && REQUIRE_MODEL=1 python -m pytest tests/ -q
 
-  data-pipeline-lint:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +25,14 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install ruff
       - run: ruff check data-pipeline/src ai-service/app
+
+  # Own job (not a step after lint): style noise must never mask a model-quality failure.
+  model-quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
       - name: Model quality gate (PRED-6)
         run: |
           if [ -f data-pipeline/outputs/model_comparison.json ]; then
@@ -30,15 +40,37 @@ jobs:
           else
             echo 'no model_comparison.json committed — gate skipped'
           fi
+      - name: Gate ↔ registry consistency
+        run: |
+          python - <<'EOF'
+          import json, pathlib
+          reg = pathlib.Path('ai-service/model/registry')
+          versions = sorted((p for p in reg.glob('v*') if p.name[1:].isdigit()),
+                            key=lambda p: int(p.name[1:]))
+          if not versions:
+              print('no registry — skipped'); raise SystemExit(0)
+          meta = json.loads((versions[-1] / 'meta.json').read_text())
+          comp = json.loads(pathlib.Path('data-pipeline/outputs/model_comparison.json').read_text())
+          assert meta['champion_classifier'] == comp['champion']['classifier'], \
+              f"registry {versions[-1].name} champion != committed comparison — stale artifact or metrics"
+          print(f"OK: {versions[-1].name} serves {meta['champion_classifier']}, matches model_comparison.json")
+          EOF
 
-
+  # backend/frontend jobs are guarded: they run only once real scaffolds exist,
+  # so the pipeline is not permanently red while the platform side is being built.
   backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - run: cd backend && npm install && npm run build
+      - name: Build backend (skipped until scaffold exists)
+        run: |
+          if [ -f backend/package.json ]; then
+            cd backend && npm install && npm run build
+          else
+            echo 'backend/package.json not found — scaffold pending, build skipped'
+          fi
 
   frontend:
     runs-on: ubuntu-latest
@@ -46,4 +78,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - run: cd frontend && npm install && npm run build
+      - name: Build frontend (skipped until scaffold exists)
+        run: |
+          if [ -f frontend/package.json ]; then
+            cd frontend && npm install && npm run build
+          else
+            echo 'frontend/package.json not found — scaffold pending, build skipped'
+          fi

@@ -19,8 +19,8 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel, ConfigDict, Field
 
 BASE = Path(__file__).resolve().parents[1]
 REGISTRY = Path(os.environ.get("MODEL_REGISTRY", BASE / "model" / "registry"))
@@ -62,6 +62,16 @@ class Registry:
         self._load()
 
     def _load(self):
+        # PRED-5: ANY load failure (missing/corrupt artifact, bad JSON) must flow into
+        # the refusal path (503 with a reason), never a raw 500 — including on /health.
+        try:
+            self._load_inner()
+        except Exception as e:  # noqa: BLE001 — deliberate catch-all into graceful degradation
+            self.clf = None
+            self.refusal = (f"registry load failed: {type(e).__name__}: {e} — "
+                            "re-run the training pipeline or remove the broken version dir")
+
+    def _load_inner(self):
         schema = load_running_schema()
         if REGISTRY.exists():
             versions = sorted((p for p in REGISTRY.glob("v*") if p.name[1:].isdigit()),
@@ -111,7 +121,13 @@ def get_registry() -> Registry:
 # ---------------------------------------------------------------- schemas
 
 class TaskFeatures(BaseModel):
-    """Plan-time features of a single task (must match training features)."""
+    """Plan-time features of a single task (must match training features).
+
+    extra="forbid": a misspelled field (planned_duration vs planned_duration_days)
+    must be a loud 422, not a silently-imputed None → confident wrong prediction.
+    """
+    model_config = ConfigDict(extra="forbid")
+
     planned_duration_days: float | None = None
     total_float_hr: float | None = None
     free_float_hr: float | None = None
@@ -181,6 +197,8 @@ def base_feature(transformed_name: str) -> str:
 # DASH-5 index all consume one source.
 RISK_BAND_T1 = float(os.environ.get("RISK_BAND_T1", "0.33"))
 RISK_BAND_T2 = float(os.environ.get("RISK_BAND_T2", "0.66"))
+if not 0.0 <= RISK_BAND_T1 <= RISK_BAND_T2 <= 1.0:
+    raise RuntimeError(f"invalid risk bands: T1={RISK_BAND_T1} T2={RISK_BAND_T2} (need 0<=T1<=T2<=1)")
 
 
 def risk_level(p: float) -> str:
@@ -239,7 +257,7 @@ def health():
     global _registry
     if _registry is None:
         _registry = Registry()
-    return {"status": "ok", "model_loaded": _registry.ready,
+    return {"status": "ok" if _registry.ready else "degraded", "model_loaded": _registry.ready,
             "model_version": _registry.version,
             "feature_schema_version": _registry.schema_version,
             "champion": _registry.meta.get("champion_classifier"),
@@ -255,12 +273,14 @@ def predict(task: TaskFeatures):
 
 @app.post("/predict/batch", response_model=list[Prediction])
 def predict_batch(tasks: list[TaskFeatures]):
+    if not tasks:                     # empty project — a valid question, an empty answer
+        return []
     reg = get_registry()
     return _predict_core(reg, pd.DataFrame([t.model_dump() for t in tasks]))
 
 
 @app.post("/explain", response_model=Explanation)
-def explain(task: TaskFeatures, top_k: int = 5):
+def explain(task: TaskFeatures, top_k: int = Query(5, ge=1, le=len(DOMAIN_LABELS))):
     """PRED-3: prediction + top-k signed SHAP contributions, aggregated per base feature."""
     reg = get_registry()
     X = pd.DataFrame([task.model_dump()])

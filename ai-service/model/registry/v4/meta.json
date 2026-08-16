@@ -1,0 +1,97 @@
+{
+  "version": "v4",
+  "created_utc": "2026-08-16T14:43:02+00:00",
+  "feature_schema_version": "1.0",
+  "champion_classifier": "xgboost",
+  "champion_regressor": "random_forest_reg",
+  "calibration": {
+    "method": "sigmoid (Platt)",
+    "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
+    "evaluated_on": "B_temporal only (A test overlaps B train \u2014 evaluating there would be leakage)",
+    "n_fit": 5810,
+    "n_cal": 1586,
+    "B_temporal": {
+      "brier_uncalibrated_same_base": 0.2344,
+      "brier_calibrated": 0.2071,
+      "classification_calibrated": {
+        "accuracy": 0.6384,
+        "precision": 0.4252,
+        "recall": 0.608,
+        "f1": 0.5004,
+        "roc_auc": 0.7228
+      }
+    }
+  },
+  "best_params": {
+    "model__learning_rate": 0.05,
+    "model__max_depth": 3,
+    "model__n_estimators": 300,
+    "model__subsample": 0.8
+  },
+  "served_metrics_B_temporal": {
+    "accuracy": 0.6384,
+    "precision": 0.4252,
+    "recall": 0.608,
+    "f1": 0.5004,
+    "roc_auc": 0.7228
+  },
+  "served_brier_B_temporal": 0.2071,
+  "metrics_B_temporal": {
+    "classification_uncalibrated_full_train_fit_NOT_SERVED": {
+      "accuracy": 0.6876,
+      "precision": 0.481,
+      "recall": 0.6166,
+      "f1": 0.5405,
+      "roc_auc": 0.7505
+    },
+    "classification_calibrated": {
+      "accuracy": 0.6384,
+      "precision": 0.4252,
+      "recall": 0.608,
+      "f1": 0.5004,
+      "roc_auc": 0.7228
+    },
+    "regression": {
+      "mae_days": 28.92,
+      "rmse_days": 53.32
+    }
+  },
+  "metrics_A_cross_project": {
+    "classification": {
+      "accuracy": 0.7743,
+      "precision": 0.0116,
+      "recall": 0.0025,
+      "f1": 0.004,
+      "roc_auc": 0.5653
+    },
+    "note": "single-split, unstable across models; repeated-splits experiment pending"
+  },
+  "features_num": [
+    "planned_duration_days",
+    "total_float_hr",
+    "free_float_hr",
+    "rel_position",
+    "proj_n_tasks",
+    "proj_span_days",
+    "n_pred",
+    "n_succ",
+    "upstream_cnt",
+    "downstream_cnt"
+  ],
+  "features_cat": [
+    "task_type"
+  ],
+  "seed": 42,
+  "trained_on": "B_temporal train split (deployment scenario)",
+  "regression_deployed": false,
+  "excluded_duplicate_projects": [
+    "Baseline 15-11-2010",
+    "Beyti plant baseline -b(fm-baseline)",
+    "Enppi",
+    "HHI",
+    "MERGE PROJECTS",
+    "Ma'aden",
+    "el ezz warehouse",
+    "schedule of Medor"
+  ]
+}

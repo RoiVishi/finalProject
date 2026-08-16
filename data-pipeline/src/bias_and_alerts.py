@@ -72,13 +72,24 @@ def label_bias() -> dict:
 def alert_volume() -> dict:
     versions = sorted((p for p in REGISTRY.glob("v*") if p.name[1:].isdigit()),
                       key=lambda p: int(p.name[1:]))
+    if not versions:
+        raise SystemExit("no registry versions found — run train_compare.py first")
     clf = joblib.load(versions[-1] / "classifier.joblib")
     lab = load_labeled()
-    _, te, _ = temporal_split(lab)
+    tr, te, _ = temporal_split(lab)
     te = te.copy()
     te["p"] = clf.predict_proba(te)[:, 1]
 
-    q80, q90 = te["p"].quantile(0.80), te["p"].quantile(0.90)
+    # Thresholds derived on TRAIN-side data (the latest calibration slice), then
+    # bands/precision are *scored* on the untouched test set. Deriving quantiles from
+    # the same test predictions we score would be a mild fit-on-test (16.8 audit, I6).
+    cal_parts = []
+    for _, g in tr.groupby("project"):
+        c = g["rel_position"].quantile(0.75)
+        cal_parts.append(g[g["rel_position"] > c])
+    cal = pd.concat(cal_parts).copy()
+    p_cal = clf.predict_proba(cal)[:, 1]
+    q80, q90 = float(pd.Series(p_cal).quantile(0.80)), float(pd.Series(p_cal).quantile(0.90))
     schemes = {
         "placeholder_0.33_0.66": (0.33, 0.66),
         f"quantile_top10_high (t1={q80:.2f}, t2={q90:.2f})": (float(q80), float(q90)),

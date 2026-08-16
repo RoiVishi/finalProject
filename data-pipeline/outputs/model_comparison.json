@@ -45,7 +45,7 @@
       "task_type"
     ],
     "tuning": "GridSearchCV, GroupKFold(3) on scenario-A train; best params reused in B",
-    "calibration": "CalibratedClassifierCV on B train, isotonic (n>1000 per sklearn guidance), cv=3; never fitted on test"
+    "calibration": "sigmoid (Platt) via CalibratedClassifierCV(FrozenEstimator): per-project temporal sub-split of B train at q=0.75 \u2014 champion fitted on earlier part, calibrator on the latest slice; evaluated on scenario B only (A test overlaps B train \u2014 see note); never fitted on test"
   },
   "classification": {
     "A_cross_project": {
@@ -176,17 +176,17 @@
   "champion": {
     "classifier": "xgboost",
     "regressor": "random_forest_reg",
-    "selected_by": "scenario-B roc_auc (clf) / mae (reg)"
+    "selected_by": "scenario-B roc_auc (clf) / mae (reg) \u2014 rule fixed before the run",
+    "runner_up_classifier": "random_forest",
+    "delta_auc_vs_runner_up": 0.0004,
+    "note": "see outputs/bootstrap_ci.json for the CI of the champion-vs-runner-up AUC delta"
   },
   "calibration": {
     "method": "sigmoid (Platt)",
     "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
+    "evaluated_on": "B_temporal only (A test overlaps B train \u2014 evaluating there would be leakage)",
     "n_fit": 5810,
     "n_cal": 1586,
-    "A_cross_project": {
-      "brier_uncalibrated_same_base": 0.0858,
-      "brier_calibrated": 0.0765
-    },
     "B_temporal": {
       "brier_uncalibrated_same_base": 0.2344,
       "brier_calibrated": 0.2071,
@@ -198,5 +198,17 @@
         "roc_auc": 0.7228
       }
     }
+  },
+  "served_model": {
+    "artifact": "calibrated pipeline (champion fitted on B_fit + sigmoid calibrator on B_cal)",
+    "metrics_B_test": {
+      "accuracy": 0.6384,
+      "precision": 0.4252,
+      "recall": 0.608,
+      "f1": 0.5004,
+      "roc_auc": 0.7228
+    },
+    "brier_B_test": 0.2071,
+    "selection_metrics_note": "champion selection used the full-B_tr fit (roc_auc 0.7505); that fit is NOT the served artifact"
   }
 }

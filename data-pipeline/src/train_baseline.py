@@ -55,6 +55,8 @@ def make_preprocessor():
 
 def main():
     df = pd.read_csv(OUT / "labeled_tasks.csv")
+    from train_compare import EXCLUDE_PROJECTS  # DATA-2: same dedup corpus everywhere
+    df = df[~df["project"].isin(EXCLUDE_PROJECTS)]
     lab = df[df["is_late"].notna()].copy()
     # exclude extreme outliers from the REGRESSION target only (documented choice)
     lab["is_late"] = lab["is_late"].astype(int)

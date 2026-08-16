@@ -68,13 +68,22 @@ NUM_FEATURES = [f["name"] for f in SCHEMA["features"] if f["role"] == "numeric"]
 CAT_FEATURES = [f["name"] for f in SCHEMA["features"] if f["role"] == "categorical"]
 SCHEMA_VERSION = SCHEMA["feature_schema_version"]
 
-# DATA-2 hardening (26.7.26): containment dedup (src/dedup_containment.py) found that
-# Enppi ⊂ MERGE PROJECTS (100% of task code+name pairs, identical 548 labels) and
-# Enppi ⊂ hela-2l (86%, 0 label disagreements on 483 shared tasks) — one schedule
-# family present three times. We keep hela-2l (largest labeled superset, 660 incl.
-# 177 unique) and drop the two duplicates; without this, the same task could sit in
-# scenario-B train via one copy and in test via another (leakage).
-EXCLUDE_PROJECTS = {"MERGE PROJECTS", "Enppi"}
+# DATA-2 hardening — containment dedup (src/dedup_containment.py), two rounds:
+# Round 1 (26.7.26): Enppi ⊂ MERGE PROJECTS (100%) and Enppi ⊂ hela-2l (86%) — one
+#   schedule family present three times. Keep hela-2l (largest labeled superset,
+#   660 labels incl. 177 unique); drop the two copies. Without this, the same task
+#   could sit in scenario-B train via one copy and in test via another (leakage).
+# Round 2 (16.8.26, code+name fingerprints): six more duplicate families found —
+#   ALL effectively unlabeled (schedule of Medor 0 labels vs its contained copy's 16;
+#   HHI/Ma'aden ⊂ Petrofac; PJ ⊂ MERGE; two baseline-vs-update pairs). No label
+#   leakage was possible, so model metrics are unchanged; corpus statistics were
+#   inflated and are corrected by these exclusions (scan recommendations followed).
+EXCLUDE_PROJECTS = {
+    "MERGE PROJECTS", "Enppi",                       # round 1 (labeled family)
+    "schedule of Medor", "HHI", "Ma'aden",           # round 2 (unlabeled copies)
+    "el ezz warehouse", "Baseline 15-11-2010",
+    "Beyti plant baseline -b(fm-baseline)",
+}
 
 
 def load_labeled() -> pd.DataFrame:
@@ -164,7 +173,11 @@ def temporal_split(lab: pd.DataFrame):
             tr_parts.append(tr_g)
             te_parts.append(te_g)
             projects.append(name)
-    return pd.concat(tr_parts), pd.concat(te_parts), projects
+    tr_all, te_all = pd.concat(tr_parts), pd.concat(te_parts)
+    n_nan = int(lab[lab["project"].isin(projects)]["rel_position"].isna().sum())
+    if n_nan:
+        print(f"[temporal_split] WARNING: {n_nan} rows with NaN rel_position dropped from both sides")
+    return tr_all, te_all, projects
 
 
 def main():
@@ -193,7 +206,10 @@ def main():
                            "n_projects": len(B_projects), "projects": B_projects},
             "features_num": NUM_FEATURES, "features_cat": CAT_FEATURES,
             "tuning": "GridSearchCV, GroupKFold(3) on scenario-A train; best params reused in B",
-            "calibration": "CalibratedClassifierCV on B train, isotonic (n>1000 per sklearn guidance), cv=3; never fitted on test",
+            "calibration": ("sigmoid (Platt) via CalibratedClassifierCV(FrozenEstimator): per-project temporal "
+                            "sub-split of B train at q=0.75 — champion fitted on earlier part, calibrator on the "
+                            "latest slice; evaluated on scenario B only (A test overlaps B train — see note); "
+                            "never fitted on test"),
         },
         "classification": {"A_cross_project": {}, "B_temporal": {}},
         "regression": {"A_cross_project": {}, "B_temporal": {}},
@@ -248,9 +264,22 @@ def main():
     champion = max((n for n in b_clf if n != "dummy_majority"), key=lambda n: b_clf[n].get("roc_auc", 0))
     b_reg = results["regression"]["B_temporal"]
     champion_reg = min((n for n in b_reg if n != "dummy_median"), key=lambda n: b_reg[n]["mae_days"])
-    results["champion"] = {"classifier": champion, "regressor": champion_reg,
-                           "selected_by": "scenario-B roc_auc (clf) / mae (reg)"}
-    print(f"\n[champion] clf={champion}  reg={champion_reg}")
+    # Honest-tie disclosure: the top-2 classifiers may be statistically indistinguishable
+    # on n_test=~3k. We record the runner-up and the point delta here; bootstrap_ci.py
+    # computes the CI of the delta. Selection rule (B roc_auc) was fixed before the run.
+    ranked = sorted((n for n in b_clf if n != "dummy_majority"),
+                    key=lambda n: b_clf[n].get("roc_auc", 0), reverse=True)
+    runner_up = ranked[1] if len(ranked) > 1 else None
+    results["champion"] = {
+        "classifier": champion, "regressor": champion_reg,
+        "selected_by": "scenario-B roc_auc (clf) / mae (reg) — rule fixed before the run",
+        "runner_up_classifier": runner_up,
+        "delta_auc_vs_runner_up": (round(b_clf[champion]["roc_auc"] - b_clf[runner_up]["roc_auc"], 4)
+                                   if runner_up else None),
+        "note": "see outputs/bootstrap_ci.json for the CI of the champion-vs-runner-up AUC delta",
+    }
+    print(f"\n[champion] clf={champion}  reg={champion_reg}  "
+          f"(runner-up {runner_up}, ΔAUC {results['champion']['delta_auc_vs_runner_up']})")
 
     # ---------- PRED-13: probability calibration on B train (never on test) ----------
     # Protocol (documented, selected on train-side data only): the late-activity base
@@ -275,12 +304,16 @@ def main():
     def brier(model, te):
         return round(float(brier_score_loss(te["is_late"], model.predict_proba(te)[:, 1])), 4)
 
-    cal_metrics = {}
-    for scen, te in {"A_cross_project": A_te, "B_temporal": B_te}.items():
-        cal_metrics[scen] = {
-            "brier_uncalibrated_same_base": brier(champ_fit, te),  # fair comparison: same fitted model
-            "brier_calibrated": brier(calibrated, te),
+    # Calibration is evaluated on scenario B ONLY. The A test set overlaps the B train
+    # side (the two splits cut the same corpus differently), so evaluating the calibrated
+    # model on A_te would score it partly on its own training rows — leakage. (Found in
+    # the 16.8 internal audit; A-side calibration Brier from earlier runs is void.)
+    cal_metrics = {
+        "B_temporal": {
+            "brier_uncalibrated_same_base": brier(champ_fit, B_te),  # fair comparison: same fitted model
+            "brier_calibrated": brier(calibrated, B_te),
         }
+    }
     pred_cal = calibrated.predict(B_te)
     proba_cal = calibrated.predict_proba(B_te)[:, 1]
     cal_metrics["B_temporal"]["classification_calibrated"] = clf_metrics(
@@ -288,9 +321,24 @@ def main():
     results["calibration"] = {
         "method": "sigmoid (Platt)",
         "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
+        "evaluated_on": "B_temporal only (A test overlaps B train — evaluating there would be leakage)",
         "n_fit": len(B_fit), "n_cal": len(B_cal),
         **cal_metrics}
     print(f"[calibration] {json.dumps(cal_metrics)}")
+
+    # ---------- what is actually SERVED (the artifact written below) ----------
+    # The championship table above scores a model fitted on the FULL B train; the served
+    # artifact is the calibrated pipeline whose base model saw only B_fit. Both metric
+    # sets are reported; the served one is what the product exposes and what the gate
+    # must hold to. Book headline = served metrics; selection metrics answer "why XGB".
+    results["served_model"] = {
+        "artifact": "calibrated pipeline (champion fitted on B_fit + sigmoid calibrator on B_cal)",
+        "metrics_B_test": cal_metrics["B_temporal"]["classification_calibrated"],
+        "brier_B_test": cal_metrics["B_temporal"]["brier_calibrated"],
+        "selection_metrics_note": ("champion selection used the full-B_tr fit "
+                                   f"(roc_auc {b_clf[champion]['roc_auc']}); that fit is NOT the served artifact"),
+    }
+    print(f"[served] {json.dumps(results['served_model']['metrics_B_test'])}")
 
     # reliability curve figure (project book, RR-6/PRED-13)
     fig_dir = OUT / "figures"
@@ -313,6 +361,17 @@ def main():
     plt.tight_layout()
     plt.savefig(fig_dir / "reliability_curve_B.png")
     plt.close()
+
+    # ---------- gate BEFORE publish (PRED-6): a failing candidate never reaches the registry ----------
+    (OUT / "model_comparison.json").write_text(json.dumps(results, indent=2))
+    from quality_gate import check as gate_check
+    gate_failures = gate_check(results)
+    if gate_failures:
+        print("QUALITY GATE: FAILED — registry NOT written")
+        for f in gate_failures:
+            print("  -", f)
+        print(f"Saved {OUT / 'model_comparison.json'} (for diagnosis)")
+        return 1
 
     # ---------- registry write (PRED-4 + PRED-8 + PRED-13) ----------
     REGISTRY.mkdir(parents=True, exist_ok=True)
@@ -339,12 +398,15 @@ def main():
         "champion_regressor": champion_reg,
         "calibration": results["calibration"],
         "best_params": results["best_params"].get(champion, {}),
+        "served_metrics_B_temporal": cal_metrics["B_temporal"]["classification_calibrated"],
+        "served_brier_B_temporal": cal_metrics["B_temporal"]["brier_calibrated"],
         "metrics_B_temporal": {
-            "classification_uncalibrated": b_clf[champion],
+            "classification_uncalibrated_full_train_fit_NOT_SERVED": b_clf[champion],
             "classification_calibrated": cal_metrics["B_temporal"]["classification_calibrated"],
             "regression": b_reg[champion_reg],
         },
-        "metrics_A_cross_project": {"classification": results["classification"]["A_cross_project"][champion]},
+        "metrics_A_cross_project": {"classification": results["classification"]["A_cross_project"][champion],
+                                    "note": "single-split, unstable across models; repeated-splits experiment pending"},
         "features_num": NUM_FEATURES, "features_cat": CAT_FEATURES,
         "seed": SEED,
         "trained_on": "B_temporal train split (deployment scenario)",
@@ -352,7 +414,6 @@ def main():
         "excluded_duplicate_projects": sorted(EXCLUDE_PROJECTS),
     }
     (vdir / "meta.json").write_text(json.dumps(meta, indent=2))
-    (OUT / "model_comparison.json").write_text(json.dumps(results, indent=2))
     print(f"Registry: {vdir}\nSaved {OUT / 'model_comparison.json'}")
     return 0
 

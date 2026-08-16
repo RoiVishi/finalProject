@@ -19,6 +19,8 @@ FIG.mkdir(parents=True, exist_ok=True)
 
 def main():
     df = pd.read_csv(OUT / "labeled_tasks.csv")
+    from train_compare import EXCLUDE_PROJECTS  # DATA-2: same dedup corpus everywhere
+    df = df[~df["project"].isin(EXCLUDE_PROJECTS)]
     lab = df[df["is_late"].notna()].copy()
     lab["is_late"] = lab["is_late"].astype(int)
 

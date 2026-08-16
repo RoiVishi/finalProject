@@ -15,7 +15,7 @@
       "n_test": 3108,
       "n_projects": 11
     },
-    "model": "tuned champion RF (train_compare best params)",
+    "model": "tuned champion from model_comparison.json: xgboost",
     "usability_criterion": "first fraction with AUC >= 0.7"
   },
   "points": [

@@ -11,9 +11,9 @@ Design (leakage-aware, comparable across points):
 - Varying train set: for history fraction f in {0.10..0.70}, train on each
   project's labeled activities with rel_position <= that project's f-quantile.
   Train grows monotonically with f; test never changes.
-- Model: the tuned champion (RF, max_features=0.5, min_samples_leaf=2, n=300,
-  class_weight=balanced), seed 42. AUC is threshold-free (primary); F1/recall
-  reported at the default 0.5 threshold (secondary).
+- Model: the tuned champion, read dynamically from model_comparison.json
+  (name + best params — XGBoost in the v3/v4 runs), seed 42. AUC is
+  threshold-free (primary); F1/recall at the default 0.5 threshold (secondary).
 
 Output: outputs/learning_curve.json + outputs/figures/learning_curve.png,
 and a derived usability threshold (first f with AUC >= 0.70) for PRED-10.
@@ -111,7 +111,8 @@ def main() -> int:
             "fixed_test": {"rule": f"rel_position > per-project q{TEMPORAL_Q}",
                            "n_test": int(len(test)),
                            "n_projects": len(trains_by_project)},
-            "model": "tuned champion RF (train_compare best params)",
+            "model": ("tuned champion from model_comparison.json: "
+                      + json.loads((OUT / 'model_comparison.json').read_text())["champion"]["classifier"]),
             "usability_criterion": f"first fraction with AUC >= {USABILITY_AUC}",
         },
         "points": points,

@@ -1,0 +1,160 @@
+{
+  "_generated_from": "export_numbers.py — do not edit; regenerate after each pipeline run",
+  "corpus": {
+    "tasks_after_dedup": 122057,
+    "projects_after_dedup": 51,
+    "labeled_tasks": 10609,
+    "labeled_projects": 15,
+    "late_rate": 0.413,
+    "excluded_duplicates": [
+      "Baseline 15-11-2010",
+      "Beyti plant baseline -b(fm-baseline)",
+      "Enppi",
+      "HHI",
+      "MERGE PROJECTS",
+      "Ma'aden",
+      "el ezz warehouse",
+      "schedule of Medor"
+    ]
+  },
+  "split_B": {
+    "n_train": 7396,
+    "n_test": 3108,
+    "n_projects": 11,
+    "train_late_rate": 0.465
+  },
+  "champion": {
+    "classifier": "xgboost",
+    "best_params": {
+      "model__learning_rate": 0.05,
+      "model__max_depth": 3,
+      "model__n_estimators": 300,
+      "model__subsample": 0.8
+    },
+    "runner_up": "random_forest",
+    "delta_auc_vs_runner_up": 0.0004,
+    "statistically_tied": true,
+    "delta_auc_ci95": [
+      -0.0103,
+      0.0115
+    ]
+  },
+  "selection_fit_B": {
+    "accuracy": 0.6876,
+    "precision": 0.481,
+    "recall": 0.6166,
+    "f1": 0.5405,
+    "roc_auc": 0.7505
+  },
+  "served_B": {
+    "accuracy": 0.6384,
+    "precision": 0.4252,
+    "recall": 0.608,
+    "f1": 0.5004,
+    "roc_auc": 0.7228,
+    "brier": 0.2071
+  },
+  "baselines_B": {
+    "dummy": {
+      "accuracy": 0.7021,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5
+    },
+    "logreg": {
+      "accuracy": 0.5672,
+      "precision": 0.3985,
+      "recall": 0.8888,
+      "f1": 0.5503,
+      "roc_auc": 0.6004
+    },
+    "random_forest": {
+      "accuracy": 0.6515,
+      "precision": 0.4512,
+      "recall": 0.784,
+      "f1": 0.5728,
+      "roc_auc": 0.7501
+    },
+    "mlp": {
+      "accuracy": 0.6416,
+      "precision": 0.3831,
+      "recall": 0.3326,
+      "f1": 0.3561,
+      "roc_auc": 0.653
+    }
+  },
+  "scenario_A": {
+    "champion_auc": 0.5653,
+    "note": "single split, unstable across models — repeated-splits pending"
+  },
+  "calibration": {
+    "brier_uncal": 0.2344,
+    "brier_cal": 0.2071,
+    "n_fit": 5810,
+    "n_cal": 1586,
+    "brier_ci95": [
+      0.1996,
+      0.2146
+    ],
+    "vs_oracle_dummy": {
+      "ci95": [
+        -0.0112,
+        0.0074
+      ],
+      "p_model_better": 0.6686
+    },
+    "vs_deployable_dummy": {
+      "ci95": [
+        -0.0235,
+        -0.0081
+      ],
+      "p_model_better": 0.9998
+    }
+  },
+  "regression": {
+    "champion_mae": 28.92,
+    "dummy_mae": 28.81,
+    "served": false
+  },
+  "learning_curve_RR11": {
+    "usable_from_fraction": 0.4,
+    "usable_auc": 0.7144,
+    "full_auc": 0.7505
+  },
+  "ablation_RR12": {
+    "full_auc": 0.7505,
+    "no_float_auc": 0.749,
+    "delta_no_float": 0.0015,
+    "heuristic_auc": 0.4872,
+    "delta_vs_heuristic": 0.2633,
+    "heuristic_auc_float_present": 0.3535,
+    "float_missing_share": 0.684
+  },
+  "alert_bands": {
+    "placeholder_0.33_0.66": {
+      "t1": 0.33,
+      "t2": 0.66,
+      "median_high_per_project": 0,
+      "median_medium_per_project": 24,
+      "max_high_per_project": 349,
+      "share_high_overall": 0.215,
+      "precision_in_high_band": 0.54
+    },
+    "quantile_top10_high (t1=0.68, t2=0.76)": {
+      "t1": 0.683,
+      "t2": 0.763,
+      "median_high_per_project": 0,
+      "median_medium_per_project": 0,
+      "max_high_per_project": 138,
+      "share_high_overall": 0.075,
+      "precision_in_high_band": 0.603
+    }
+  },
+  "history": {
+    "auc_2_projects": 0.828,
+    "auc_13_projects": 0.768,
+    "auc_dedup_hardened": 0.7505,
+    "note": "each drop = a deliberate hardening; always the lower honest number was adopted"
+  }
+}

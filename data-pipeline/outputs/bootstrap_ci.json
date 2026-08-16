@@ -1,0 +1,51 @@
+{
+  "config": {
+    "seed": 42,
+    "B": 5000,
+    "n_test": 3108,
+    "method": "paired bootstrap over test tasks"
+  },
+  "brier": {
+    "served_version": "v4",
+    "point": {
+      "model": 0.2071,
+      "dummy_oracle_rate": 0.2092,
+      "dummy_cal_slice_rate": 0.2228,
+      "oracle_rate": 0.298,
+      "cal_slice_rate": 0.415
+    },
+    "ci95_model_brier": [
+      0.1996,
+      0.2146
+    ],
+    "delta_vs_oracle_dummy": {
+      "ci95": [
+        -0.0112,
+        0.0074
+      ],
+      "p_model_better": 0.6686
+    },
+    "delta_vs_cal_slice_dummy": {
+      "ci95": [
+        -0.0235,
+        -0.0081
+      ],
+      "p_model_better": 0.9998
+    }
+  },
+  "auc_champion_vs_runner_up": {
+    "champion": "xgboost",
+    "runner_up": "random_forest",
+    "point_auc": {
+      "xgboost": 0.7505,
+      "random_forest": 0.7501
+    },
+    "delta_auc_ci95": [
+      -0.0103,
+      0.0115
+    ],
+    "p_champion_better": 0.522,
+    "statistically_tied": true,
+    "note": "tie \u21d2 champion stands on the pre-registered rule (B roc_auc), not on evidence of superiority"
+  }
+}

@@ -5,8 +5,10 @@ The original dedup (name+code Jaccard > 0.8) misses the case where one P6 file
 CONTAINS another (e.g. a "merged" master file that includes a standalone
 project). Jaccard is diluted by the container's extra tasks, so the pair
 passes. This scan flags any project pair where >=80% of the smaller project's
-task codes appear in the larger one, and reports which side to drop
-(the container, unless it holds unique labeled tasks the standalone lacks).
+task (code, name[:40]) fingerprints appear in the larger one, and reports which
+side to drop (the container, unless it holds unique labeled tasks the standalone
+lacks). Fingerprints use code+name because bare P6 codes (A1000, A1010…) falsely
+match unrelated projects.
 
 Run: python src/dedup_containment.py   → prints pairs + writes outputs/dedup_containment.json
 """
@@ -22,11 +24,16 @@ OUT = Path(__file__).resolve().parents[1] / "outputs"
 CONTAINMENT = 0.8
 
 
+def fingerprint(g: pd.DataFrame) -> set:
+    """Task identity = code + first 40 chars of name — P6 codes alone (A1000, A1010…)
+    falsely match unrelated projects (same warning as etl.py's dedup)."""
+    return set(zip(g["task_code"].astype(str), g["task_name"].astype(str).str[:40]))
+
+
 def main() -> int:
     df = pd.read_csv(OUT / "labeled_tasks.csv")
-    codes = {p: set(g["task_code"].astype(str)) for p, g in df.groupby("project")}
-    labeled = {p: set(g.loc[g["is_late"].notna(), "task_code"].astype(str))
-               for p, g in df.groupby("project")}
+    codes = {p: fingerprint(g) for p, g in df.groupby("project")}
+    labeled = {p: fingerprint(g[g["is_late"].notna()]) for p, g in df.groupby("project")}
     findings = []
     for a, b in combinations(sorted(codes), 2):
         small, big = (a, b) if len(codes[a]) <= len(codes[b]) else (b, a)

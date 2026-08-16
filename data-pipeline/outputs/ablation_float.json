@@ -25,9 +25,11 @@
     },
     "cpm_heuristic": {
       "auc": 0.4872,
+      "auc_float_present_subset": 0.3535,
+      "n_float_present_test": 981,
       "f1": 0.4461,
       "recall": 0.9449,
-      "rule": "late if total_float_hr < 1128h (threshold chosen on train)",
+      "rule": "late if total_float_hr < 1128h (threshold chosen on train; missing = riskiest)",
       "float_missing_share_test": 0.684
     }
   },

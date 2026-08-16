@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout 15 npm --prefix frontend run dev)",
+      "Bash(echo \"=== exit: $?\")",
+      "Bash(xargs kill)",
+      "mcp__680f9fc3-f58f-433c-ba58-32cbd2039ecb__balance",
+      "mcp__680f9fc3-f58f-433c-ba58-32cbd2039ecb__models_explore",
+      "WebSearch",
+      "WebFetch(domain:www.archdaily.com)",
+      "mcp__mcp-registry__search_mcp_registry",
+      "Bash(git credential *)",
+      "Bash(brew install *)",
+      "Bash(gh auth *)"
+    ]
+  }
+}
