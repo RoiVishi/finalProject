@@ -92,6 +92,12 @@ def main() -> int:
                           "heuristic_auc_float_present": ab["results"]["cpm_heuristic"].get("auc_float_present_subset"),
                           "float_missing_share": ab["results"]["cpm_heuristic"]["float_missing_share_test"]},
         "alert_bands": ba["alert_volume"]["schemes"],
+        "external_validation_RR8": (lambda p: (
+            {"descriptive": json.loads(p.read_text())["descriptive"],
+             "auc_unseen_agency": {k: {m: v["auc_mean"] for m, v in
+                                       json.loads(p.read_text())[k].get("models", {}).items()}
+                                   for k in ("model_slipped_new_cohort", "model_late_actual")}}
+            if p.exists() else None))(OUT / "rr8_nyc.json"),
         "history": {"auc_2_projects": 0.828, "auc_13_projects": 0.768,
                     "auc_dedup_hardened": b[champ].get("roc_auc"),
                     "note": "each drop = a deliberate hardening; always the lower honest number was adopted"},

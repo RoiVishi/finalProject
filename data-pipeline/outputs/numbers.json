@@ -197,6 +197,27 @@
       "precision_in_high_band": 0.603
     }
   },
+  "external_validation_RR8": {
+    "descriptive": {
+      "n_projects": 2314,
+      "n_new": 771,
+      "slipped_rate_all": 0.618,
+      "slipped_rate_new": 0.48,
+      "median_slip_days_all": 183.5,
+      "finished_share": 0.291,
+      "late_rate_actual_finishers": 0.427
+    },
+    "auc_unseen_agency": {
+      "model_slipped_new_cohort": {
+        "logreg": 0.599,
+        "xgboost": 0.5455
+      },
+      "model_late_actual": {
+        "logreg": 0.6763,
+        "xgboost": 0.6255
+      }
+    }
+  },
   "history": {
     "auc_2_projects": 0.828,
     "auc_13_projects": 0.768,

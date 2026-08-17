@@ -1,0 +1,106 @@
+{
+  "config": {
+    "seed": 42,
+    "grace_days": 30,
+    "source": "NYC Open Data 95tx-snak",
+    "unit": "project (agency+pid)",
+    "plan_ref": "first observed Forecast snapshot",
+    "split": "GroupKFold by managing_agency (unseen-agency transfer)"
+  },
+  "descriptive": {
+    "n_projects": 2314,
+    "n_new": 771,
+    "slipped_rate_all": 0.618,
+    "slipped_rate_new": 0.48,
+    "median_slip_days_all": 183.5,
+    "finished_share": 0.291,
+    "late_rate_actual_finishers": 0.427
+  },
+  "model_slipped_new_cohort": {
+    "n": 771,
+    "positive_rate": 0.48,
+    "n_agencies": 13,
+    "models": {
+      "logreg": {
+        "auc_mean": 0.599,
+        "auc_std": 0.0488,
+        "auc_folds": [
+          0.575,
+          0.6734,
+          0.5921,
+          0.626,
+          0.5284
+        ]
+      },
+      "xgboost": {
+        "auc_mean": 0.5455,
+        "auc_std": 0.0265,
+        "auc_folds": [
+          0.5303,
+          0.5524,
+          0.5079,
+          0.5879,
+          0.5488
+        ]
+      }
+    }
+  },
+  "model_slipped_all": {
+    "n": 2314,
+    "positive_rate": 0.618,
+    "n_agencies": 13,
+    "models": {
+      "logreg": {
+        "auc_mean": 0.5663,
+        "auc_std": 0.0306,
+        "auc_folds": [
+          0.5914,
+          0.6013,
+          0.529,
+          0.579,
+          0.5308
+        ]
+      },
+      "xgboost": {
+        "auc_mean": 0.5524,
+        "auc_std": 0.0281,
+        "auc_folds": [
+          0.5905,
+          0.5675,
+          0.5275,
+          0.563,
+          0.5134
+        ]
+      }
+    }
+  },
+  "model_late_actual": {
+    "n": 674,
+    "positive_rate": 0.427,
+    "n_agencies": 11,
+    "models": {
+      "logreg": {
+        "auc_mean": 0.6763,
+        "auc_std": 0.0351,
+        "auc_folds": [
+          0.6379,
+          0.6434,
+          0.7354,
+          0.6776,
+          0.6872
+        ]
+      },
+      "xgboost": {
+        "auc_mean": 0.6255,
+        "auc_std": 0.0593,
+        "auc_folds": [
+          0.6531,
+          0.5722,
+          0.6933,
+          0.5392,
+          0.6695
+        ]
+      }
+    }
+  }
+}
