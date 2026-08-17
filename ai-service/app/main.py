@@ -22,6 +22,8 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .adapter import ProjectGraphPayload, compute_features
+
 BASE = Path(__file__).resolve().parents[1]
 REGISTRY = Path(os.environ.get("MODEL_REGISTRY", BASE / "model" / "registry"))
 LEGACY_MODEL = BASE / "model" / "model_rf_classifier.joblib"
@@ -54,7 +56,7 @@ SCHEMA_RANGES: dict[str, tuple[float, float]] = {
     if f.get("role") == "numeric" and isinstance(f.get("range"), list) and len(f["range"]) == 2
 }
 
-app = FastAPI(title="Construction Delay Prediction Service", version="0.2.1")
+app = FastAPI(title="Construction Delay Prediction Service", version="0.3.0")
 
 # ---------------------------------------------------------------- registry
 
@@ -302,6 +304,30 @@ def predict_batch(tasks: list[TaskFeatures]):
         return []
     reg = get_registry()
     return _predict_core(reg, pd.DataFrame([t.model_dump() for t in tasks]))
+
+
+class ProjectPrediction(BaseModel):
+    task_id: str
+    prediction: Prediction
+
+
+@app.post("/predict/project", response_model=list[ProjectPrediction])
+def predict_project(payload: ProjectGraphPayload):
+    """PRED-9: predictions straight from RAW platform entities.
+
+    The backend sends tasks + dependencies + dates; the adapter (app/adapter.py)
+    derives the 11 schema features here — the platform never computes a feature.
+    Float features are sent as None by design (RR-12); the pipeline imputes them.
+    Feature dicts still pass TaskFeatures validation (ranges, KAN-103) before the
+    model sees them.
+    """
+    if not payload.tasks:
+        return []
+    reg = get_registry()
+    feats = [TaskFeatures(**f) for f in compute_features(payload)]   # range-validated
+    preds = _predict_core(reg, pd.DataFrame([f.model_dump() for f in feats]))
+    return [ProjectPrediction(task_id=t.id, prediction=p)
+            for t, p in zip(payload.tasks, preds)]
 
 
 @app.post("/explain", response_model=Explanation)
