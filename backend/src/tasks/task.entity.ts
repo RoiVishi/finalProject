@@ -53,10 +53,21 @@ export class Task {
   })
   predecessors: Task[];
 
-  /** Cached last prediction from the AI service. */
+  /** Cached last prediction from the AI service (TASK-5 traceability). */
   @Column({ type: 'float', nullable: true })
   lateProbability: number;
 
   @Column({ nullable: true })
   riskLevel: 'low' | 'medium' | 'high';
+
+  /** Which registry version produced the cached numbers (PRED-4/TASK-5). */
+  @Column({ nullable: true })
+  modelVersion: string;
+
+  /** Cold-start gate verdict from the AI service: 'ok' | 'low_transfer_prior'. */
+  @Column({ nullable: true })
+  reliability: string;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  predictedAt: Date;
 }
