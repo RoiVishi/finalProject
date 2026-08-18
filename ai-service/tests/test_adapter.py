@@ -112,3 +112,33 @@ def test_endpoint_empty_and_strict():
     bad["tasks"][0]["actual_finish"] = "2026-01-03"        # post-hoc field → forbidden
     r = client.post("/predict/project", json=bad)
     assert r.status_code == 422
+
+
+def test_cold_start_flagging():
+    """No completed_share → low_transfer_prior, prediction still returned (flag policy)."""
+    if not _model_available():
+        return
+    r = client.post("/predict/project", json=mock_payload())
+    assert r.status_code == 200
+    for x in r.json():
+        assert x["reliability"] == "low_transfer_prior"
+        assert x["prediction"] is not None      # default policy = flag, not abstain
+        assert "RR-11" in (x["note"] or "")
+
+    mature = mock_payload()
+    mature["project"]["completed_share"] = 0.55  # above the 40% RR-11 threshold
+    r2 = client.post("/predict/project", json=mature)
+    assert all(x["reliability"] == "ok" and x["note"] is None for x in r2.json())
+
+
+def test_cold_start_abstain_policy(monkeypatch):
+    """Under COLD_START_POLICY=abstain a young project gets null predictions."""
+    import app.main as m
+    monkeypatch.setattr(m, "COLD_START_POLICY", "abstain")
+    young = mock_payload()
+    young["project"]["completed_share"] = 0.1
+    r = client.post("/predict/project", json=young)
+    assert r.status_code == 200
+    for x in r.json():
+        assert x["reliability"] == "low_transfer_prior"
+        assert x["prediction"] is None

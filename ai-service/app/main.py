@@ -56,7 +56,7 @@ SCHEMA_RANGES: dict[str, tuple[float, float]] = {
     if f.get("role") == "numeric" and isinstance(f.get("range"), list) and len(f["range"]) == 2
 }
 
-app = FastAPI(title="Construction Delay Prediction Service", version="0.3.0")
+app = FastAPI(title="Construction Delay Prediction Service", version="0.3.1")
 
 # ---------------------------------------------------------------- registry
 
@@ -289,6 +289,7 @@ def health():
             "feature_schema_version": _registry.schema_version,
             "champion": _registry.meta.get("champion_classifier"),
             "risk_bands": {"t1": RISK_BAND_T1, "t2": RISK_BAND_T2},
+            "cold_start": {"policy": COLD_START_POLICY, "min_history": COLD_START_MIN_HISTORY},
             "refusal": _registry.refusal}
 
 
@@ -306,9 +307,33 @@ def predict_batch(tasks: list[TaskFeatures]):
     return _predict_core(reg, pd.DataFrame([t.model_dump() for t in tasks]))
 
 
+# ---- Cold-start policy (PRED-10 extension, 17.8 external-audit finding) ----
+# Our own research says transfer to a history-less project is unreliable
+# (scenario A ~0.57 and unstable across 20 splits; LOPO range 0.0-0.92 — RR-13),
+# and RR-11 puts within-project usability at ~40% completed history. Serving a
+# confident calibrated number in that regime would contradict the project's own
+# findings. Policy per prediction, driven by project.completed_share:
+#   >= threshold        -> reliability "ok"
+#   below / unknown     -> "low_transfer_prior": under COLD_START_POLICY=flag
+#                          (default) the prediction is still returned but marked;
+#                          under =abstain it is withheld (prediction=null).
+COLD_START_MIN_HISTORY = float(os.environ.get("COLD_START_MIN_HISTORY", "0.4"))  # RR-11
+COLD_START_POLICY = os.environ.get("COLD_START_POLICY", "flag")                  # flag | abstain
+if COLD_START_POLICY not in ("flag", "abstain"):
+    raise RuntimeError(f"COLD_START_POLICY must be flag|abstain, got {COLD_START_POLICY}")
+
+LOW_RELIABILITY_NOTE = (
+    "Project history below the RR-11 usability threshold "
+    f"({COLD_START_MIN_HISTORY:.0%}): this is a cross-project transfer prior, "
+    "shown by our scenario-A/RR-13 experiments to be weak and unstable. "
+    "Treat as indicative only; reliability improves as the project accumulates history.")
+
+
 class ProjectPrediction(BaseModel):
     task_id: str
-    prediction: Prediction
+    reliability: str                             # "ok" | "low_transfer_prior"
+    prediction: Prediction | None = None         # null when policy=abstain on low reliability
+    note: str | None = None
 
 
 @app.post("/predict/project", response_model=list[ProjectPrediction])
@@ -319,14 +344,25 @@ def predict_project(payload: ProjectGraphPayload):
     derives the 11 schema features here — the platform never computes a feature.
     Float features are sent as None by design (RR-12); the pipeline imputes them.
     Feature dicts still pass TaskFeatures validation (ranges, KAN-103) before the
-    model sees them.
+    model sees them. Cold-start reliability gating per the module note above.
     """
     if not payload.tasks:
         return []
+    share = payload.project.completed_share
+    reliable = share is not None and share >= COLD_START_MIN_HISTORY
+    reliability = "ok" if reliable else "low_transfer_prior"
+
+    if not reliable and COLD_START_POLICY == "abstain":
+        return [ProjectPrediction(task_id=t.id, reliability=reliability,
+                                  prediction=None, note=LOW_RELIABILITY_NOTE)
+                for t in payload.tasks]
+
     reg = get_registry()
     feats = [TaskFeatures(**f) for f in compute_features(payload)]   # range-validated
     preds = _predict_core(reg, pd.DataFrame([f.model_dump() for f in feats]))
-    return [ProjectPrediction(task_id=t.id, prediction=p)
+    note = None if reliable else LOW_RELIABILITY_NOTE
+    return [ProjectPrediction(task_id=t.id, reliability=reliability,
+                              prediction=p, note=note)
             for t, p in zip(payload.tasks, preds)]
 
 

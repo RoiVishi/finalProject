@@ -68,6 +68,11 @@ class RawProject(BaseModel):
 
     planned_start: date | None = None       # optional — derived from tasks if absent
     planned_finish: date | None = None
+    # Reliability METADATA — not a model feature (never enters the feature vector).
+    # Share of the project's tasks already completed (0..1). Drives the cold-start
+    # gate: our own research (scenario A + RR-13) shows transfer to a project with
+    # no history is unreliable, and RR-11 puts usability at ~40% history.
+    completed_share: float | None = Field(None, ge=0.0, le=1.0)
 
 
 class ProjectGraphPayload(BaseModel):
