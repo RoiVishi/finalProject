@@ -66,12 +66,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - name: Build backend (skipped until scaffold exists)
+      - name: Build and test backend
         run: |
           if [ -f backend/package.json ]; then
-            cd backend && npm install && npm run build
+            cd backend
+            npm ci || npm install
+            npm run build
+            npm test
           else
-            echo 'backend/package.json not found — scaffold pending, build skipped'
+            echo 'backend/package.json not found — scaffold pending, skipped'
           fi
 
   frontend:
