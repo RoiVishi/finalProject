@@ -7,9 +7,14 @@ import { User } from './user.entity';
 export class UsersService {
   constructor(@InjectRepository(User) private repo: Repository<User>) {}
 
-  async create(data: Pick<User, 'email' | 'passwordHash' | 'fullName'>) {
+  async create(
+    data: Pick<
+      User,
+      'email' | 'passwordHash' | 'fullName' | 'phone' | 'profession'
+    >,
+  ) {
     if (await this.repo.findOneBy({ email: data.email })) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException('כתובת הדוא"ל כבר רשומה במערכת');
     }
     return this.repo.save(this.repo.create(data));
   }
