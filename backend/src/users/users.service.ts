@@ -27,7 +27,16 @@ export class UsersService {
       .getOne();
   }
 
+  findByEmail(email: string) {
+    return this.repo.findOneBy({ email });
+  }
+
   findById(id: string) {
     return this.repo.findOneBy({ id });
+  }
+
+  /** AUTH-7: replace the stored hash after a verified reset. */
+  async updatePassword(userId: string, passwordHash: string) {
+    await this.repo.update(userId, { passwordHash });
   }
 }
