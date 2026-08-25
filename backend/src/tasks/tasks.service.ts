@@ -1,24 +1,208 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException, ConflictException, ForbiddenException,
+  Injectable, NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import {
   PredictionsService,
   ProjectGraphPayload,
   ProjectPrediction,
 } from '../predictions/predictions.service';
 import { predictionScope } from '../auth/permissions';
+import { ActivityLogService } from '../common/activity-log.service';
+import { NotificationsService } from '../common/notifications.service';
+import { zoneExists } from '../projects/layout';
 import { ProjectRole } from '../projects/project-member.entity';
+import { ProjectMembersService } from '../projects/project-members.service';
+import { Project } from '../projects/project.entity';
+import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
+import { assertTransition, STATUS_LABELS } from './task-lifecycle';
 import { Task, TaskStatus } from './task.entity';
+
+/** The identity of whoever is acting, as the guard already resolved it. */
+export interface TaskActor {
+  userId: string;
+  role: ProjectRole;
+}
 
 @Injectable()
 export class TasksService {
   constructor(
     @InjectRepository(Task) private repo: Repository<Task>,
+    @InjectRepository(Project) private projects: Repository<Project>,
     private predictions: PredictionsService,
+    private members: ProjectMembersService,
+    private activity: ActivityLogService,
+    private notifications: NotificationsService,
   ) {}
 
-  async create(data: Partial<Task>) {
-    return this.repo.save(this.repo.create(data));
+  /**
+   * TASK-2 — create an activity. Always PLANNED: the client cannot choose a
+   * starting status, so no activity can be born "in progress" without an
+   * actual start date, and none can be born "blocked" at all.
+   */
+  async create(dto: CreateTaskDto, actor: TaskActor) {
+    const project = await this.requireProject(dto.projectId);
+
+    this.assertZone(project, dto.zone);
+    this.assertDateOrder(dto.plannedStart, dto.plannedEnd);
+    const assignee = await this.resolveAssignee(project.id, dto.assigneeId);
+
+    const task = await this.repo.save(
+      this.repo.create({
+        name: dto.name.trim(),
+        description: dto.description?.trim() ?? null,
+        trade: dto.trade,
+        zone: dto.zone,
+        plannedStart: dto.plannedStart,
+        plannedEnd: dto.plannedEnd,
+        estimatedDurationDays: dto.estimatedDurationDays ?? null,
+        status: TaskStatus.PLANNED,
+        project: { id: project.id } as never,
+        assignee: assignee ? ({ id: assignee } as never) : null,
+      }),
+    );
+
+    this.activity.record({
+      projectId: project.id, actorId: actor.userId, entity: 'task',
+      entityId: task.id, action: 'task.created', after: { name: task.name, zone: task.zone },
+    });
+    if (assignee) this.announceAssignment(task, project.id, assignee);
+
+    return task;
+  }
+
+  /**
+   * TASK-2 — edit an activity. Status is not editable here; it moves only
+   * through changeStatus(), where the transition rules live.
+   */
+  async update(taskId: string, dto: UpdateTaskDto, actor: TaskActor) {
+    const task = await this.requireTask(taskId);
+    const project = await this.requireProject(task.project.id);
+
+    this.assertZone(project, dto.zone);
+    this.assertDateOrder(
+      dto.plannedStart ?? task.plannedStart,
+      dto.plannedEnd ?? task.plannedEnd,
+    );
+
+    const previousAssignee = task.assignee?.id ?? null;
+    const planBefore = { plannedStart: task.plannedStart, plannedEnd: task.plannedEnd };
+
+    if (dto.name !== undefined) task.name = dto.name.trim();
+    if (dto.description !== undefined) task.description = dto.description.trim();
+    if (dto.trade !== undefined) task.trade = dto.trade;
+    if (dto.zone !== undefined) task.zone = dto.zone;
+    if (dto.plannedStart !== undefined) task.plannedStart = dto.plannedStart;
+    if (dto.plannedEnd !== undefined) task.plannedEnd = dto.plannedEnd;
+    if (dto.estimatedDurationDays !== undefined) {
+      task.estimatedDurationDays = dto.estimatedDurationDays;
+    }
+    if (dto.assigneeId !== undefined) {
+      const assignee = await this.resolveAssignee(project.id, dto.assigneeId);
+      task.assignee = assignee ? ({ id: assignee } as never) : null;
+    }
+
+    const planAfter = { plannedStart: task.plannedStart, plannedEnd: task.plannedEnd };
+    const planMoved = planBefore.plannedStart !== planAfter.plannedStart
+      || planBefore.plannedEnd !== planAfter.plannedEnd;
+
+    const saved = await this.repo.save(task);
+
+    /**
+     * The audited case of TASK-2: "plan-date edits after execution start are
+     * audited". Moving the plan before work starts is ordinary planning;
+     * moving it after the crew is on site is how a schedule quietly absorbs a
+     * delay, so that edit — and only that edit — leaves a trail with both the
+     * old and the new dates.
+     */
+    if (planMoved && task.actualStart) {
+      this.activity.record({
+        projectId: project.id, actorId: actor.userId, entity: 'task', entityId: task.id,
+        action: 'task.plan_dates_changed_after_start', before: planBefore, after: planAfter,
+      });
+    }
+
+    if (dto.assigneeId !== undefined && dto.assigneeId !== previousAssignee && dto.assigneeId) {
+      this.announceAssignment(saved, project.id, dto.assigneeId);
+    }
+    return saved;
+  }
+
+  /**
+   * TASK-2 — the lifecycle. Illegal transitions are rejected by
+   * assertTransition(); the extra rule here is that "ready" means what it says:
+   * an activity cannot be declared ready while a predecessor is unfinished
+   * (מסמך האפיון §5.2 — "מוכנה להתחלה (כל התלויות הושלמו)").
+   */
+  async changeStatus(taskId: string, next: TaskStatus, actor: TaskActor) {
+    const task = await this.requireTask(taskId);
+    const from = task.status;
+
+    assertTransition(from, next);
+
+    if (next === TaskStatus.READY) {
+      const { blocked, blockingTasks } = this.blockersOf(task);
+      if (blocked) {
+        throw new ConflictException(
+          `לא ניתן לסמן "מוכנה להתחלה" — ממתינה לסיום: ${blockingTasks.join(', ')}`,
+        );
+      }
+    }
+
+    task.status = next;
+    const today = new Date().toISOString().slice(0, 10);
+    if (next === TaskStatus.IN_PROGRESS && !task.actualStart) task.actualStart = today;
+    // TODO (DOC-4): completion must also be refused while a required document
+    // is unapproved. The gate belongs to the documents epic; the hook is here.
+    if (next === TaskStatus.COMPLETED && !task.actualEnd) task.actualEnd = today;
+
+    const saved = await this.repo.save(task);
+    this.activity.record({
+      projectId: task.project.id, actorId: actor.userId, entity: 'task', entityId: task.id,
+      action: 'task.status_changed',
+      before: { status: STATUS_LABELS[from] }, after: { status: STATUS_LABELS[next] },
+    });
+    return saved;
+  }
+
+  /**
+   * Deleting an activity others depend on would silently cut the dependency
+   * chain, so it is refused and the dependants are named. Work that has
+   * already started is not deletable either — that is history, and TASK-7's
+   * archiving is the way to put a project away.
+   */
+  async remove(taskId: string, actor: TaskActor) {
+    const task = await this.requireTask(taskId);
+
+    if (task.status === TaskStatus.IN_PROGRESS || task.status === TaskStatus.COMPLETED) {
+      throw new ConflictException(
+        `לא ניתן למחוק משימה במצב "${STATUS_LABELS[task.status]}" — היא כבר חלק מהיסטוריית הביצוע`,
+      );
+    }
+
+    const dependants = await this.repo.find({
+      where: { predecessors: { id: taskId } },
+      select: { id: true, name: true },
+    });
+    if (dependants.length > 0) {
+      throw new ConflictException(
+        `לא ניתן למחוק: משימות אחרות תלויות בה — ${dependants.map((t) => t.name).join(', ')}`,
+      );
+    }
+
+    await this.repo.remove(task);
+    this.activity.record({
+      projectId: task.project.id, actorId: actor.userId, entity: 'task',
+      entityId: taskId, action: 'task.deleted', before: { name: task.name },
+    });
+  }
+
+  /** One activity, with its computed blocking state (never a stored status). */
+  async findOne(taskId: string) {
+    const task = await this.requireTask(taskId);
+    return { ...task, ...this.blockersOf(task) };
   }
 
   findByProject(projectId: string) {
@@ -35,8 +219,65 @@ export class TasksService {
   async computeBlocked(taskId: string): Promise<{ blocked: boolean; blockingTasks: string[] }> {
     const task = await this.repo.findOne({ where: { id: taskId }, relations: { predecessors: true } });
     if (!task) throw new NotFoundException('Task not found');
+    return this.blockersOf(task);
+  }
+
+  // ---- internal helpers --------------------------------------------------
+
+  private blockersOf(task: Task) {
     const blocking = (task.predecessors ?? []).filter((p) => p.status !== TaskStatus.COMPLETED);
     return { blocked: blocking.length > 0, blockingTasks: blocking.map((t) => t.name) };
+  }
+
+  private async requireTask(taskId: string) {
+    const task = await this.repo.findOne({
+      where: { id: taskId },
+      relations: { project: true, assignee: true, predecessors: true },
+    });
+    if (!task) throw new NotFoundException('המשימה לא נמצאה');
+    return task;
+  }
+
+  private async requireProject(projectId: string) {
+    const project = await this.projects.findOne({
+      where: { id: projectId, deletedAt: IsNull() },
+    });
+    if (!project) throw new NotFoundException('הפרויקט לא נמצא');
+    return project;
+  }
+
+  /** TASK-1 owns the building; an activity may only sit in a zone it defines. */
+  private assertZone(project: Project, zone?: string) {
+    if (zone === undefined) return;
+    if (!zoneExists(project.layout, zone)) {
+      throw new BadRequestException('האזור אינו קיים במבנה הפרויקט');
+    }
+  }
+
+  /** מסמך האפיון §5.1: "רק חברי הפרויקט מוצעים". */
+  private async resolveAssignee(projectId: string, assigneeId?: string) {
+    if (!assigneeId) return null;
+    const membership = await this.members.findActiveMembership(projectId, assigneeId);
+    if (!membership) {
+      throw new BadRequestException('ניתן לשבץ רק חבר פרויקט פעיל');
+    }
+    return assigneeId;
+  }
+
+  private announceAssignment(task: Task, projectId: string, userId: string) {
+    this.notifications.taskAssigned({
+      userId, projectId, taskId: task.id, taskName: task.name,
+    });
+    this.activity.record({
+      projectId, actorId: userId, entity: 'task', entityId: task.id,
+      action: 'task.assigned', after: { assigneeId: userId },
+    });
+  }
+
+  private assertDateOrder(start?: string | null, end?: string | null) {
+    if (start && end && new Date(end) < new Date(start)) {
+      throw new BadRequestException('תאריך הסיום המתוכנן מוקדם מתאריך ההתחלה');
+    }
   }
 
   /**

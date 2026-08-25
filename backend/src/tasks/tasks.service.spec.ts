@@ -27,7 +27,14 @@ describe('AUTH-2 — subcontractor prediction scoping', () => {
       create: jest.fn(),
     };
     predictions = { predictProject: jest.fn() };
-    service = new TasksService(repo as never, predictions as never);
+    service = new TasksService(
+      repo as never,
+      { findOne: jest.fn() } as never,          // projects repository — unused here
+      predictions as never,
+      { findActiveMembership: jest.fn() } as never,
+      { record: jest.fn() } as never,
+      { taskAssigned: jest.fn() } as never,
+    );
   });
 
   it('refuses a subcontractor the prediction of a task assigned to someone else', async () => {

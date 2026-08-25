@@ -4,12 +4,39 @@ import {
 import { Project } from '../projects/project.entity';
 import { User } from '../users/user.entity';
 
+/**
+ * TASK-2 lifecycle. 'blocked' is deliberately NOT a member: it is computed
+ * from unfinished predecessors and unapproved required documents on every
+ * read (see task-lifecycle.ts and TasksService.computeBlocked).
+ */
 export enum TaskStatus {
-  NOT_STARTED = 'not_started',
+  PLANNED = 'planned',
+  /** Every predecessor is completed — the crew may start. */
+  READY = 'ready',
   IN_PROGRESS = 'in_progress',
-  BLOCKED = 'blocked', // computed: a predecessor is not completed
   COMPLETED = 'completed',
 }
+
+/** מסמך האפיון §5.1: שלד / חשמל / אינסטלציה / גבס / מיזוג / גמר / אחר */
+export enum TradeCategory {
+  STRUCTURE = 'structure',
+  ELECTRICAL = 'electrical',
+  PLUMBING = 'plumbing',
+  DRYWALL = 'drywall',
+  HVAC = 'hvac',
+  FINISHING = 'finishing',
+  OTHER = 'other',
+}
+
+export const TRADE_LABELS: Record<TradeCategory, string> = {
+  [TradeCategory.STRUCTURE]: 'שלד',
+  [TradeCategory.ELECTRICAL]: 'חשמל',
+  [TradeCategory.PLUMBING]: 'אינסטלציה',
+  [TradeCategory.DRYWALL]: 'גבס',
+  [TradeCategory.HVAC]: 'מיזוג',
+  [TradeCategory.FINISHING]: 'גמר',
+  [TradeCategory.OTHER]: 'אחר',
+};
 
 @Entity('tasks')
 export class Task {
@@ -19,14 +46,26 @@ export class Task {
   @Column()
   name: string;
 
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
   @ManyToOne(() => Project, (p) => p.tasks, { onDelete: 'CASCADE' })
   project: Project;
 
-  /** Zone in the schematic Digital Twin (e.g. "floor-3/east") */
+  /** Zone of the schematic Twin, e.g. "floor-3/zone-2" — validated against
+   *  the project layout (TASK-1) so an activity can never point at a zone
+   *  the building does not have. */
   @Column({ nullable: true })
   zone: string;
 
-  @Column({ type: 'enum', enum: TaskStatus, default: TaskStatus.NOT_STARTED })
+  @Column({ type: 'enum', enum: TradeCategory, default: TradeCategory.OTHER })
+  trade: TradeCategory;
+
+  /** Planned duration in working days, as estimated at planning time. */
+  @Column({ type: 'int', nullable: true })
+  estimatedDurationDays: number | null;
+
+  @Column({ type: 'enum', enum: TaskStatus, default: TaskStatus.PLANNED })
   status: TaskStatus;
 
   @Column({ type: 'date', nullable: true })
