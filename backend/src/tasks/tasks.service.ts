@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -6,6 +6,8 @@ import {
   ProjectGraphPayload,
   ProjectPrediction,
 } from '../predictions/predictions.service';
+import { predictionScope } from '../auth/permissions';
+import { ProjectRole } from '../projects/project-member.entity';
 import { Task, TaskStatus } from './task.entity';
 
 @Injectable()
@@ -97,9 +99,18 @@ export class TasksService {
    * the whole project — dependency features make prediction inherently
    * project-scoped — and returns this task's entry.
    */
-  async refreshPrediction(taskId: string) {
-    const task = await this.repo.findOne({ where: { id: taskId }, relations: { project: true } });
+  async refreshPrediction(taskId: string, role?: ProjectRole, userId?: string) {
+    const task = await this.repo.findOne({
+      where: { id: taskId },
+      relations: { project: true, assignee: true },
+    });
     if (!task) throw new NotFoundException('Task not found');
+
+    // AUTH-2: "subcontractors see risk predictions and explanations for own
+    // tasks only". A row-level scope, so it cannot live in the matrix.
+    if (role && predictionScope(role) === 'own' && task.assignee?.id !== userId) {
+      throw new ForbiddenException('קבלן משנה רשאי לראות תחזיות למשימות שלו בלבד');
+    }
     const { results } = await this.refreshProjectPredictions(task.project.id);
     const mine = results.find((r) => r.task_id === taskId) ?? null;
     return { task: task.name, prediction: mine?.prediction ?? null, reliability: mine?.reliability ?? null };

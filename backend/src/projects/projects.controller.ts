@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { CurrentUser, AuthenticatedUser } from '../auth/current-user.decorator';
-import { RolesGuard } from '../auth/roles.guard';
+import { AuthenticatedUser, CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Profession } from '../users/user.entity';
 import { ProjectsService } from './projects.service';
 
 class CreateProjectDto {
@@ -11,29 +11,38 @@ class CreateProjectDto {
   @IsOptional() @IsInt() @Min(1) floors?: number;
 }
 
+/**
+ * AUTH-2 note: these routes enforce membership through ProjectsService rather
+ * than through ProjectPermissionGuard. The guard lives in AuthzModule, which
+ * imports ProjectsModule to resolve membership — so ProjectsModule cannot
+ * import it back without a circular dependency. Flagged for review.
+ */
 @Controller('projects')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(JwtAuthGuard)
 export class ProjectsController {
   constructor(private projects: ProjectsService) {}
 
   @Post()
-  // TODO (AUTH-2 + AUTH-5): site-role authorization moves to a per-project
-  // guard backed by ProjectMember. Until then the route is authenticated only.
   create(@Body() dto: CreateProjectDto, @CurrentUser() me: AuthenticatedUser) {
-    return this.projects.create({
-      name: dto.name,
-      address: dto.address,
-      layout: dto.floors ? { floors: dto.floors, zonesPerFloor: ['north', 'south', 'east', 'west'] } : null,
-    }, me.userId);
+    return this.projects.create(
+      {
+        name: dto.name,
+        address: dto.address,
+        layout: dto.floors
+          ? { floors: dto.floors, zonesPerFloor: ['north', 'south', 'east', 'west'] }
+          : null,
+      },
+      { userId: me.userId, profession: me.profession as Profession },
+    );
   }
 
   @Get()
-  findAll() {
-    return this.projects.findAll();
+  findAll(@CurrentUser() me: AuthenticatedUser) {
+    return this.projects.findAllForUser(me.userId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projects.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() me: AuthenticatedUser) {
+    return this.projects.findOne(id, me.userId);
   }
 }

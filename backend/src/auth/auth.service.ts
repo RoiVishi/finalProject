@@ -23,7 +23,7 @@ export class AuthService {
       phone: dto.phone,
       profession: dto.profession,
     });
-    return this.sign(user.id, user.email, user.role);
+    return this.sign(user.id, user.email, user.role, user.profession);
   }
 
   async login(email: string, password: string) {
@@ -31,11 +31,11 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException(INVALID_CREDENTIALS);
     }
-    return this.sign(user.id, user.email, user.role);
+    return this.sign(user.id, user.email, user.role, user.profession);
   }
 
   /** AUTH-1: 12h token. Expiry is configured in AuthModule. */
-  private sign(sub: string, email: string, role: string) {
-    return { access_token: this.jwt.sign({ sub, email, role }) };
+  private sign(sub: string, email: string, role: string, profession: string) {
+    return { access_token: this.jwt.sign({ sub, email, role, profession }) };
   }
 }
