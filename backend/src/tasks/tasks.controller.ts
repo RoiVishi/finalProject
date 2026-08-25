@@ -6,7 +6,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ProjectAction } from '../auth/permissions';
 import { ProjectPermissionGuard, RequirePermission } from '../auth/project-permission.guard';
 import { ProjectMember } from '../projects/project-member.entity';
-import { ChangeTaskStatusDto, CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
+import {
+  AddDependencyDto, ChangeTaskStatusDto, CreateTaskDto, UpdateTaskDto,
+} from './dto/task.dto';
 import { TasksService } from './tasks.service';
 
 @Controller('tasks')
@@ -76,6 +78,40 @@ export class TasksController {
     @CurrentUser() me: AuthenticatedUser,
   ) {
     return this.tasks.remove(id, { userId: me.userId, role: membership.role });
+  }
+
+  /** TASK-3 — both directions of the dependency graph for one activity. */
+  @Get(':id/dependencies')
+  @RequirePermission(ProjectAction.VIEW_PROJECT, 'task')
+  dependencies(@Param('id') id: string) {
+    return this.tasks.dependencies(id);
+  }
+
+  @Post(':id/dependencies')
+  @RequirePermission(ProjectAction.MANAGE_TASKS, 'task')
+  addDependency(
+    @Param('id') id: string,
+    @Body() dto: AddDependencyDto,
+    @CurrentMembership() membership: ProjectMember,
+    @CurrentUser() me: AuthenticatedUser,
+  ) {
+    return this.tasks.addDependency(id, dto.predecessorId, {
+      userId: me.userId, role: membership.role,
+    });
+  }
+
+  @Delete(':id/dependencies/:predecessorId')
+  @HttpCode(204)
+  @RequirePermission(ProjectAction.MANAGE_TASKS, 'task')
+  removeDependency(
+    @Param('id') id: string,
+    @Param('predecessorId') predecessorId: string,
+    @CurrentMembership() membership: ProjectMember,
+    @CurrentUser() me: AuthenticatedUser,
+  ) {
+    return this.tasks.removeDependency(id, predecessorId, {
+      userId: me.userId, role: membership.role,
+    });
   }
 
   @Get(':id/blocked')

@@ -66,6 +66,12 @@ export class UpdateTaskDto {
   estimatedDurationDays?: number;
 }
 
+/** TASK-3: "this activity waits for that one to finish" (finish-to-start). */
+export class AddDependencyDto {
+  @IsUUID('4', { message: 'מזהה המשימה הקודמת אינו תקין' })
+  predecessorId: string;
+}
+
 export class ChangeTaskStatusDto {
   /**
    * 'blocked' is not a member of TaskStatus, so a client that tries to set it
