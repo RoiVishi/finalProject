@@ -16,6 +16,7 @@ import { zoneExists } from '../projects/layout';
 import { ProjectRole } from '../projects/project-member.entity';
 import { ProjectMembersService } from '../projects/project-members.service';
 import { Project } from '../projects/project.entity';
+import { buildWaitsFor, cyclePathFor, describePath } from './dependency-graph';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
 import { assertTransition, STATUS_LABELS } from './task-lifecycle';
 import { Task, TaskStatus } from './task.entity';
@@ -197,6 +198,97 @@ export class TasksService {
       projectId: task.project.id, actorId: actor.userId, entity: 'task',
       entityId: taskId, action: 'task.deleted', before: { name: task.name },
     });
+  }
+
+  /**
+   * TASK-3 — record that `taskId` waits for `predecessorId` to finish.
+   *
+   * The whole project graph is loaded first, because a cycle is a property of
+   * the graph and not of the two activities in front of us: A→B and B→C are
+   * both fine, and C→A is the one that closes the ring.
+   */
+  async addDependency(taskId: string, predecessorId: string, actor: TaskActor) {
+    if (taskId === predecessorId) {
+      throw new BadRequestException('משימה אינה יכולה להיות תלויה בעצמה');
+    }
+
+    const task = await this.requireTask(taskId);
+    const predecessor = await this.requireTask(predecessorId);
+
+    if (task.project.id !== predecessor.project.id) {
+      throw new BadRequestException('ניתן ליצור תלות רק בין משימות באותו פרויקט');
+    }
+    if ((task.predecessors ?? []).some((p) => p.id === predecessorId)) {
+      throw new ConflictException('התלות כבר קיימת');
+    }
+
+    const all = await this.repo.find({
+      where: { project: { id: task.project.id } },
+      relations: { predecessors: true },
+    });
+    const cycle = cyclePathFor(buildWaitsFor(all), taskId, predecessorId);
+    if (cycle) {
+      const names = new Map(all.map((t) => [t.id, t.name]));
+      names.set(task.id, task.name);
+      names.set(predecessor.id, predecessor.name);
+      throw new ConflictException(
+        `לא ניתן ליצור תלות מעגלית: ${describePath(cycle, names)}`,
+      );
+    }
+
+    task.predecessors = [...(task.predecessors ?? []), predecessor];
+
+    /**
+     * A new open predecessor un-readies the activity. "Ready" is a claim that
+     * every dependency is finished; leaving it standing while adding an
+     * unfinished one would put a crew on site in front of work that has not
+     * happened yet.
+     */
+    if (task.status === TaskStatus.READY && predecessor.status !== TaskStatus.COMPLETED) {
+      task.status = TaskStatus.PLANNED;
+    }
+
+    const saved = await this.repo.save(task);
+    this.activity.record({
+      projectId: task.project.id, actorId: actor.userId, entity: 'task', entityId: task.id,
+      action: 'task.dependency_added', after: { predecessorId, predecessor: predecessor.name },
+    });
+    return saved;
+  }
+
+  async removeDependency(taskId: string, predecessorId: string, actor: TaskActor) {
+    const task = await this.requireTask(taskId);
+    const before = task.predecessors ?? [];
+    const removed = before.find((p) => p.id === predecessorId);
+    if (!removed) throw new NotFoundException('התלות לא נמצאה');
+
+    task.predecessors = before.filter((p) => p.id !== predecessorId);
+    const saved = await this.repo.save(task);
+    this.activity.record({
+      projectId: task.project.id, actorId: actor.userId, entity: 'task', entityId: task.id,
+      action: 'task.dependency_removed', before: { predecessorId, predecessor: removed.name },
+    });
+    return saved;
+  }
+
+  /**
+   * TASK-3 acceptance criterion: "per-activity predecessor and dependent lists
+   * visible". Both directions, because the question a site manager actually
+   * asks is not only "what am I waiting for" but "who is waiting for me".
+   */
+  async dependencies(taskId: string) {
+    const task = await this.requireTask(taskId);
+    const dependants = await this.repo.find({
+      where: { predecessors: { id: taskId } },
+      select: { id: true, name: true, status: true },
+    });
+
+    return {
+      predecessors: (task.predecessors ?? []).map((p) => ({
+        id: p.id, name: p.name, status: p.status,
+      })),
+      dependants: dependants.map((d) => ({ id: d.id, name: d.name, status: d.status })),
+    };
   }
 
   /** One activity, with its computed blocking state (never a stored status). */
