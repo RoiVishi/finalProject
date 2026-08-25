@@ -16,6 +16,7 @@ import { zoneExists } from '../projects/layout';
 import { ProjectRole } from '../projects/project-member.entity';
 import { ProjectMembersService } from '../projects/project-members.service';
 import { Project } from '../projects/project.entity';
+import { Blocker, BlockingState, blockingState } from './blocking';
 import { buildWaitsFor, cyclePathFor, describePath } from './dependency-graph';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
 import { assertTransition, STATUS_LABELS } from './task-lifecycle';
@@ -144,11 +145,11 @@ export class TasksService {
     assertTransition(from, next);
 
     if (next === TaskStatus.READY) {
-      const { blocked, blockingTasks } = this.blockersOf(task);
+      const { blocked, summary } = this.blockersOf(task);
       if (blocked) {
-        throw new ConflictException(
-          `לא ניתן לסמן "מוכנה להתחלה" — ממתינה לסיום: ${blockingTasks.join(', ')}`,
-        );
+        // TASK-4: the refusal carries the same named summary the "can I start?"
+        // question gets, so the user is never told "no" without being told why.
+        throw new ConflictException(`לא ניתן לסמן "מוכנה להתחלה" — ${summary}`);
       }
     }
 
@@ -297,34 +298,53 @@ export class TasksService {
     return { ...task, ...this.blockersOf(task) };
   }
 
-  findByProject(projectId: string) {
-    return this.repo.find({
+  /**
+   * The project's activities, each carrying its own blocking verdict. The
+   * board and the Twin badge both need it per row, and computing it here —
+   * from data already loaded — costs one query rather than one per activity.
+   */
+  async findByProject(projectId: string) {
+    const tasks = await this.repo.find({
       where: { project: { id: projectId } },
-      relations: { predecessors: true, assignee: true },
+      relations: { predecessors: { assignee: true }, assignee: true },
     });
+    return tasks.map((task) => ({ ...task, ...this.blockersOf(task) }));
   }
 
   /**
-   * Core business rule: a task is BLOCKED if any predecessor is not completed.
-   * (e.g. "Cannot start electrical works — structural works not completed")
+   * TASK-4 — the named answer to "אפשר להתחיל?". Live from the dependency
+   * graph on every call: a stored blocking flag goes stale the moment a
+   * predecessor is completed in another session.
    */
-  async computeBlocked(taskId: string): Promise<{ blocked: boolean; blockingTasks: string[] }> {
-    const task = await this.repo.findOne({ where: { id: taskId }, relations: { predecessors: true } });
-    if (!task) throw new NotFoundException('Task not found');
+  async computeBlocked(taskId: string): Promise<BlockingState> {
+    const task = await this.requireTask(taskId);
     return this.blockersOf(task);
   }
 
   // ---- internal helpers --------------------------------------------------
 
-  private blockersOf(task: Task) {
-    const blocking = (task.predecessors ?? []).filter((p) => p.status !== TaskStatus.COMPLETED);
-    return { blocked: blocking.length > 0, blockingTasks: blocking.map((t) => t.name) };
+  private blockersOf(task: Task): BlockingState {
+    return blockingState(task.predecessors ?? [], this.documentBlockers(task));
+  }
+
+  /**
+   * The second half of TASK-4 — "מסמך נדרש שטרם אושר". The documents epic
+   * (DOC-1..DOC-4) does not exist yet, so this returns nothing and every
+   * activity is judged on its dependencies alone. DOC-4 fills it in and the
+   * summary sentence gains its "ממתין לאישור: …" half with no other change:
+   * blocking.ts already renders both halves and the tests already cover the
+   * rendering.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private documentBlockers(_task: Task): Blocker[] {
+    return [];
   }
 
   private async requireTask(taskId: string) {
     const task = await this.repo.findOne({
       where: { id: taskId },
-      relations: { project: true, assignee: true, predecessors: true },
+      // predecessors carry their assignee: TASK-4 names who owns the blocker.
+      relations: { project: true, assignee: true, predecessors: { assignee: true } },
     });
     if (!task) throw new NotFoundException('המשימה לא נמצאה');
     return task;

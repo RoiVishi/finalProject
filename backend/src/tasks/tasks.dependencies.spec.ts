@@ -12,7 +12,10 @@ const row = (id: string, name: string, over: Record<string, unknown> = {}) => ({
   name,
   status: TaskStatus.PLANNED,
   project: { id: PROJECT },
-  predecessors: [],
+  predecessors: [] as unknown[],
+  zone: null as string | null,
+  plannedEnd: null as string | null,
+  assignee: null as { fullName: string } | null,
   ...over,
 });
 
@@ -136,6 +139,44 @@ describe('TASK-3 — dependencies between activities', () => {
     it('404s on an edge that is not there', async () => {
       await expect(service.removeDependency('flooring', 'electrical', ACTOR))
         .rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('TASK-4 — the named answer to "אפשר להתחיל?"', () => {
+    beforeEach(() => {
+      rows.structure.plannedEnd = '2026-09-12';
+      rows.structure.assignee = { fullName: 'א.ב. בנייה' };
+      rows.structure.zone = 'floor-3/zone-1';
+      rows.flooring.predecessors = [rows.structure];
+    });
+
+    it('names the blocker, its owner and when it is expected to finish', async () => {
+      const state = await service.computeBlocked('flooring');
+
+      expect(state.blocked).toBe(true);
+      expect(state.summary).toBe(
+        'חסום על ידי: שלד קומה 3 (floor-3/zone-1) — א.ב. בנייה, צפי סיום 12.09.2026',
+      );
+    });
+
+    it('clears the moment the blocker is completed — nothing is stored', async () => {
+      rows.structure.status = TaskStatus.COMPLETED;
+
+      expect(await service.computeBlocked('flooring')).toMatchObject({
+        blocked: false, summary: '',
+      });
+    });
+
+    it('refuses "ready" with the same sentence rather than a bare no', async () => {
+      await expect(service.changeStatus('flooring', TaskStatus.READY, ACTOR))
+        .rejects.toThrow(/חסום על ידי: שלד קומה 3 .*א\.ב\. בנייה/);
+    });
+
+    it('carries a verdict on every row of the project list', async () => {
+      const list = await service.findByProject(PROJECT);
+
+      expect(list.find((t) => t.id === 'flooring')).toMatchObject({ blocked: true });
+      expect(list.find((t) => t.id === 'structure')).toMatchObject({ blocked: false });
     });
   });
 
