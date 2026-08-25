@@ -43,6 +43,13 @@ export class ProjectMembersService {
     );
   }
 
+  /** Active memberships of one user, across projects (DASH-5 / project list). */
+  listForUser(userId: string) {
+    return this.members.find({
+      where: { user: { id: userId }, status: MemberStatus.ACTIVE },
+    });
+  }
+
   async list(projectId: string, actorId: string) {
     await this.requireMember(projectId, actorId);
     return this.members.find({ where: { project: { id: projectId } } });

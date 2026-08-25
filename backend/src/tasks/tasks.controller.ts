@@ -1,7 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Body, Controller, Get, Param, Post, Query, UseGuards,
+} from '@nestjs/common';
 import { IsDateString, IsOptional, IsString, IsUUID } from 'class-validator';
-import { RolesGuard } from '../auth/roles.guard';
+import { CurrentMembership, CurrentUser, AuthenticatedUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ProjectAction } from '../auth/permissions';
+import { ProjectPermissionGuard, RequirePermission } from '../auth/project-permission.guard';
+import { ProjectMember } from '../projects/project-member.entity';
 import { TasksService } from './tasks.service';
 
 class CreateTaskDto {
@@ -13,13 +18,12 @@ class CreateTaskDto {
 }
 
 @Controller('tasks')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(JwtAuthGuard, ProjectPermissionGuard)
 export class TasksController {
   constructor(private tasks: TasksService) {}
 
   @Post()
-  // TODO (AUTH-2 + AUTH-5): site-role authorization moves to a per-project
-  // guard backed by ProjectMember. Until then the route is authenticated only.
+  @RequirePermission(ProjectAction.MANAGE_TASKS, 'body')
   create(@Body() dto: CreateTaskDto) {
     return this.tasks.create({
       name: dto.name,
@@ -31,17 +35,25 @@ export class TasksController {
   }
 
   @Get()
+  @RequirePermission(ProjectAction.VIEW_PROJECT, 'query')
   byProject(@Query('projectId') projectId: string) {
     return this.tasks.findByProject(projectId);
   }
 
   @Get(':id/blocked')
+  @RequirePermission(ProjectAction.VIEW_PROJECT, 'task')
   blocked(@Param('id') id: string) {
     return this.tasks.computeBlocked(id);
   }
 
+  /** Subcontractors are scoped to their own tasks — enforced in the service. */
   @Post(':id/predict')
-  predict(@Param('id') id: string) {
-    return this.tasks.refreshPrediction(id);
+  @RequirePermission(ProjectAction.VIEW_PREDICTIONS, 'task')
+  predict(
+    @Param('id') id: string,
+    @CurrentMembership() membership: ProjectMember,
+    @CurrentUser() me: AuthenticatedUser,
+  ) {
+    return this.tasks.refreshPrediction(id, membership.role, me.userId);
   }
 }
