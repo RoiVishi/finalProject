@@ -2,17 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
-import { createHash, randomBytes } from 'crypto';
 import { IsNull, Repository } from 'typeorm';
+import { hashToken, newToken } from '../common/token.util';
 import { UsersService } from '../users/users.service';
-import { MailService } from './mail.service';
+import { MailService } from '../common/mail.service';
 import { PasswordResetToken } from './password-reset.entity';
 
 /** Same message whatever went wrong — never reveal why a link failed. */
 const INVALID_LINK = 'הקישור אינו תקין או שפג תוקפו';
-
-export const hashToken = (raw: string) =>
-  createHash('sha256').update(raw).digest('hex');
 
 @Injectable()
 export class PasswordResetService {
@@ -43,7 +40,7 @@ export class PasswordResetService {
       { usedAt: new Date() },
     );
 
-    const raw = randomBytes(32).toString('hex');
+    const raw = newToken();
     await this.tokens.save(
       this.tokens.create({
         user,
