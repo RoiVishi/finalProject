@@ -80,7 +80,7 @@ export class ProjectMembersService {
     const member = await this.requireMemberRow(projectId, memberId);
 
     if (member.role === ProjectRole.OWNER && role !== ProjectRole.OWNER) {
-      await this.requireAnotherOwnerExists(projectId, memberId);
+      await this.requireAnotherOwnerExists(projectId);
     }
 
     await this.members.update(member.id, { role });
@@ -98,7 +98,7 @@ export class ProjectMembersService {
     const member = await this.requireMemberRow(projectId, memberId);
 
     if (member.role === ProjectRole.OWNER) {
-      await this.requireAnotherOwnerExists(projectId, memberId);
+      await this.requireAnotherOwnerExists(projectId);
     }
 
     await this.members.update(member.id, {
@@ -135,7 +135,7 @@ export class ProjectMembersService {
   }
 
   /** A project must never be left without an owner. */
-  private async requireAnotherOwnerExists(projectId: string, exceptMemberId: string) {
+  private async requireAnotherOwnerExists(projectId: string) {
     const owners = await this.members.count({
       where: {
         project: { id: projectId },
@@ -146,6 +146,5 @@ export class ProjectMembersService {
     if (owners <= 1) {
       throw new BadRequestException('לא ניתן להשאיר פרויקט ללא בעלים');
     }
-    void exceptMemberId;
   }
 }
