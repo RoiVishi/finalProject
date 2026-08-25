@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MailModule } from '../common/mail.module';
+import { Task } from '../tasks/task.entity';
 import { UsersModule } from '../users/users.module';
 import { Invitation } from './invitation.entity';
 import {
@@ -16,7 +17,11 @@ import { ProjectsService } from './projects.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Project, ProjectMember, Invitation]),
+    // Task is registered here for its repository only (TASK-1 layout edits
+    // must check for activities in zones that would disappear). Importing
+    // TasksModule instead would create a cycle: TasksModule → AuthzModule →
+    // ProjectsModule.
+    TypeOrmModule.forFeature([Project, ProjectMember, Invitation, Task]),
     UsersModule,
     MailModule,
   ],
