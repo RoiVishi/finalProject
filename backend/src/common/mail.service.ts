@@ -19,4 +19,13 @@ export class MailService {
     this.log.log(`[mail] קישור לאיפוס סיסמה עבור ${to}: ${link}`);
     return link;
   }
+
+  async sendProjectInvitation(
+    to: string, rawToken: string, projectName: string,
+  ): Promise<string> {
+    const base = this.cfg.get('APP_URL', 'http://localhost:5173');
+    const link = `${base}/invitations/${rawToken}`;
+    this.log.log(`[mail] הזמנה לפרויקט "${projectName}" עבור ${to}: ${link}`);
+    return link;
+  }
 }

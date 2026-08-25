@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { InvitationsService } from '../projects/invitations.service';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 
@@ -12,9 +13,14 @@ export class AuthService {
   constructor(
     private users: UsersService,
     private jwt: JwtService,
+    private invitations: InvitationsService,
   ) {}
 
   async register(dto: RegisterDto) {
+    // AUTH-4: check the link BEFORE creating the account, so an expired or
+    // revoked link fails cleanly instead of leaving an orphan user.
+    if (dto.inviteToken) await this.invitations.assertUsable(dto.inviteToken);
+
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const user = await this.users.create({
       email: dto.email,
@@ -23,6 +29,9 @@ export class AuthService {
       phone: dto.phone,
       profession: dto.profession,
     });
+
+    if (dto.inviteToken) await this.invitations.accept(dto.inviteToken, user.id);
+
     return this.sign(user.id, user.email, user.role, user.profession);
   }
 

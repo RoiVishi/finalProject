@@ -24,11 +24,13 @@ async function invalidFields(payload: Record<string, unknown>) {
 describe('AUTH-1 — registration and login', () => {
   let service: AuthService;
   let users: { create: jest.Mock; findByEmailWithPassword: jest.Mock };
+  let invitations: { assertUsable: jest.Mock; accept: jest.Mock };
 
   beforeEach(() => {
     users = { create: jest.fn(), findByEmailWithPassword: jest.fn() };
+    invitations = { assertUsable: jest.fn(), accept: jest.fn() };
     const jwt = { sign: jest.fn().mockReturnValue('signed.jwt.token') } as unknown as JwtService;
-    service = new AuthService(users as never, jwt);
+    service = new AuthService(users as never, jwt, invitations as never);
   });
 
   describe('validation (AC: client + server validation)', () => {
@@ -71,6 +73,25 @@ describe('AUTH-1 — registration and login', () => {
       await expect(service.register(VALID as never)).resolves.toEqual({
         access_token: 'signed.jwt.token',
       });
+    });
+
+    it('attaches a user who signed up through an invite link', async () => {
+      users.create.mockResolvedValue({ id: 'u1', email: VALID.email, role: SystemRole.USER });
+
+      await service.register({ ...VALID, inviteToken: 'raw-invite' } as never);
+
+      expect(invitations.assertUsable).toHaveBeenCalledWith('raw-invite');
+      expect(invitations.accept).toHaveBeenCalledWith('raw-invite', 'u1');
+    });
+
+    it('rejects an unusable invite link BEFORE creating the account', async () => {
+      invitations.assertUsable.mockRejectedValue(new Error('unusable'));
+
+      await expect(
+        service.register({ ...VALID, inviteToken: 'dead-link' } as never),
+      ).rejects.toThrow();
+
+      expect(users.create).not.toHaveBeenCalled(); // no orphan user
     });
 
     it('propagates the conflict when the email is already registered', async () => {

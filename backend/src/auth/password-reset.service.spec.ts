@@ -1,8 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
-import { MailService } from './mail.service';
-import { hashToken, PasswordResetService } from './password-reset.service';
+import { MailService } from '../common/mail.service';
+import { hashToken } from '../common/token.util';
+import { PasswordResetService } from './password-reset.service';
 
 const USER = { id: 'u1', email: 'shira@test.com' };
 const MINUTE = 60_000;

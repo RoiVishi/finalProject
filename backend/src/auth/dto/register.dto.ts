@@ -1,4 +1,6 @@
-import { IsEmail, IsEnum, IsString, Matches, MinLength } from 'class-validator';
+import {
+  IsEmail, IsEnum, IsOptional, IsString, Matches, MinLength,
+} from 'class-validator';
 import { Profession } from '../../users/user.entity';
 
 /** AUTH-1: at least 8 chars, containing at least one letter and one digit. */
@@ -25,6 +27,12 @@ export class RegisterDto {
 
   @IsEnum(Profession, { message: 'יש לבחור מקצוע מהרשימה' })
   profession: Profession;
+
+  /** AUTH-4: signing up through a shareable link attaches the new user
+   *  to the project automatically. */
+  @IsOptional()
+  @IsString()
+  inviteToken?: string;
 }
 
 export class LoginDto {

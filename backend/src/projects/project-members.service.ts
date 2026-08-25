@@ -50,6 +50,24 @@ export class ProjectMembersService {
     });
   }
 
+  /**
+   * AUTH-4: used only when an invitation is accepted. There is no actor check
+   * here on purpose — authorization happened when the invitation was ISSUED
+   * (owner or PM per §2). The person accepting is not the person authorising,
+   * so requiring ownership here would make every PM invitation unusable.
+   */
+  attach(projectId: string, userId: string, role: ProjectRole, trade?: string) {
+    return this.members.save(
+      this.members.create({
+        project: { id: projectId } as never,
+        user: { id: userId } as never,
+        role,
+        trade,
+        status: MemberStatus.ACTIVE,
+      }),
+    );
+  }
+
   async list(projectId: string, actorId: string) {
     await this.requireMember(projectId, actorId);
     return this.members.find({ where: { project: { id: projectId } } });
