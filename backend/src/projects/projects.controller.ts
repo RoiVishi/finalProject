@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { CurrentUser, AuthenticatedUser } from '../auth/current-user.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ProjectsService } from './projects.service';
 
@@ -18,12 +19,12 @@ export class ProjectsController {
   @Post()
   // TODO (AUTH-2 + AUTH-5): site-role authorization moves to a per-project
   // guard backed by ProjectMember. Until then the route is authenticated only.
-  create(@Body() dto: CreateProjectDto) {
+  create(@Body() dto: CreateProjectDto, @CurrentUser() me: AuthenticatedUser) {
     return this.projects.create({
       name: dto.name,
       address: dto.address,
       layout: dto.floors ? { floors: dto.floors, zonesPerFloor: ['north', 'south', 'east', 'west'] } : null,
-    });
+    }, me.userId);
   }
 
   @Get()

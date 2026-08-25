@@ -1,14 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ProjectMembersService } from './project-members.service';
 import { Project } from './project.entity';
 
 @Injectable()
 export class ProjectsService {
-  constructor(@InjectRepository(Project) private repo: Repository<Project>) {}
+  constructor(
+    @InjectRepository(Project) private repo: Repository<Project>,
+    private members: ProjectMembersService,
+  ) {}
 
-  create(data: Partial<Project>) {
-    return this.repo.save(this.repo.create(data));
+  /**
+   * The creator becomes the project owner (TASK-1). Without this no project
+   * has an owner, and every AUTH-5 ownership check would be unreachable.
+   */
+  async create(data: Partial<Project>, creatorUserId: string) {
+    const project = await this.repo.save(this.repo.create(data));
+    await this.members.createOwnerMembership(project.id, creatorUserId);
+    return project;
   }
 
   findAll() {
