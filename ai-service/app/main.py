@@ -329,9 +329,20 @@ LOW_RELIABILITY_NOTE = (
     "Treat as indicative only; reliability improves as the project accumulates history.")
 
 
+# 7.9.26 (two independent audits): the tag "ok" over-promised. Crossing the RR-11 threshold
+# does not change the model — it is still the cross-project model, scored on a project it has
+# never seen; RR-11 measured usability of *training* history, not of the served model. The tag
+# therefore names what the prediction rests on, never "ok", and `basis` says it explicitly.
+RELIABILITY_LOW = "low_transfer_prior"          # project history below the RR-11 threshold
+RELIABILITY_HISTORY = "within_project_history"   # threshold crossed; model unchanged
+BASIS_NOTE = ("Cross-project model (registry {version}); it is not trained on this project. "
+              "The project has completed {share:.0%} of its activities.")
+
+
 class ProjectPrediction(BaseModel):
     task_id: str
-    reliability: str                             # "ok" | "low_transfer_prior"
+    reliability: str                             # "within_project_history" | "low_transfer_prior"
+    basis: str = "cross_project_model"           # what the number rests on — never "ok"
     prediction: Prediction | None = None         # null when policy=abstain on low reliability
     note: str | None = None
 
@@ -350,7 +361,7 @@ def predict_project(payload: ProjectGraphPayload):
         return []
     share = payload.project.completed_share
     reliable = share is not None and share >= COLD_START_MIN_HISTORY
-    reliability = "ok" if reliable else "low_transfer_prior"
+    reliability = RELIABILITY_HISTORY if reliable else RELIABILITY_LOW
 
     if not reliable and COLD_START_POLICY == "abstain":
         return [ProjectPrediction(task_id=t.id, reliability=reliability,
@@ -360,7 +371,8 @@ def predict_project(payload: ProjectGraphPayload):
     reg = get_registry()
     feats = [TaskFeatures(**f) for f in compute_features(payload)]   # range-validated
     preds = _predict_core(reg, pd.DataFrame([f.model_dump() for f in feats]))
-    note = None if reliable else LOW_RELIABILITY_NOTE
+    basis_note = BASIS_NOTE.format(version=reg.version, share=(share or 0.0))
+    note = basis_note if reliable else LOW_RELIABILITY_NOTE + " " + basis_note
     return [ProjectPrediction(task_id=t.id, reliability=reliability,
                               prediction=p, note=note)
             for t, p in zip(payload.tasks, preds)]

@@ -128,7 +128,12 @@ def test_cold_start_flagging():
     mature = mock_payload()
     mature["project"]["completed_share"] = 0.55  # above the 40% RR-11 threshold
     r2 = client.post("/predict/project", json=mature)
-    assert all(x["reliability"] == "ok" and x["note"] is None for x in r2.json())
+    # 7.9.26: the tag never says "ok" — crossing the threshold does not change the model
+    for x in r2.json():
+        assert x["reliability"] == "within_project_history"
+        assert x["basis"] == "cross_project_model"
+        assert "not trained on this project" in (x["note"] or "")
+    assert not any(x["reliability"] == "ok" for x in r2.json())
 
 
 def test_cold_start_abstain_policy(monkeypatch):
