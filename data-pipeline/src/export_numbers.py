@@ -129,17 +129,17 @@ def main() -> int:
              "etl": json.loads(pe.read_text()) if pe.exists() else None,
              "rr17": (lambda r: {
                  "dslib_split": r["dslib"],
-                 "transfer_v4": {l: {"pooled_auc": r["part_A_transfer"]["labels"][l]["v4"]["pooled"],
-                                     "per_project": r["part_A_transfer"]["labels"][l]["v4"]["per_project"],
-                                     "buildings_auc": r["part_A_transfer"]["labels"][l]["by_group"]["buildings"]["v4"]} for l in r["part_A_transfer"]["labels"]},
-                 "transfer_v5_candidate": {l: {"pooled_auc": r["part_A_transfer"]["labels"][l]["v5_candidate"]["pooled"],
-                                               "buildings_auc": r["part_A_transfer"]["labels"][l]["by_group"]["buildings"]["v5_candidate"]} for l in r["part_A_transfer"]["labels"]},
+                 "transfer_v4": {lb: {"pooled_auc": r["part_A_transfer"]["labels"][lb]["v4"]["pooled"],
+                                     "per_project": r["part_A_transfer"]["labels"][lb]["v4"]["per_project"],
+                                     "buildings_auc": r["part_A_transfer"]["labels"][lb]["by_group"]["buildings"]["v4"]} for lb in r["part_A_transfer"]["labels"]},
+                 "transfer_v5_candidate": {lb: {"pooled_auc": r["part_A_transfer"]["labels"][lb]["v5_candidate"]["pooled"],
+                                               "buildings_auc": r["part_A_transfer"]["labels"][lb]["by_group"]["buildings"]["v5_candidate"]} for lb in r["part_A_transfer"]["labels"]},
                  "v4_mean_predicted_p": r["part_A_transfer"]["labels"]["is_late"]["v4"]["mean_p"],
                  "v4_brier_vs_dummy": [r["part_A_transfer"]["labels"]["is_late"]["v4"]["brier"], r["part_A_transfer"]["brier_dummy_is_late"]],
                  "label_construct": r.get("post_hoc_label_construct"),
                  "corpus_v3": {k: {"pooled_test_auc": v["pooled_test_auc"], "slices": v["slices"],
-                                   "dslib_holdout_all": {l: v["dslib_holdout"][l]["all"] for l in v["dslib_holdout"]},
-                                   "dslib_holdout_buildings": {l: v["dslib_holdout"][l]["by_group"]["buildings"] for l in v["dslib_holdout"]}}
+                                   "dslib_holdout_all": {lb: v["dslib_holdout"][lb]["all"] for lb in v["dslib_holdout"]},
+                                   "dslib_holdout_buildings": {lb: v["dslib_holdout"][lb]["by_group"]["buildings"] for lb in v["dslib_holdout"]}}
                                for k, v in r["part_B_corpus_v3"]["runs"].items()},
                  "corpus_v3_references": r["part_B_corpus_v3"]["references"],
                  "calibration": r["part_C_calibration"],
@@ -152,15 +152,15 @@ def main() -> int:
         # ---- RR-18 (2.9.26): per-customer model simulation on DSLIB (train on one customer's history only) ----
         "customer_model_RR18": (lambda p: (lambda r: {
             "config": r["config"],
-            "new_project_holdout": {l: {m: {"pooled_auc": r["part_A_new_project_holdout"][l][m]["pooled"],
-                                            "per_project_median": r["part_A_new_project_holdout"][l][m]["per_project"]["median"],
-                                            "buildings_auc": r["part_A_new_project_holdout"][l][m]["buildings"]}
+            "new_project_holdout": {lb: {m: {"pooled_auc": r["part_A_new_project_holdout"][lb][m]["pooled"],
+                                            "per_project_median": r["part_A_new_project_holdout"][lb][m]["per_project"]["median"],
+                                            "buildings_auc": r["part_A_new_project_holdout"][lb][m]["buildings"]}
                                         for m in ("random_forest", "xgboost", "logistic_regression")}
-                                    for l in r["part_A_new_project_holdout"]},
+                                    for lb in r["part_A_new_project_holdout"]},
             "within_project_scenarioB": r["part_B_within_project_scenarioB"]["results"],
-            "learning_curve": {l: {n: {"pooled_median": v["pooled_median"], "per_project_median": v["per_project_median_of_medians"], "rows": v["rows_median"]}
-                                   for n, v in r["part_C_learning_curve"]["curve"][l].items()} for l in r["part_C_learning_curve"]["curve"]},
-            "asof_combination": {l: {k: v for k, v in r["part_D_asof_combination"]["results"][l].items() if not isinstance(v, dict)} for l in r["part_D_asof_combination"]["results"]},
+            "learning_curve": {lb: {n: {"pooled_median": v["pooled_median"], "per_project_median": v["per_project_median_of_medians"], "rows": v["rows_median"]}
+                                   for n, v in r["part_C_learning_curve"]["curve"][lb].items()} for lb in r["part_C_learning_curve"]["curve"]},
+            "asof_combination": {lb: {k: v for k, v in r["part_D_asof_combination"]["results"][lb].items() if not isinstance(v, dict)} for lb in r["part_D_asof_combination"]["results"]},
             "customer_calibration_holdout": r["part_E_customer_calibration"]["holdout"],
             "reverse_transfer_to_own": {k: v for k, v in r["part_F_reverse_transfer_to_own"].items() if k != "note"},
             "status": "simulation only — no per-tenant training in the product yet; minimum ~20 customer projects before the gate opens"
