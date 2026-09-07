@@ -14,3 +14,8 @@ data-pipeline/outputs/labeled_tasks.csv
 # working-dir helpers (VM cannot unlink on this mount)
 _to_delete/
 ci.yml.sprint1
+
+# DSLIB derived tables (regenerate: python src/rr17_dslib_etl.py "<DSLIB 3.4 dir>", ~40s)
+data-pipeline/outputs/dslib_labeled_tasks.csv
+data-pipeline/outputs/dslib_snapshots.csv
+data-pipeline/outputs/dslib_asof_instances.csv

@@ -1,0 +1,38 @@
+{
+ "projects_construction": 163,
+ "leaf_activities": 17866,
+ "labeled": 8040,
+ "projects_with_labels": 117,
+ "by_group": {
+  "buildings": {
+   "projects": 87,
+   "activities": 5046,
+   "labeled": 3752
+  },
+  "civil": {
+   "projects": 60,
+   "activities": 11329,
+   "labeled": 3805
+  },
+  "industrial": {
+   "projects": 16,
+   "activities": 1491,
+   "labeled": 483
+  }
+ },
+ "late_rate": 0.6444,
+ "late7_rate": 0.4504,
+ "start_late_rate": 0.615,
+ "grew_rate": 0.2531,
+ "own_delay_rate": 0.3034,
+ "late_given_start_late": 0.9753,
+ "late_given_start_on_time": 0.1157,
+ "median_delay_days": 6.0,
+ "median_start_delay_days": 4.0,
+ "float_nan_share": 0.0105,
+ "projects_with_network_cycle": 3,
+ "baseline_end_derived_cells": 3240,
+ "snapshots_rows": 83037,
+ "tracking_periods": 1098,
+ "activities_with_predecessors_share": 0.7604
+}
