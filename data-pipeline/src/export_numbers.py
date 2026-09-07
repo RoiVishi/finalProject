@@ -56,6 +56,9 @@ def main() -> int:
         "champion": {
             "classifier": champ,
             "best_params": r["best_params"].get(champ, {}),
+            "selected_by": r["champion"].get("selected_by"),
+            "inner_selection_auc": r["champion"].get("inner_selection_auc"),
+            "same_champion_as_b_test_ranking": r["champion"].get("same_champion_as_b_test_ranking"),
             "runner_up": r["champion"].get("runner_up_classifier"),
             "delta_auc_vs_runner_up": r["champion"].get("delta_auc_vs_runner_up"),
             "statistically_tied": bs["auc_champion_vs_runner_up"]["statistically_tied"],

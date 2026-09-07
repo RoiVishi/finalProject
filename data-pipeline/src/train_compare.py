@@ -291,24 +291,43 @@ def main():
             if scen == "B_temporal":
                 tuned[f"__reg__{name}"] = pipe
 
-    # ---------- champion selection (by scenario-B ROC-AUC, the deployment claim) ----------
+    # ---------- champion selection — NESTED, on the inner slice of B train (RR-19b, 7.9.26) ----------
+    # Until 7.9.26 the family (RF vs XGB vs ...) was chosen by roc_auc on B_test and then reported on the
+    # same B_test — a model-selection bias (external review, 7.9.26). Selection now happens on the inner
+    # temporal slice of B TRAIN (each project's rel_position > q0.75 — the same slice the calibrator uses):
+    # every tuned family is refitted on the earlier 75% and scored on that slice; the best one is the
+    # champion. B_test is touched once, for reporting. The old B_test ranking is kept for transparency.
     b_clf = results["classification"]["B_temporal"]
-    champion = max((n for n in b_clf if n != "dummy_majority"), key=lambda n: b_clf[n].get("roc_auc", 0))
+    fit_parts, cal_parts = [], []
+    for _, g in B_tr.groupby("project"):
+        c = g["rel_position"].quantile(0.75)
+        fit_parts.append(g[g["rel_position"] <= c])
+        cal_parts.append(g[g["rel_position"] > c])
+    B_fit, B_cal = pd.concat(fit_parts), pd.concat(cal_parts)
+    inner = {}
+    for name, est in tuned.items():
+        if name == "dummy_majority" or name.startswith("__reg__"):
+            continue
+        m = clone(est)
+        m.fit(B_fit, B_fit["is_late"])
+        inner[name] = round(float(roc_auc_score(B_cal["is_late"], m.predict_proba(B_cal)[:, 1])), 4)
+        print(f"[select inner] {name}: roc_auc on B_cal = {inner[name]}")
+    results["classification"]["B_inner_selection"] = inner
+    ranked = sorted(inner, key=lambda n: inner[n], reverse=True)
+    champion, runner_up = ranked[0], (ranked[1] if len(ranked) > 1 else None)
     b_reg = results["regression"]["B_temporal"]
     champion_reg = min((n for n in b_reg if n != "dummy_median"), key=lambda n: b_reg[n]["mae_days"])
-    # Honest-tie disclosure: the top-2 classifiers may be statistically indistinguishable
-    # on n_test=~3k. We record the runner-up and the point delta here; bootstrap_ci.py
-    # computes the CI of the delta. Selection rule (B roc_auc) was fixed before the run.
-    ranked = sorted((n for n in b_clf if n != "dummy_majority"),
-                    key=lambda n: b_clf[n].get("roc_auc", 0), reverse=True)
-    runner_up = ranked[1] if len(ranked) > 1 else None
+    test_ranked = sorted((n for n in b_clf if n != "dummy_majority"), key=lambda n: b_clf[n].get("roc_auc", 0), reverse=True)
     results["champion"] = {
         "classifier": champion, "regressor": champion_reg,
-        "selected_by": "scenario-B roc_auc (clf) / mae (reg) — rule fixed before the run",
+        "selected_by": "roc_auc on the inner temporal slice of B TRAIN (q0.75) — nested selection, B_test untouched (RR-19b); reg: B mae",
+        "inner_selection_auc": inner,
         "runner_up_classifier": runner_up,
         "delta_auc_vs_runner_up": (round(b_clf[champion]["roc_auc"] - b_clf[runner_up]["roc_auc"], 4)
                                    if runner_up else None),
-        "note": "see outputs/bootstrap_ci.json for the CI of the champion-vs-runner-up AUC delta",
+        "b_test_ranking_for_transparency": test_ranked,
+        "same_champion_as_b_test_ranking": bool(test_ranked[0] == champion),
+        "note": "see outputs/bootstrap_ci.json for the CI of the champion-vs-runner-up AUC delta (task- and project-level)",
     }
     print(f"\n[champion] clf={champion}  reg={champion_reg}  "
           f"(runner-up {runner_up}, ΔAUC {results['champion']['delta_auc_vs_runner_up']})")
@@ -322,12 +341,7 @@ def main():
     # on the latest slice — the distribution closest to deployment time. Sigmoid chosen
     # over isotonic for robustness on the modest calibration slice (isotonic evaluated,
     # comparable). Test data is never touched.
-    fit_parts, cal_parts = [], []
-    for _, g in B_tr.groupby("project"):
-        c = g["rel_position"].quantile(0.75)
-        fit_parts.append(g[g["rel_position"] <= c])
-        cal_parts.append(g[g["rel_position"] > c])
-    B_fit, B_cal = pd.concat(fit_parts), pd.concat(cal_parts)
+    # (B_fit / B_cal computed above — the same slice selected the champion)
     champ_fit = clone(tuned[champion])
     champ_fit.fit(B_fit, B_fit["is_late"])
     calibrated = CalibratedClassifierCV(FrozenEstimator(champ_fit), method="sigmoid")
@@ -442,7 +456,8 @@ def main():
         "metrics_A_repeated": results["classification"]["A_repeated"].get(champion),
         "protocol_note": ("RR-19 (7.9.26): hyperparameters tuned INSIDE each scenario's own train set (GroupKFold by project); "
                           "until then they were tuned on A train, which overlaps 80% of B test — measured non-optimistic. "
-                          "Gate rule for A moved from a single split to 20 repeated splits."),
+                          "Gate rule for A moved from a single split to 20 repeated splits. RR-19b: model family selected on the inner "
+                          "slice of B train, not on B test (nested selection)."),
         "features_num": NUM_FEATURES, "features_cat": CAT_FEATURES,
         "seed": SEED,
         "trained_on": "B_temporal train split (deployment scenario)",

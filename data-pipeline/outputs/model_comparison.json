@@ -159,6 +159,12 @@
         "max": 0.876,
         "share_above_chance": 0.55
       }
+    },
+    "B_inner_selection": {
+      "logistic_regression": 0.6897,
+      "random_forest": 0.8305,
+      "xgboost": 0.8154,
+      "mlp": 0.786
     }
   },
   "regression": {
@@ -234,10 +240,23 @@
   "champion": {
     "classifier": "random_forest",
     "regressor": "random_forest_reg",
-    "selected_by": "scenario-B roc_auc (clf) / mae (reg) \u2014 rule fixed before the run",
+    "selected_by": "roc_auc on the inner temporal slice of B TRAIN (q0.75) \u2014 nested selection, B_test untouched (RR-19b); reg: B mae",
+    "inner_selection_auc": {
+      "logistic_regression": 0.6897,
+      "random_forest": 0.8305,
+      "xgboost": 0.8154,
+      "mlp": 0.786
+    },
     "runner_up_classifier": "xgboost",
     "delta_auc_vs_runner_up": 0.0034,
-    "note": "see outputs/bootstrap_ci.json for the CI of the champion-vs-runner-up AUC delta"
+    "b_test_ranking_for_transparency": [
+      "random_forest",
+      "xgboost",
+      "mlp",
+      "logistic_regression"
+    ],
+    "same_champion_as_b_test_ranking": true,
+    "note": "see outputs/bootstrap_ci.json for the CI of the champion-vs-runner-up AUC delta (task- and project-level)"
   },
   "calibration": {
     "method": "sigmoid (Platt)",

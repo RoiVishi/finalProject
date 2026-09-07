@@ -30,6 +30,14 @@
       "model__min_samples_leaf": 2,
       "model__n_estimators": 300
     },
+    "selected_by": "roc_auc on the inner temporal slice of B TRAIN (q0.75) — nested selection, B_test untouched (RR-19b); reg: B mae",
+    "inner_selection_auc": {
+      "logistic_regression": 0.6897,
+      "random_forest": 0.8305,
+      "xgboost": 0.8154,
+      "mlp": 0.786
+    },
+    "same_champion_as_b_test_ranking": true,
     "runner_up": "xgboost",
     "delta_auc_vs_runner_up": 0.0034,
     "statistically_tied": true,
