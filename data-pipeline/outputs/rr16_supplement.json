@@ -1,0 +1,42 @@
+{
+ "rf_variant_A": {
+  "pooled_auc_calibrated": 0.7603,
+  "pooled_brier": 0.104,
+  "by_source": {
+   "jpf": {
+    "auc": 0.7508,
+    "brier_pooled_calibrator": 0.0998,
+    "brier_source_calibrator": 0.1001,
+    "brier_dummy": 0.1077,
+    "n_cal_source": 42586
+   },
+   "own": {
+    "auc": 0.7215,
+    "brier_pooled_calibrator": 0.205,
+    "brier_source_calibrator": 0.1932,
+    "brier_dummy": 0.2092,
+    "n_cal_source": 1586
+   }
+  }
+ },
+ "rf_variant_B": {
+  "pooled_auc_calibrated": 0.7609,
+  "pooled_brier": 0.1037,
+  "by_source": {
+   "jpf": {
+    "auc": 0.7511,
+    "brier_pooled_calibrator": 0.0996,
+    "brier_source_calibrator": 0.0999,
+    "brier_dummy": 0.1077,
+    "n_cal_source": 42586
+   },
+   "own": {
+    "auc": 0.7154,
+    "brier_pooled_calibrator": 0.2011,
+    "brier_source_calibrator": 0.1896,
+    "brier_dummy": 0.2092,
+    "n_cal_source": 1586
+   }
+  }
+ }
+}

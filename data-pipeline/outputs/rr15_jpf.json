@@ -1,0 +1,1162 @@
+{
+ "served_version": "v4",
+ "excluded_contained_projects": [
+  "15614",
+  "1819",
+  "1820",
+  "1821",
+  "1822",
+  "2598",
+  "2599",
+  "2639",
+  "2640",
+  "2641",
+  "2642",
+  "2643",
+  "2651",
+  "2664",
+  "2665",
+  "2666",
+  "2684",
+  "2843",
+  "4761",
+  "589",
+  "628",
+  "6883",
+  "757"
+ ],
+ "n_projects": 255,
+ "n_labeled": 253527,
+ "base_rate_is_late": 0.1576,
+ "pooled_auc_is_late": 0.6614,
+ "pooled_auc_is_late_7": 0.6953,
+ "pooled_auc_grew": 0.6895,
+ "brier_served": 0.152,
+ "brier_dummy_jpf_rate": 0.1328,
+ "mean_predicted_p": 0.2214,
+ "ref_auc_planned_duration_days": 0.6852,
+ "ref_auc_upstream_cnt": 0.5335,
+ "ref_auc_total_float_hr": 0.5383,
+ "per_project": {
+  "n_projects": 148,
+  "median_auc": 0.6043,
+  "q25": 0.5356,
+  "q75": 0.6714,
+  "min": 0.2175,
+  "max": 0.88,
+  "share_above_chance": 0.831,
+  "weighted_mean_auc": 0.6204
+ },
+ "by_project_type": {
+  "Airports": {
+   "n": 8833,
+   "projects": 3,
+   "late_rate": 0.163,
+   "auc": 0.4736
+  },
+  "Clean Water Networks": {
+   "n": 11554,
+   "projects": 150,
+   "late_rate": 0.141,
+   "auc": 0.6617
+  },
+  "Electical Networks": {
+   "n": 6940,
+   "projects": 3,
+   "late_rate": 0.035,
+   "auc": 0.3032
+  },
+  "Highways": {
+   "n": 9310,
+   "projects": 8,
+   "late_rate": 0.232,
+   "auc": 0.6273
+  },
+  "Light Rail - Overground": {
+   "n": 72372,
+   "projects": 13,
+   "late_rate": 0.146,
+   "auc": 0.6958
+  },
+  "Light Rail - Underground (exc. Tunnelling)": {
+   "n": 19482,
+   "projects": 3,
+   "late_rate": 0.203,
+   "auc": 0.6345
+  },
+  "Light Rail - Underground (inc. Tunnelling)": {
+   "n": 17535,
+   "projects": 3,
+   "late_rate": 0.209,
+   "auc": 0.5905
+  },
+  "Marine Projects - Ports/Coastal Defence etc.": {
+   "n": 32294,
+   "projects": 5,
+   "late_rate": 0.196,
+   "auc": 0.6349
+  },
+  "Power Generation - Coal": {
+   "n": 1935,
+   "projects": 1,
+   "late_rate": 0.095,
+   "auc": 0.4987
+  },
+  "Power Generation - Renewables": {
+   "n": 511,
+   "projects": 1,
+   "late_rate": 0.321,
+   "auc": 0.4179
+  },
+  "Rail": {
+   "n": 43272,
+   "projects": 57,
+   "late_rate": 0.053,
+   "auc": 0.5462
+  },
+  "Waste Water Treatment": {
+   "n": 29489,
+   "projects": 8,
+   "late_rate": 0.249,
+   "auc": 0.5845
+  }
+ },
+ "per_project_table": [
+  {
+   "project": "10030",
+   "type": "Rail",
+   "n": 954,
+   "late_rate": 0.005,
+   "auc": 0.7258
+  },
+  {
+   "project": "10227",
+   "type": "Rail",
+   "n": 1078,
+   "late_rate": 0.13,
+   "auc": 0.5327
+  },
+  {
+   "project": "10290",
+   "type": "Power Generation - Coal",
+   "n": 1935,
+   "late_rate": 0.095,
+   "auc": 0.4987
+  },
+  {
+   "project": "10291",
+   "type": "Rail",
+   "n": 105,
+   "late_rate": 0.067,
+   "auc": 0.5022
+  },
+  {
+   "project": "10389",
+   "type": "Light Rail - Overground",
+   "n": 11685,
+   "late_rate": 0.129,
+   "auc": 0.6883
+  },
+  {
+   "project": "10459",
+   "type": "Light Rail - Overground",
+   "n": 15861,
+   "late_rate": 0.179,
+   "auc": 0.6907
+  },
+  {
+   "project": "11046",
+   "type": "Light Rail - Underground (inc. Tunnelling)",
+   "n": 1343,
+   "late_rate": 0.175,
+   "auc": 0.7343
+  },
+  {
+   "project": "11424",
+   "type": "Rail",
+   "n": 1113,
+   "late_rate": 0.013,
+   "auc": 0.5357
+  },
+  {
+   "project": "11594",
+   "type": "Rail",
+   "n": 273,
+   "late_rate": 0.385,
+   "auc": 0.662
+  },
+  {
+   "project": "11619",
+   "type": "Rail",
+   "n": 457,
+   "late_rate": 0.022,
+   "auc": 0.3452
+  },
+  {
+   "project": "11783",
+   "type": "Rail",
+   "n": 360,
+   "late_rate": 0.031,
+   "auc": 0.5955
+  },
+  {
+   "project": "1221",
+   "type": "Waste Water Treatment",
+   "n": 4692,
+   "late_rate": 0.24,
+   "auc": 0.6621
+  },
+  {
+   "project": "12900",
+   "type": "Rail",
+   "n": 2706,
+   "late_rate": 0.041,
+   "auc": 0.3952
+  },
+  {
+   "project": "12903",
+   "type": "Rail",
+   "n": 634,
+   "late_rate": 0.069,
+   "auc": 0.6596
+  },
+  {
+   "project": "12911",
+   "type": "Rail",
+   "n": 279,
+   "late_rate": 0.047,
+   "auc": 0.5561
+  },
+  {
+   "project": "13136",
+   "type": "Rail",
+   "n": 339,
+   "late_rate": 0.086,
+   "auc": 0.5007
+  },
+  {
+   "project": "13467",
+   "type": "Rail",
+   "n": 639,
+   "late_rate": 0.031,
+   "auc": 0.6325
+  },
+  {
+   "project": "14434",
+   "type": "Rail",
+   "n": 242,
+   "late_rate": 0.05,
+   "auc": 0.5359
+  },
+  {
+   "project": "14606",
+   "type": "Rail",
+   "n": 215,
+   "late_rate": 0.042,
+   "auc": 0.6192
+  },
+  {
+   "project": "1588",
+   "type": "Clean Water Networks",
+   "n": 61,
+   "late_rate": 0.115,
+   "auc": 0.5278
+  },
+  {
+   "project": "1590",
+   "type": "Clean Water Networks",
+   "n": 205,
+   "late_rate": 0.029,
+   "auc": 0.5804
+  },
+  {
+   "project": "15900",
+   "type": "Rail",
+   "n": 152,
+   "late_rate": 0.092,
+   "auc": 0.5844
+  },
+  {
+   "project": "15997",
+   "type": "Light Rail - Underground (exc. Tunnelling)",
+   "n": 11992,
+   "late_rate": 0.229,
+   "auc": 0.5909
+  },
+  {
+   "project": "16075",
+   "type": "Rail",
+   "n": 2846,
+   "late_rate": 0.026,
+   "auc": 0.6947
+  },
+  {
+   "project": "1623",
+   "type": "Light Rail - Underground (inc. Tunnelling)",
+   "n": 8653,
+   "late_rate": 0.185,
+   "auc": 0.5633
+  },
+  {
+   "project": "1640",
+   "type": "Clean Water Networks",
+   "n": 160,
+   "late_rate": 0.05,
+   "auc": 0.6016
+  },
+  {
+   "project": "16461",
+   "type": "Rail",
+   "n": 1094,
+   "late_rate": 0.086,
+   "auc": 0.7468
+  },
+  {
+   "project": "16799",
+   "type": "Rail",
+   "n": 376,
+   "late_rate": 0.066,
+   "auc": 0.6726
+  },
+  {
+   "project": "1687",
+   "type": "Clean Water Networks",
+   "n": 120,
+   "late_rate": 0.142,
+   "auc": 0.5366
+  },
+  {
+   "project": "1690",
+   "type": "Clean Water Networks",
+   "n": 88,
+   "late_rate": 0.08,
+   "auc": 0.8325
+  },
+  {
+   "project": "1691",
+   "type": "Clean Water Networks",
+   "n": 95,
+   "late_rate": 0.116,
+   "auc": 0.6683
+  },
+  {
+   "project": "1692",
+   "type": "Clean Water Networks",
+   "n": 107,
+   "late_rate": 0.159,
+   "auc": 0.633
+  },
+  {
+   "project": "1693",
+   "type": "Clean Water Networks",
+   "n": 108,
+   "late_rate": 0.102,
+   "auc": 0.6706
+  },
+  {
+   "project": "1694",
+   "type": "Clean Water Networks",
+   "n": 86,
+   "late_rate": 0.081,
+   "auc": 0.519
+  },
+  {
+   "project": "1695",
+   "type": "Clean Water Networks",
+   "n": 93,
+   "late_rate": 0.086,
+   "auc": 0.5419
+  },
+  {
+   "project": "1704",
+   "type": "Clean Water Networks",
+   "n": 30,
+   "late_rate": 0.2,
+   "auc": 0.5833
+  },
+  {
+   "project": "1706",
+   "type": "Clean Water Networks",
+   "n": 35,
+   "late_rate": 0.286,
+   "auc": 0.796
+  },
+  {
+   "project": "17549",
+   "type": "Light Rail - Underground (exc. Tunnelling)",
+   "n": 42,
+   "late_rate": 0.19,
+   "auc": 0.5625
+  },
+  {
+   "project": "1840",
+   "type": "Rail",
+   "n": 1320,
+   "late_rate": 0.093,
+   "auc": 0.5814
+  },
+  {
+   "project": "1983",
+   "type": "Clean Water Networks",
+   "n": 94,
+   "late_rate": 0.085,
+   "auc": 0.5814
+  },
+  {
+   "project": "2004",
+   "type": "Clean Water Networks",
+   "n": 88,
+   "late_rate": 0.148,
+   "auc": 0.4979
+  },
+  {
+   "project": "2101",
+   "type": "Clean Water Networks",
+   "n": 95,
+   "late_rate": 0.126,
+   "auc": 0.5828
+  },
+  {
+   "project": "2104",
+   "type": "Clean Water Networks",
+   "n": 93,
+   "late_rate": 0.108,
+   "auc": 0.5235
+  },
+  {
+   "project": "2107",
+   "type": "Clean Water Networks",
+   "n": 93,
+   "late_rate": 0.118,
+   "auc": 0.4922
+  },
+  {
+   "project": "2118",
+   "type": "Clean Water Networks",
+   "n": 2838,
+   "late_rate": 0.28,
+   "auc": 0.6274
+  },
+  {
+   "project": "2163",
+   "type": "Clean Water Networks",
+   "n": 92,
+   "late_rate": 0.109,
+   "auc": 0.6341
+  },
+  {
+   "project": "2164",
+   "type": "Clean Water Networks",
+   "n": 88,
+   "late_rate": 0.08,
+   "auc": 0.6252
+  },
+  {
+   "project": "2165",
+   "type": "Clean Water Networks",
+   "n": 85,
+   "late_rate": 0.059,
+   "auc": 0.6725
+  },
+  {
+   "project": "2166",
+   "type": "Clean Water Networks",
+   "n": 90,
+   "late_rate": 0.089,
+   "auc": 0.6113
+  },
+  {
+   "project": "2167",
+   "type": "Clean Water Networks",
+   "n": 108,
+   "late_rate": 0.102,
+   "auc": 0.5881
+  },
+  {
+   "project": "2168",
+   "type": "Clean Water Networks",
+   "n": 88,
+   "late_rate": 0.068,
+   "auc": 0.7439
+  },
+  {
+   "project": "2169",
+   "type": "Clean Water Networks",
+   "n": 90,
+   "late_rate": 0.067,
+   "auc": 0.5694
+  },
+  {
+   "project": "2170",
+   "type": "Clean Water Networks",
+   "n": 84,
+   "late_rate": 0.095,
+   "auc": 0.662
+  },
+  {
+   "project": "219058",
+   "type": "Marine Projects - Ports/Coastal Defence etc.",
+   "n": 58,
+   "late_rate": 0.155,
+   "auc": 0.7234
+  },
+  {
+   "project": "22181",
+   "type": "Highways",
+   "n": 525,
+   "late_rate": 0.286,
+   "auc": 0.7399
+  },
+  {
+   "project": "2240",
+   "type": "Electical Networks",
+   "n": 202,
+   "late_rate": 0.149,
+   "auc": 0.3495
+  },
+  {
+   "project": "2270",
+   "type": "Clean Water Networks",
+   "n": 87,
+   "late_rate": 0.115,
+   "auc": 0.5779
+  },
+  {
+   "project": "2271",
+   "type": "Clean Water Networks",
+   "n": 110,
+   "late_rate": 0.073,
+   "auc": 0.7237
+  },
+  {
+   "project": "2272",
+   "type": "Clean Water Networks",
+   "n": 92,
+   "late_rate": 0.109,
+   "auc": 0.6494
+  },
+  {
+   "project": "2274",
+   "type": "Clean Water Networks",
+   "n": 88,
+   "late_rate": 0.091,
+   "auc": 0.8094
+  },
+  {
+   "project": "2275",
+   "type": "Clean Water Networks",
+   "n": 86,
+   "late_rate": 0.07,
+   "auc": 0.7042
+  },
+  {
+   "project": "2276",
+   "type": "Clean Water Networks",
+   "n": 84,
+   "late_rate": 0.083,
+   "auc": 0.6735
+  },
+  {
+   "project": "2277",
+   "type": "Clean Water Networks",
+   "n": 98,
+   "late_rate": 0.163,
+   "auc": 0.6654
+  },
+  {
+   "project": "2278",
+   "type": "Clean Water Networks",
+   "n": 99,
+   "late_rate": 0.141,
+   "auc": 0.7181
+  },
+  {
+   "project": "2279",
+   "type": "Clean Water Networks",
+   "n": 89,
+   "late_rate": 0.124,
+   "auc": 0.4709
+  },
+  {
+   "project": "2280",
+   "type": "Clean Water Networks",
+   "n": 86,
+   "late_rate": 0.128,
+   "auc": 0.5976
+  },
+  {
+   "project": "2282",
+   "type": "Clean Water Networks",
+   "n": 87,
+   "late_rate": 0.126,
+   "auc": 0.5048
+  },
+  {
+   "project": "2283",
+   "type": "Clean Water Networks",
+   "n": 89,
+   "late_rate": 0.18,
+   "auc": 0.4615
+  },
+  {
+   "project": "2284",
+   "type": "Clean Water Networks",
+   "n": 93,
+   "late_rate": 0.151,
+   "auc": 0.6257
+  },
+  {
+   "project": "2285",
+   "type": "Clean Water Networks",
+   "n": 89,
+   "late_rate": 0.09,
+   "auc": 0.6227
+  },
+  {
+   "project": "2292",
+   "type": "Clean Water Networks",
+   "n": 97,
+   "late_rate": 0.124,
+   "auc": 0.6353
+  },
+  {
+   "project": "2295",
+   "type": "Clean Water Networks",
+   "n": 84,
+   "late_rate": 0.071,
+   "auc": 0.6688
+  },
+  {
+   "project": "2296",
+   "type": "Clean Water Networks",
+   "n": 92,
+   "late_rate": 0.098,
+   "auc": 0.6292
+  },
+  {
+   "project": "2297",
+   "type": "Clean Water Networks",
+   "n": 94,
+   "late_rate": 0.117,
+   "auc": 0.5947
+  },
+  {
+   "project": "2302",
+   "type": "Clean Water Networks",
+   "n": 92,
+   "late_rate": 0.076,
+   "auc": 0.5235
+  },
+  {
+   "project": "2304",
+   "type": "Clean Water Networks",
+   "n": 89,
+   "late_rate": 0.067,
+   "auc": 0.5974
+  },
+  {
+   "project": "2305",
+   "type": "Clean Water Networks",
+   "n": 96,
+   "late_rate": 0.156,
+   "auc": 0.5868
+  },
+  {
+   "project": "2306",
+   "type": "Clean Water Networks",
+   "n": 91,
+   "late_rate": 0.121,
+   "auc": 0.5352
+  },
+  {
+   "project": "2307",
+   "type": "Clean Water Networks",
+   "n": 96,
+   "late_rate": 0.083,
+   "auc": 0.419
+  },
+  {
+   "project": "2308",
+   "type": "Clean Water Networks",
+   "n": 88,
+   "late_rate": 0.091,
+   "auc": 0.6023
+  },
+  {
+   "project": "2312",
+   "type": "Clean Water Networks",
+   "n": 105,
+   "late_rate": 0.124,
+   "auc": 0.6263
+  },
+  {
+   "project": "2315",
+   "type": "Clean Water Networks",
+   "n": 90,
+   "late_rate": 0.089,
+   "auc": 0.7149
+  },
+  {
+   "project": "2328",
+   "type": "Clean Water Networks",
+   "n": 94,
+   "late_rate": 0.074,
+   "auc": 0.4631
+  },
+  {
+   "project": "2329",
+   "type": "Clean Water Networks",
+   "n": 84,
+   "late_rate": 0.095,
+   "auc": 0.5485
+  },
+  {
+   "project": "2334",
+   "type": "Clean Water Networks",
+   "n": 82,
+   "late_rate": 0.061,
+   "auc": 0.5481
+  },
+  {
+   "project": "2336",
+   "type": "Clean Water Networks",
+   "n": 81,
+   "late_rate": 0.111,
+   "auc": 0.4213
+  },
+  {
+   "project": "2338",
+   "type": "Clean Water Networks",
+   "n": 95,
+   "late_rate": 0.126,
+   "auc": 0.5301
+  },
+  {
+   "project": "2339",
+   "type": "Clean Water Networks",
+   "n": 95,
+   "late_rate": 0.105,
+   "auc": 0.5606
+  },
+  {
+   "project": "2341",
+   "type": "Clean Water Networks",
+   "n": 89,
+   "late_rate": 0.09,
+   "auc": 0.6844
+  },
+  {
+   "project": "2342",
+   "type": "Clean Water Networks",
+   "n": 90,
+   "late_rate": 0.056,
+   "auc": 0.6729
+  },
+  {
+   "project": "2382",
+   "type": "Highways",
+   "n": 1302,
+   "late_rate": 0.219,
+   "auc": 0.6393
+  },
+  {
+   "project": "2496",
+   "type": "Clean Water Networks",
+   "n": 32,
+   "late_rate": 0.219,
+   "auc": 0.3429
+  },
+  {
+   "project": "2600",
+   "type": "Clean Water Networks",
+   "n": 49,
+   "late_rate": 0.224,
+   "auc": 0.3971
+  },
+  {
+   "project": "2601",
+   "type": "Clean Water Networks",
+   "n": 52,
+   "late_rate": 0.327,
+   "auc": 0.4622
+  },
+  {
+   "project": "2611",
+   "type": "Clean Water Networks",
+   "n": 30,
+   "late_rate": 0.167,
+   "auc": 0.88
+  },
+  {
+   "project": "2618",
+   "type": "Clean Water Networks",
+   "n": 60,
+   "late_rate": 0.217,
+   "auc": 0.671
+  },
+  {
+   "project": "2620",
+   "type": "Clean Water Networks",
+   "n": 32,
+   "late_rate": 0.25,
+   "auc": 0.4115
+  },
+  {
+   "project": "26256",
+   "type": "Light Rail - Overground",
+   "n": 395,
+   "late_rate": 0.023,
+   "auc": 0.5046
+  },
+  {
+   "project": "26689",
+   "type": "Rail",
+   "n": 13419,
+   "late_rate": 0.039,
+   "auc": 0.5186
+  },
+  {
+   "project": "26874",
+   "type": "Marine Projects - Ports/Coastal Defence etc.",
+   "n": 11811,
+   "late_rate": 0.198,
+   "auc": 0.5994
+  },
+  {
+   "project": "28338",
+   "type": "Rail",
+   "n": 184,
+   "late_rate": 0.484,
+   "auc": 0.6043
+  },
+  {
+   "project": "3039",
+   "type": "Highways",
+   "n": 441,
+   "late_rate": 0.222,
+   "auc": 0.4493
+  },
+  {
+   "project": "31187",
+   "type": "Marine Projects - Ports/Coastal Defence etc.",
+   "n": 227,
+   "late_rate": 0.229,
+   "auc": 0.7132
+  },
+  {
+   "project": "31193",
+   "type": "Rail",
+   "n": 57,
+   "late_rate": 0.158,
+   "auc": 0.728
+  },
+  {
+   "project": "31898",
+   "type": "Marine Projects - Ports/Coastal Defence etc.",
+   "n": 14924,
+   "late_rate": 0.182,
+   "auc": 0.6389
+  },
+  {
+   "project": "33314",
+   "type": "Rail",
+   "n": 128,
+   "late_rate": 0.133,
+   "auc": 0.2523
+  },
+  {
+   "project": "33317",
+   "type": "Light Rail - Overground",
+   "n": 392,
+   "late_rate": 0.112,
+   "auc": 0.4883
+  },
+  {
+   "project": "3425",
+   "type": "Power Generation - Renewables",
+   "n": 511,
+   "late_rate": 0.321,
+   "auc": 0.4179
+  },
+  {
+   "project": "3448",
+   "type": "Electical Networks",
+   "n": 1407,
+   "late_rate": 0.081,
+   "auc": 0.5387
+  },
+  {
+   "project": "3517",
+   "type": "Light Rail - Underground (inc. Tunnelling)",
+   "n": 7539,
+   "late_rate": 0.243,
+   "auc": 0.5949
+  },
+  {
+   "project": "36832",
+   "type": "Light Rail - Overground",
+   "n": 7625,
+   "late_rate": 0.152,
+   "auc": 0.6587
+  },
+  {
+   "project": "3818",
+   "type": "Rail",
+   "n": 780,
+   "late_rate": 0.032,
+   "auc": 0.6115
+  },
+  {
+   "project": "3872",
+   "type": "Light Rail - Overground",
+   "n": 4794,
+   "late_rate": 0.111,
+   "auc": 0.731
+  },
+  {
+   "project": "3897",
+   "type": "Waste Water Treatment",
+   "n": 2289,
+   "late_rate": 0.266,
+   "auc": 0.6899
+  },
+  {
+   "project": "3898",
+   "type": "Waste Water Treatment",
+   "n": 1461,
+   "late_rate": 0.318,
+   "auc": 0.6576
+  },
+  {
+   "project": "39242",
+   "type": "Light Rail - Overground",
+   "n": 1998,
+   "late_rate": 0.236,
+   "auc": 0.7074
+  },
+  {
+   "project": "40751",
+   "type": "Airports",
+   "n": 4522,
+   "late_rate": 0.263,
+   "auc": 0.7235
+  },
+  {
+   "project": "4115",
+   "type": "Clean Water Networks",
+   "n": 78,
+   "late_rate": 0.103,
+   "auc": 0.5357
+  },
+  {
+   "project": "4181",
+   "type": "Airports",
+   "n": 1000,
+   "late_rate": 0.188,
+   "auc": 0.5507
+  },
+  {
+   "project": "44625",
+   "type": "Rail",
+   "n": 697,
+   "late_rate": 0.007,
+   "auc": 0.2175
+  },
+  {
+   "project": "4517",
+   "type": "Airports",
+   "n": 3311,
+   "late_rate": 0.018,
+   "auc": 0.5721
+  },
+  {
+   "project": "4534",
+   "type": "Highways",
+   "n": 608,
+   "late_rate": 0.11,
+   "auc": 0.6289
+  },
+  {
+   "project": "4582",
+   "type": "Waste Water Treatment",
+   "n": 8747,
+   "late_rate": 0.139,
+   "auc": 0.5771
+  },
+  {
+   "project": "4694",
+   "type": "Rail",
+   "n": 1176,
+   "late_rate": 0.044,
+   "auc": 0.61
+  },
+  {
+   "project": "5060",
+   "type": "Highways",
+   "n": 1302,
+   "late_rate": 0.164,
+   "auc": 0.4932
+  },
+  {
+   "project": "52324",
+   "type": "Light Rail - Overground",
+   "n": 3325,
+   "late_rate": 0.224,
+   "auc": 0.6786
+  },
+  {
+   "project": "5289",
+   "type": "Light Rail - Underground (exc. Tunnelling)",
+   "n": 7448,
+   "late_rate": 0.163,
+   "auc": 0.7164
+  },
+  {
+   "project": "533",
+   "type": "Waste Water Treatment",
+   "n": 8592,
+   "late_rate": 0.371,
+   "auc": 0.5393
+  },
+  {
+   "project": "5330",
+   "type": "Highways",
+   "n": 111,
+   "late_rate": 0.288,
+   "auc": 0.7298
+  },
+  {
+   "project": "5345",
+   "type": "Rail",
+   "n": 707,
+   "late_rate": 0.017,
+   "auc": 0.6658
+  },
+  {
+   "project": "539",
+   "type": "Light Rail - Overground",
+   "n": 12200,
+   "late_rate": 0.068,
+   "auc": 0.5535
+  },
+  {
+   "project": "54019",
+   "type": "Light Rail - Overground",
+   "n": 685,
+   "late_rate": 0.035,
+   "auc": 0.6219
+  },
+  {
+   "project": "5486",
+   "type": "Waste Water Treatment",
+   "n": 1211,
+   "late_rate": 0.278,
+   "auc": 0.6389
+  },
+  {
+   "project": "5521",
+   "type": "Waste Water Treatment",
+   "n": 2490,
+   "late_rate": 0.163,
+   "auc": 0.6925
+  },
+  {
+   "project": "56565",
+   "type": "Rail",
+   "n": 1960,
+   "late_rate": 0.044,
+   "auc": 0.6586
+  },
+  {
+   "project": "57315",
+   "type": "Light Rail - Overground",
+   "n": 5189,
+   "late_rate": 0.155,
+   "auc": 0.7223
+  },
+  {
+   "project": "5988",
+   "type": "Marine Projects - Ports/Coastal Defence etc.",
+   "n": 5274,
+   "late_rate": 0.229,
+   "auc": 0.7377
+  },
+  {
+   "project": "6571",
+   "type": "Highways",
+   "n": 314,
+   "late_rate": 0.255,
+   "auc": 0.3402
+  },
+  {
+   "project": "6743",
+   "type": "Rail",
+   "n": 275,
+   "late_rate": 0.036,
+   "auc": 0.6526
+  },
+  {
+   "project": "7352",
+   "type": "Electical Networks",
+   "n": 5331,
+   "late_rate": 0.018,
+   "auc": 0.4661
+  },
+  {
+   "project": "74401",
+   "type": "Light Rail - Overground",
+   "n": 4984,
+   "late_rate": 0.098,
+   "auc": 0.6859
+  },
+  {
+   "project": "7606",
+   "type": "Rail",
+   "n": 2628,
+   "late_rate": 0.122,
+   "auc": 0.7816
+  },
+  {
+   "project": "8051",
+   "type": "Rail",
+   "n": 106,
+   "late_rate": 0.057,
+   "auc": 0.3333
+  },
+  {
+   "project": "8770",
+   "type": "Rail",
+   "n": 539,
+   "late_rate": 0.039,
+   "auc": 0.6054
+  },
+  {
+   "project": "883",
+   "type": "Highways",
+   "n": 4707,
+   "late_rate": 0.262,
+   "auc": 0.6355
+  },
+  {
+   "project": "928",
+   "type": "Light Rail - Overground",
+   "n": 3239,
+   "late_rate": 0.337,
+   "auc": 0.6043
+  },
+  {
+   "project": "9583",
+   "type": "Rail",
+   "n": 2737,
+   "late_rate": 0.068,
+   "auc": 0.6898
+  },
+  {
+   "project": "9719",
+   "type": "Rail",
+   "n": 476,
+   "late_rate": 0.107,
+   "auc": 0.4644
+  }
+ ]
+}
