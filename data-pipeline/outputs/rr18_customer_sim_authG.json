@@ -1,0 +1,434 @@
+{
+ "config": {
+  "seed": 42,
+  "split": "same 60/40 project split as RR-17",
+  "train_projects": 46,
+  "train_rows": 2737,
+  "holdout_projects": 31,
+  "holdout_rows": 1976,
+  "holdout_base_rates": {
+   "is_late": 0.7136,
+   "is_late_7": 0.6083,
+   "grew": 0.2282
+  }
+ },
+ "part_A_new_project_holdout": {
+  "is_late": {
+   "reference_rel_position": 0.5649,
+   "reference_duration": 0.5172,
+   "dummy": {
+    "pooled": 0.5,
+    "per_project": {
+     "n_projects": 10,
+     "median": 0.5,
+     "q25": 0.5,
+     "q75": 0.5,
+     "share_above_chance": 0.0
+    },
+    "buildings": 0.5,
+    "by_group": {
+     "buildings": 0.5,
+     "civil": 0.5,
+     "industrial": 0.5
+    }
+   },
+   "logistic_regression": {
+    "pooled": 0.5239,
+    "per_project": {
+     "n_projects": 10,
+     "median": 0.6177,
+     "q25": 0.4378,
+     "q75": 0.7378,
+     "share_above_chance": 0.7
+    },
+    "buildings": 0.5339,
+    "by_group": {
+     "buildings": 0.5339,
+     "civil": 0.4341,
+     "industrial": 0.6985
+    }
+   },
+   "random_forest": {
+    "pooled": 0.6306,
+    "per_project": {
+     "n_projects": 10,
+     "median": 0.6135,
+     "q25": 0.4321,
+     "q75": 0.9124,
+     "share_above_chance": 0.6
+    },
+    "buildings": 0.7144,
+    "by_group": {
+     "buildings": 0.7144,
+     "civil": 0.418,
+     "industrial": 0.3341
+    }
+   },
+   "xgboost": {
+    "pooled": 0.6033,
+    "per_project": {
+     "n_projects": 10,
+     "median": 0.574,
+     "q25": 0.4687,
+     "q75": 0.8962,
+     "share_above_chance": 0.6
+    },
+    "buildings": 0.6441,
+    "by_group": {
+     "buildings": 0.6441,
+     "civil": 0.5784,
+     "industrial": 0.3653
+    }
+   }
+  },
+  "is_late_7": {
+   "reference_rel_position": 0.5727,
+   "reference_duration": 0.5208,
+   "dummy": {
+    "pooled": 0.5,
+    "per_project": {
+     "n_projects": 13,
+     "median": 0.5,
+     "q25": 0.5,
+     "q75": 0.5,
+     "share_above_chance": 0.0
+    },
+    "buildings": 0.5,
+    "by_group": {
+     "buildings": 0.5,
+     "civil": 0.5,
+     "industrial": 0.5
+    }
+   },
+   "logistic_regression": {
+    "pooled": 0.608,
+    "per_project": {
+     "n_projects": 13,
+     "median": 0.6247,
+     "q25": 0.3469,
+     "q75": 0.8185,
+     "share_above_chance": 0.615
+    },
+    "buildings": 0.5664,
+    "by_group": {
+     "buildings": 0.5664,
+     "civil": 0.4673,
+     "industrial": 0.8507
+    }
+   },
+   "random_forest": {
+    "pooled": 0.6185,
+    "per_project": {
+     "n_projects": 13,
+     "median": 0.8451,
+     "q25": 0.4199,
+     "q75": 0.934,
+     "share_above_chance": 0.615
+    },
+    "buildings": 0.729,
+    "by_group": {
+     "buildings": 0.729,
+     "civil": 0.4225,
+     "industrial": 0.1706
+    }
+   },
+   "xgboost": {
+    "pooled": 0.6242,
+    "per_project": {
+     "n_projects": 13,
+     "median": 0.6715,
+     "q25": 0.4242,
+     "q75": 0.9376,
+     "share_above_chance": 0.692
+    },
+    "buildings": 0.7102,
+    "by_group": {
+     "buildings": 0.7102,
+     "civil": 0.5326,
+     "industrial": 0.2038
+    }
+   }
+  },
+  "grew": {
+   "reference_rel_position": 0.608,
+   "reference_duration": 0.5921,
+   "dummy": {
+    "pooled": 0.5,
+    "per_project": {
+     "n_projects": 11,
+     "median": 0.5,
+     "q25": 0.5,
+     "q75": 0.5,
+     "share_above_chance": 0.0
+    },
+    "buildings": 0.5,
+    "by_group": {
+     "buildings": 0.5,
+     "civil": 0.5,
+     "industrial": 0.5
+    }
+   },
+   "logistic_regression": {
+    "pooled": 0.5799,
+    "per_project": {
+     "n_projects": 11,
+     "median": 0.5773,
+     "q25": 0.4299,
+     "q75": 0.6031,
+     "share_above_chance": 0.545
+    },
+    "buildings": 0.5281,
+    "by_group": {
+     "buildings": 0.5281,
+     "civil": 0.5441,
+     "industrial": 0.5283
+    }
+   },
+   "random_forest": {
+    "pooled": 0.4681,
+    "per_project": {
+     "n_projects": 11,
+     "median": 0.5146,
+     "q25": 0.429,
+     "q75": 0.625,
+     "share_above_chance": 0.545
+    },
+    "buildings": 0.6474,
+    "by_group": {
+     "buildings": 0.6474,
+     "civil": 0.281,
+     "industrial": 0.426
+    }
+   },
+   "xgboost": {
+    "pooled": 0.4752,
+    "per_project": {
+     "n_projects": 11,
+     "median": 0.5631,
+     "q25": 0.4591,
+     "q75": 0.6594,
+     "share_above_chance": 0.636
+    },
+    "buildings": 0.6181,
+    "by_group": {
+     "buildings": 0.6181,
+     "civil": 0.2866,
+     "industrial": 0.4173
+    }
+   }
+  }
+ },
+ "part_B_within_project_scenarioB": {
+  "n_train": 2622,
+  "n_test": 1091,
+  "projects": 32,
+  "results": {
+   "is_late": {
+    "dummy": 0.5,
+    "logistic_regression": 0.5014,
+    "random_forest": 0.719,
+    "xgboost": 0.7904,
+    "reference_rel_position": 0.6497
+   },
+   "grew": {
+    "dummy": 0.5,
+    "logistic_regression": 0.5371,
+    "random_forest": 0.6628,
+    "xgboost": 0.6716,
+    "reference_rel_position": 0.5305
+   }
+  }
+ },
+ "part_C_learning_curve": {
+  "n_train_projects_available": 46,
+  "curve": {
+   "is_late": {
+    "5": {
+     "draws": 10,
+     "pooled_median": 0.5558,
+     "pooled_iqr": 0.0985,
+     "pooled_min": 0.4674,
+     "pooled_max": 0.665,
+     "per_project_median_of_medians": 0.6735,
+     "rows_median": 307
+    },
+    "10": {
+     "draws": 10,
+     "pooled_median": 0.5376,
+     "pooled_iqr": 0.0436,
+     "pooled_min": 0.473,
+     "pooled_max": 0.6422,
+     "per_project_median_of_medians": 0.6653,
+     "rows_median": 621
+    },
+    "20": {
+     "draws": 10,
+     "pooled_median": 0.6381,
+     "pooled_iqr": 0.0619,
+     "pooled_min": 0.5831,
+     "pooled_max": 0.7117,
+     "per_project_median_of_medians": 0.6872,
+     "rows_median": 1152
+    },
+    "40": {
+     "draws": 10,
+     "pooled_median": 0.6416,
+     "pooled_iqr": 0.0496,
+     "pooled_min": 0.5977,
+     "pooled_max": 0.6927,
+     "per_project_median_of_medians": 0.6176,
+     "rows_median": 2275
+    },
+    "46": {
+     "draws": 1,
+     "pooled_median": 0.6306,
+     "pooled_iqr": 0.0,
+     "pooled_min": 0.6306,
+     "pooled_max": 0.6306,
+     "per_project_median_of_medians": 0.6135,
+     "rows_median": 2737
+    }
+   },
+   "grew": {
+    "5": {
+     "draws": 10,
+     "pooled_median": 0.4899,
+     "pooled_iqr": 0.1965,
+     "pooled_min": 0.3777,
+     "pooled_max": 0.6496,
+     "per_project_median_of_medians": 0.4701,
+     "rows_median": 307
+    },
+    "10": {
+     "draws": 10,
+     "pooled_median": 0.4899,
+     "pooled_iqr": 0.1866,
+     "pooled_min": 0.3957,
+     "pooled_max": 0.6545,
+     "per_project_median_of_medians": 0.496,
+     "rows_median": 621
+    },
+    "20": {
+     "draws": 10,
+     "pooled_median": 0.4573,
+     "pooled_iqr": 0.0753,
+     "pooled_min": 0.3886,
+     "pooled_max": 0.6821,
+     "per_project_median_of_medians": 0.5249,
+     "rows_median": 1152
+    },
+    "40": {
+     "draws": 10,
+     "pooled_median": 0.4768,
+     "pooled_iqr": 0.0691,
+     "pooled_min": 0.4106,
+     "pooled_max": 0.5846,
+     "per_project_median_of_medians": 0.5412,
+     "rows_median": 2275
+    },
+    "46": {
+     "draws": 1,
+     "pooled_median": 0.4681,
+     "pooled_iqr": 0.0,
+     "pooled_min": 0.4681,
+     "pooled_max": 0.4681,
+     "per_project_median_of_medians": 0.5146,
+     "rows_median": 2737
+    }
+   }
+  }
+ },
+ "part_D_asof_combination": {
+  "holdout_instances": 17925,
+  "holdout_snapshots": 277,
+  "holdout_projects": 30,
+  "results": {
+   "is_late": {
+    "plan_time_model_alone": 0.3973,
+    "drift_rule_alone": 0.6615,
+    "share_finished_late_alone": 0.5952,
+    "plan_time_model_per_project": {
+     "n_projects": 9,
+     "median": 0.5246,
+     "q25": 0.2135,
+     "q75": 0.8658,
+     "share_above_chance": 0.556
+    },
+    "combination_model+drift_logistic": 0.6725,
+    "combination_per_project": {
+     "n_projects": 9,
+     "median": 0.5084,
+     "q25": 0.2903,
+     "q75": 0.6329,
+     "share_above_chance": 0.556
+    },
+    "combination_coefficients": {
+     "m": -0.254,
+     "median_start_slip_so_far": 0.824,
+     "share_finished_late_so_far": 0.288
+    },
+    "gain_over_drift_rule": 0.011
+   },
+   "grew": {
+    "plan_time_model_alone": 0.4534,
+    "drift_rule_alone": 0.5781,
+    "share_finished_late_alone": 0.5893,
+    "plan_time_model_per_project": {
+     "n_projects": 16,
+     "median": 0.526,
+     "q25": 0.3739,
+     "q75": 0.6564,
+     "share_above_chance": 0.562
+    },
+    "combination_model+drift_logistic": 0.5823,
+    "combination_per_project": {
+     "n_projects": 16,
+     "median": 0.5069,
+     "q25": 0.3715,
+     "q75": 0.6285,
+     "share_above_chance": 0.562
+    },
+    "combination_coefficients": {
+     "m": -0.163,
+     "median_start_slip_so_far": -0.066,
+     "share_finished_late_so_far": 0.628
+    },
+    "gain_over_drift_rule": 0.0042
+   }
+  }
+ },
+ "part_E_customer_calibration": {
+  "n_fit": 2088,
+  "n_cal": 649,
+  "holdout": {
+   "is_late": {
+    "brier_dummy": 0.2044,
+    "brier_uncalibrated": 0.2271,
+    "brier_calibrated": 0.34,
+    "mean_p_calibrated": 0.3667,
+    "base_rate": 0.7136,
+    "auc_calibrated": 0.6753
+   },
+   "grew": {
+    "brier_dummy": 0.1761,
+    "brier_uncalibrated": 0.2278,
+    "brier_calibrated": 0.1944,
+    "mean_p_calibrated": 0.1355,
+    "base_rate": 0.2282,
+    "auc_calibrated": 0.4666
+   }
+  }
+ },
+ "part_F_reverse_transfer_to_own": {
+  "n": 10609,
+  "pooled_auc": 0.4678,
+  "per_project": {
+   "n_projects": 9,
+   "median": 0.4066,
+   "q25": 0.3321,
+   "q75": 0.4422,
+   "share_above_chance": 0.111
+  },
+  "note": "DSLIB-only RF (is_late) scored on our labeled corpus; v4 on DSLIB gave 0.389 (RR-17)"
+ }
+}

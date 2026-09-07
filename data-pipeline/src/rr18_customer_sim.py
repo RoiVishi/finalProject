@@ -27,6 +27,7 @@ Run: python rr18_customer_sim.py <dslib_labeled.csv> <asof_instances.csv> <own_l
 
 from __future__ import annotations
 import json
+import os
 import sys
 import warnings
 from pathlib import Path
@@ -156,6 +157,12 @@ def fit(est, X, y):
 dsl = pd.read_csv(DSL, dtype={"project": str})
 dsl["project"] = "dslib::" + dsl["project"]
 dsl["task_type"] = "NA"
+# 7.9.26 audit follow-up: DSLIB flags each project's tracking authenticity (G/Y/O). With DSLIB_AUTH_G=1 the run is
+# restricted to the 77 construction projects with authentic tracking (G) and writes *_authG outputs.
+AUTH_G = bool(os.environ.get("DSLIB_AUTH_G"))
+if AUTH_G:
+    dsl = dsl[dsl["auth_tracking"] == "G"].copy()
+SUFFIX = "_authG" if AUTH_G else ""
 lab = dsl[dsl["is_late"].notna()].copy()
 for lb in ("is_late", "is_late_7", "grew"):
     lab[lb] = lab[lb].astype(int)
@@ -412,5 +419,5 @@ R["part_F_reverse_transfer_to_own"] = dict(
     note="DSLIB-only RF (is_late) scored on our labeled corpus; v4 on DSLIB gave 0.389 (RR-17)",
 )
 print("F", R["part_F_reverse_transfer_to_own"])
-json.dump(R, open(OUT / "rr18_customer_sim.json", "w"), indent=1, default=str)
+json.dump(R, open(OUT / f"rr18_customer_sim{SUFFIX}.json", "w"), indent=1, default=str)
 print("saved")

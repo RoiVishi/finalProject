@@ -38,6 +38,7 @@ Run: python rr17_dslib_eval.py <own_labeled.csv> <jpf_labeled.csv> <dslib_labele
 
 from __future__ import annotations
 import json
+import os
 import sys
 import warnings
 from pathlib import Path
@@ -119,6 +120,12 @@ dsl = pd.read_csv(DSL, dtype={"project": str})
 dsl["project_code"] = dsl["project"]
 dsl["project"] = "dslib::" + dsl["project"]
 dsl["task_type"] = np.nan
+# 7.9.26 audit follow-up: DSLIB flags each project's tracking authenticity (G/Y/O). With DSLIB_AUTH_G=1 the run is
+# restricted to the 77 construction projects with authentic tracking (G) and writes *_authG outputs.
+AUTH_G = bool(os.environ.get("DSLIB_AUTH_G"))
+if AUTH_G:
+    dsl = dsl[dsl["auth_tracking"] == "G"].copy()
+SUFFIX = "_authG" if AUTH_G else ""
 for d in (own, jpf):
     if "is_late_7" not in d:
         d["is_late_7"] = (
@@ -603,5 +610,5 @@ for lbl in ("is_late", "grew"):
     D["results"][lbl] = res
     print("Part D", lbl, json.dumps(res))
 R["part_D_asof_snapshots"] = D
-json.dump(R, open(OUT / "rr17_dslib.json", "w"), indent=1, default=str)
-print("saved", OUT / "rr17_dslib.json")
+json.dump(R, open(OUT / f"rr17_dslib{SUFFIX}.json", "w"), indent=1, default=str)
+print("saved", OUT / f"rr17_dslib{SUFFIX}.json")
