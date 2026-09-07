@@ -119,8 +119,35 @@ def main() -> int:
         "note": "tie ⇒ champion stands on the pre-registered rule (B roc_auc), not on evidence of superiority",
     }
 
-    out = {"config": {"seed": SEED, "B": B, "n_test": n, "method": "paired bootstrap over test tasks"},
-           "brier": brier_part, "auc_champion_vs_runner_up": auc_part}
+    # ---------- part 3: PROJECT-level (cluster) bootstrap — 7.9.26 audit finding ----------
+    # Tasks of one project are not independent, so resampling tasks understates the uncertainty.
+    # Resample whole projects with replacement (11 clusters) and recompute the same quantities.
+    proj = te["project"].to_numpy()
+    uniq = np.unique(proj)
+    members = {u: np.flatnonzero(proj == u) for u in uniq}
+    cl_delta, cl_brier, cl_dcal = [], [], []
+    for _ in range(B):
+        pick = rng.choice(uniq, size=len(uniq), replace=True)
+        ii = np.concatenate([members[u] for u in pick])
+        yb = y[ii]
+        if yb.min() == yb.max():
+            continue
+        cl_delta.append(roc_auc_score(yb, probas[champ][ii]) - roc_auc_score(yb, probas[runner][ii]))
+        cl_brier.append(((p_served[ii] - yb) ** 2).mean())
+        cl_dcal.append(((p_served[ii] - yb) ** 2).mean() - ((r_cal - yb) ** 2).mean())
+    cl_delta, cl_brier, cl_dcal = map(np.array, (cl_delta, cl_brier, cl_dcal))
+    cluster_part = {
+        "method": f"cluster bootstrap over the {len(uniq)} test projects (resample projects, keep all their tasks)",
+        "n_projects": int(len(uniq)), "B_effective": int(len(cl_delta)),
+        "delta_auc_ci95": ci(cl_delta), "p_champion_better": round(float((cl_delta > 0).mean()), 4),
+        "statistically_tied": bool(ci(cl_delta)[0] < 0 < ci(cl_delta)[1]),
+        "ci95_model_brier": ci(cl_brier),
+        "delta_vs_cal_slice_dummy": {"ci95": ci(cl_dcal), "p_model_better": round(float((cl_dcal < 0).mean()), 4)},
+        "note": "the task-level intervals above are the optimistic (narrow) reading; quote both",
+    }
+
+    out = {"config": {"seed": SEED, "B": B, "n_test": n, "method": "paired bootstrap over test tasks (+ project-level cluster bootstrap, part 3)"},
+           "brier": brier_part, "auc_champion_vs_runner_up": auc_part, "project_level_bootstrap": cluster_part}
     (OUT / "bootstrap_ci.json").write_text(json.dumps(out, indent=2))
     print(json.dumps(out, indent=2))
     return 0

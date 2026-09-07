@@ -10,11 +10,11 @@ Runs in two places:
 Rules (all against results of the SAME run):
   B (deployment claim, selection fit): champion beats dummy on F1+AUC and LogReg on AUC.
   B (SERVED calibrated pipeline):      AUC beats dummy(0.5) and LogReg; F1 beats dummy.
-  A (transfer sanity):                 champion AUC > 0.5 (dummy). AUC only — the F1
-       clause was removed 16.8: with a majority-class dummy F1 of exactly 0.0, any model
-       that predicts zero positives in the hard transfer setting would fail on a
-       technicality; AUC is the threshold-free sanity signal. Single-split A is noisy —
-       a repeated-splits formulation is planned.
+  A (transfer sanity):                 champion median AUC over 20 repeated project splits > 0.5
+       AND >= 75% of splits above chance (RR-19, 7.9.26; before: a single split, which RR-13 showed
+       to range 0.18–0.88 by seed). AUC only — the F1 clause was removed 16.8: with a majority-class
+       dummy F1 of exactly 0.0, any model that predicts zero positives in the hard transfer setting
+       would fail on a technicality.
   Calibration:                         calibrated Brier <= uncalibrated (same base).
 
 The regression row does NOT block (PRED-11): it decides whether the regressor is
@@ -55,10 +55,21 @@ def check(r: dict) -> list[str]:
         if served.get("f1", 0) <= dummy_b.get("f1", 0):
             failures.append(f"[B served] calibrated f1={served.get('f1')} <= dummy")
 
-    # scenario A — sanity only (AUC > chance)
-    a = r["classification"]["A_cross_project"]
-    if a[champ].get("roc_auc", 0) <= 0.5:
-        failures.append(f"[A] champion {champ} roc_auc={a[champ].get('roc_auc')} <= chance 0.5")
+    # scenario A — transfer sanity on REPEATED project splits (RR-13 follow-up, adopted 7.9.26 / RR-19).
+    # A single GroupShuffleSplit is noise (RR-13: 0.18–0.88 across seeds); the rule is now the median
+    # over 20 splits > 0.5 AND at least 75% of splits above chance — stricter than the old single split
+    # (a model that passed by luck on one seed fails here; one that failed by luck on one seed passes).
+    # The single split is still reported for continuity but no longer blocks.
+    rep = r["classification"].get("A_repeated", {}).get(champ)
+    if rep is None:
+        a = r["classification"]["A_cross_project"]      # legacy artifacts without A_repeated
+        if a[champ].get("roc_auc", 0) <= 0.5:
+            failures.append(f"[A] champion {champ} roc_auc={a[champ].get('roc_auc')} <= chance 0.5")
+    else:
+        if rep.get("median_auc", 0) <= 0.5:
+            failures.append(f"[A repeated] champion {champ} median roc_auc={rep.get('median_auc')} <= chance 0.5")
+        if rep.get("share_above_chance", 0) < 0.75:
+            failures.append(f"[A repeated] champion {champ} only {rep.get('share_above_chance')} of splits above chance (< 0.75)")
 
     # PRED-13: calibration must not worsen Brier (scenario B)
     cal = r.get("calibration", {}).get("B_temporal", {})

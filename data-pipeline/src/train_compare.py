@@ -10,8 +10,14 @@ Two leakage-aware evaluation scenarios (RR-4):
      TEMPORAL_CUT share of each project's timeline, test on the rest) —
      "live project mid-execution"; this is the primary deployment claim.
 
-Hyperparameter tuning (RR-5): GridSearchCV with GroupKFold on the scenario-A
-training set; the best params are reused in scenario B for comparability.
+Hyperparameter tuning (RR-5, protocol fixed 7.9.26 — RR-19): GridSearchCV with
+GroupKFold on EACH scenario's OWN training set. Until 7.9.26 the grid was searched once
+on the scenario-A train set and the params reused in B; because 80% of the B test rows
+(2,481/3,108) sit inside A train, the four hyperparameters had "seen" B's test rows —
+a protocol-level leakage (weights never saw them). Measured effect: none in the
+optimistic direction — the A-chosen params (depth 3, lr 0.05) were the WORST of the
+four grid points on B test (0.7505 vs 0.757–0.762). Tuning on B train alone picks
+depth 6 / lr 0.05. Each scenario now sees only its own train rows at every stage.
 
 Registry (PRED-4): the champion pipelines (clf + reg) are written to
   ai-service/model/registry/<version>/ with meta.json holding config,
@@ -53,6 +59,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from xgboost import XGBClassifier, XGBRegressor
 
 SEED = 42
+N_REPEATED_A = 20           # scenario A: repeated GroupShuffleSplits for the gate (RR-19)
 TEMPORAL_Q = 0.7            # scenario B: per-project temporal quantile cut (train = earliest 70%
                             # of the project's own labeled activities by rel_position)
 MIN_LABELED = 30            # scenario B: project needs ≥30 labeled activities overall
@@ -205,7 +212,7 @@ def main():
                            "n_train": len(B_tr), "n_test": len(B_te),
                            "n_projects": len(B_projects), "projects": B_projects},
             "features_num": NUM_FEATURES, "features_cat": CAT_FEATURES,
-            "tuning": "GridSearchCV, GroupKFold(3) on scenario-A train; best params reused in B",
+            "tuning": "GridSearchCV, GroupKFold(3) by project INSIDE each scenario's own train set (RR-19, 7.9.26; before: tuned on A train and reused in B — 80% of B test rows were in A train)",
             "calibration": ("sigmoid (Platt) via CalibratedClassifierCV(FrozenEstimator): per-project temporal "
                             "sub-split of B train at q=0.75 — champion fitted on earlier part, calibrator on the "
                             "latest slice; evaluated on scenario B only (A test overlaps B train — see note); "
@@ -216,33 +223,58 @@ def main():
         "best_params": {},
     }
 
+    # RR-19 (7.9.26): tune INSIDE each scenario's own train set. GroupKFold by project keeps
+    # whole projects together in every fold; the scenario's test rows are never touched
+    # before the final scoring. results["best_params"] holds the B (deployment) choice,
+    # results["best_params_A"] the A choice — they may legitimately differ.
     tuned = {}
-    gkf = GroupKFold(n_splits=3)
-    for name, (est, grid) in classifier_zoo().items():
-        pipe = Pipeline([("prep", make_preprocessor()), ("model", est)])
-        if grid:
-            gs = GridSearchCV(pipe, grid, scoring="roc_auc", n_jobs=-1,
-                              cv=gkf.split(A_tr, A_tr["is_late"], groups=A_tr["project"]))
-            gs.fit(A_tr, A_tr["is_late"])
-            tuned[name] = gs.best_estimator_
-            results["best_params"][name] = {k: (v if isinstance(v, (int, float, str)) else str(v))
-                                            for k, v in gs.best_params_.items()}
-            print(f"[tune] {name}: {gs.best_params_} (cv auc={gs.best_score_:.4f})")
-        else:
-            pipe.fit(A_tr, A_tr["is_late"])
-            tuned[name] = pipe
-
+    results["best_params_A"] = {}
     for scen, (tr, te) in {"A_cross_project": (A_tr, A_te), "B_temporal": (B_tr, B_te)}.items():
-        for name, est in tuned.items():
-            model = est
-            if scen == "B_temporal":
-                model = clone(est)
-                model.fit(tr, tr["is_late"])
+        gkf = GroupKFold(n_splits=3)
+        for name, (est, grid) in classifier_zoo().items():
+            pipe = Pipeline([("prep", make_preprocessor()), ("model", est)])
+            if grid:
+                gs = GridSearchCV(pipe, grid, scoring="roc_auc", n_jobs=-1,
+                                  cv=gkf.split(tr, tr["is_late"], groups=tr["project"]))
+                gs.fit(tr, tr["is_late"])
+                model = gs.best_estimator_
+                params = {k: (v if isinstance(v, (int, float, str)) else str(v)) for k, v in gs.best_params_.items()}
+                (results["best_params"] if scen == "B_temporal" else results["best_params_A"])[name] = params
+                print(f"[tune {scen}] {name}: {gs.best_params_} (cv auc={gs.best_score_:.4f})")
+            else:
+                pipe.fit(tr, tr["is_late"])
+                model = pipe
             pred = model.predict(te)
             proba = model.predict_proba(te)[:, 1] if hasattr(model, "predict_proba") else None
             results["classification"][scen][name] = clf_metrics(te["is_late"], pred, proba)
             print(f"[clf {scen}] {name}: {results['classification'][scen][name]}")
-            tuned[name] = model if scen == "B_temporal" else tuned[name]
+            if scen == "B_temporal":
+                tuned[name] = model
+
+    # ---------- scenario A, repeated (RR-13 follow-up; the gate reads the champion's row) ----------
+    # 20 GroupShuffleSplits by project with the B-tuned params of each classifier. Reported: median AUC,
+    # IQR, min/max, share of splits above chance. Replaces the single seed-42 split as the blocking rule.
+    results["classification"]["A_repeated"] = {}
+    for name, est in tuned.items():
+        if name == "dummy_majority":
+            continue
+        aucs = []
+        for seed in range(N_REPEATED_A):
+            tr_i, te_i = next(GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=seed).split(lab, groups=lab["project"]))
+            a_tr, a_te = lab.iloc[tr_i], lab.iloc[te_i]
+            if a_te["is_late"].nunique() < 2:
+                continue
+            m = clone(est)
+            m.fit(a_tr, a_tr["is_late"])
+            aucs.append(roc_auc_score(a_te["is_late"], m.predict_proba(a_te)[:, 1]))
+        arr = np.array(aucs)
+        results["classification"]["A_repeated"][name] = {
+            "n_splits": int(len(arr)), "median_auc": round(float(np.median(arr)), 4),
+            "q25": round(float(np.percentile(arr, 25)), 4), "q75": round(float(np.percentile(arr, 75)), 4),
+            "min": round(float(arr.min()), 4), "max": round(float(arr.max()), 4),
+            "share_above_chance": round(float((arr > 0.5).mean()), 3),
+        }
+        print(f"[clf A_repeated] {name}: {results['classification']['A_repeated'][name]}")
 
     # ---------- regression ----------
     for scen, (tr, te) in {"A_cross_project": (A_tr, A_te), "B_temporal": (B_tr, B_te)}.items():
@@ -406,7 +438,11 @@ def main():
             "regression": b_reg[champion_reg],
         },
         "metrics_A_cross_project": {"classification": results["classification"]["A_cross_project"][champion],
-                                    "note": "single-split, unstable across models; repeated-splits experiment pending"},
+                                    "note": "single seed-42 split, reported for continuity only; the gate reads A_repeated (RR-19)"},
+        "metrics_A_repeated": results["classification"]["A_repeated"].get(champion),
+        "protocol_note": ("RR-19 (7.9.26): hyperparameters tuned INSIDE each scenario's own train set (GroupKFold by project); "
+                          "until then they were tuned on A train, which overlaps 80% of B test — measured non-optimistic. "
+                          "Gate rule for A moved from a single split to 20 repeated splits."),
         "features_num": NUM_FEATURES, "features_cat": CAT_FEATURES,
         "seed": SEED,
         "trained_on": "B_temporal train split (deployment scenario)",

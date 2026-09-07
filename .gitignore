@@ -11,6 +11,9 @@ data-pipeline/outputs/labeled_tasks.csv
 .DS_Store
 # exception: the SERVED artifact is small (XGBoost ~65KB) and CI must test the real model
 !ai-service/model/registry/v4/classifier.joblib
+# v5 (RR-19, 7.9.26): Random Forest champion, ~10MB compressed — committed as a documented size exception
+# (CI must test the real served model, REQUIRE_MODEL=1); Git LFS becomes the path if a version grows beyond ~20MB
+!ai-service/model/registry/v5/classifier.joblib
 # working-dir helpers (VM cannot unlink on this mount)
 _to_delete/
 ci.yml.sprint1

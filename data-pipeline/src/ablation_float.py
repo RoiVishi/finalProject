@@ -49,6 +49,18 @@ def champ_params():
     return {k.replace("model__", ""): v for k, v in r["best_params"][r["champion"]["classifier"]].items()}
 
 
+def champ_estimator():
+    """The current champion by name (RR-19: the champion is no longer hard-wired to XGBoost)."""
+    r = json.loads((OUT / "model_comparison.json").read_text())
+    name, params = r["champion"]["classifier"], champ_params()
+    if name == "xgboost":
+        return XGBClassifier(random_state=SEED, n_jobs=-1, eval_metric="logloss", tree_method="hist", **params)
+    if name == "random_forest":
+        from sklearn.ensemble import RandomForestClassifier
+        return RandomForestClassifier(class_weight="balanced", random_state=SEED, n_jobs=-1, **params)
+    raise ValueError(f"no builder for champion {name}")
+
+
 def evaluate(y, proba, thresh=0.5):
     pred = (proba >= thresh).astype(int)
     return {"auc": round(float(roc_auc_score(y, proba)), 4),
@@ -65,16 +77,14 @@ def main() -> int:
 
     # 1. full champion
     full = Pipeline([("prep", make_prep(NUM_FEATURES, CAT_FEATURES)),
-                     ("model", XGBClassifier(random_state=SEED, n_jobs=-1,
-                                             eval_metric="logloss", tree_method="hist", **params))])
+                     ("model", champ_estimator())])
     full.fit(tr, y_tr)
     results["champion_full"] = evaluate(y_te, full.predict_proba(te)[:, 1])
 
     # 2. ablation: no float
     num_nf = [f for f in NUM_FEATURES if f not in FLOAT_FEATURES]
     nofloat = Pipeline([("prep", make_prep(num_nf, CAT_FEATURES)),
-                        ("model", XGBClassifier(random_state=SEED, n_jobs=-1,
-                                                eval_metric="logloss", tree_method="hist", **params))])
+                        ("model", champ_estimator())])
     nofloat.fit(tr, y_tr)
     results["champion_no_float"] = evaluate(y_te, nofloat.predict_proba(te)[:, 1])
 

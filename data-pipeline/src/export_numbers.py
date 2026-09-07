@@ -66,7 +66,10 @@ def main() -> int:
         "baselines_B": {"dummy": b["dummy_majority"], "logreg": b["logistic_regression"],
                         "random_forest": b.get("random_forest"), "mlp": b.get("mlp")},
         "scenario_A": {"champion_auc": r["classification"]["A_cross_project"][champ].get("roc_auc"),
-                       "note": "single split — quote only alongside the RR-13 stability results"},
+                       "note": "single seed-42 split — continuity only; the gate and the documents quote scenario_A_repeated_RR19"},
+        "scenario_A_repeated_RR19": r["classification"].get("A_repeated", {}).get(champ),
+        "protocol_RR19": r["config"].get("tuning"),
+        "project_level_bootstrap": bs.get("project_level_bootstrap"),
         "scenario_A_stability_RR13": (lambda p: (
             {"repeated_splits": {m: v for m, v in json.loads(p.read_text())["repeated_splits"].items()},
              "lopo_champion_median_auc": json.loads(p.read_text())["lopo_champion"]["median_auc"],
@@ -165,6 +168,24 @@ def main() -> int:
             "reverse_transfer_to_own": {k: v for k, v in r["part_F_reverse_transfer_to_own"].items() if k != "note"},
             "status": "simulation only — no per-tenant training in the product yet; minimum ~20 customer projects before the gate opens"
             })(json.loads(p.read_text())) if p.exists() else None)(OUT / "rr18_customer_sim.json"),
+        # ---- 7.9.26 audit follow-up: DSLIB restricted to its 77 authentic-tracking (G) projects ----
+        "dslib_authentic_tracking_subset": (lambda p17, p18: (
+            {"note": "same protocols as RR-17/RR-18 with DSLIB filtered to auth_tracking == G (DSLIB_AUTH_G=1); compare with the full-corpus blocks above",
+             "rr17": (lambda r: {"labeled": r["dslib"]["labeled"], "projects": r["dslib"]["projects"],
+                 "v4_transfer_is_late_pooled": r["part_A_transfer"]["labels"]["is_late"]["v4"]["pooled"],
+                 "v4_transfer_is_late_per_project_median": r["part_A_transfer"]["labels"]["is_late"]["v4"]["per_project"]["median"],
+                 "v4_transfer_grew_pooled": r["part_A_transfer"]["labels"]["grew"]["v4"]["pooled"],
+                 "asof_plan_time_only": r["part_D_asof_snapshots"]["results"]["is_late"]["plan_time_only"]["auc"],
+                 "asof_plus_project_level": r["part_D_asof_snapshots"]["results"]["is_late"]["plan_time_plus_asof"]["auc"],
+                 "drift_rule": r["part_D_asof_snapshots"]["results"]["is_late"]["naive_rule_median_slip"]})(json.loads(p17.read_text())) if p17.exists() else None,
+             "rr18": (lambda r: {"train_projects": r["config"]["train_projects"], "holdout_projects": r["config"]["holdout_projects"],
+                 "new_project_holdout": {lb: {"pooled_auc": r["part_A_new_project_holdout"][lb]["random_forest"]["pooled"],
+                                              "per_project_median": r["part_A_new_project_holdout"][lb]["random_forest"]["per_project"]["median"]}
+                                         for lb in r["part_A_new_project_holdout"]},
+                 "learning_curve_pooled_median": {n: v["pooled_median"] for n, v in r["part_C_learning_curve"]["curve"]["is_late"].items()},
+                 "asof_drift_rule": r["part_D_asof_combination"]["results"]["is_late"]["drift_rule_alone"],
+                 "asof_combination": r["part_D_asof_combination"]["results"]["is_late"]["combination_model+drift_logistic"]})(json.loads(p18.read_text())) if p18.exists() else None}
+        ))(OUT / "rr17_dslib_authG.json", OUT / "rr18_customer_sim_authG.json"),
         "history": {"auc_2_projects": 0.828, "auc_13_projects": 0.768,
                     "auc_dedup_hardened": b[champ].get("roc_auc"),
                     "note": "each drop = a deliberate hardening; always the lower honest number was adopted"},

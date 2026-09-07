@@ -1,0 +1,106 @@
+{
+  "version": "v5",
+  "created_utc": "2026-09-07T14:57:01+00:00",
+  "feature_schema_version": "1.0",
+  "champion_classifier": "random_forest",
+  "champion_regressor": "random_forest_reg",
+  "calibration": {
+    "method": "sigmoid (Platt)",
+    "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
+    "evaluated_on": "B_temporal only (A test overlaps B train \u2014 evaluating there would be leakage)",
+    "n_fit": 5810,
+    "n_cal": 1586,
+    "B_temporal": {
+      "brier_uncalibrated_same_base": 0.2165,
+      "brier_calibrated": 0.1881,
+      "classification_calibrated": {
+        "accuracy": 0.6818,
+        "precision": 0.4776,
+        "recall": 0.7257,
+        "f1": 0.5761,
+        "roc_auc": 0.7694
+      }
+    }
+  },
+  "best_params": {
+    "model__max_features": "sqrt",
+    "model__min_samples_leaf": 2,
+    "model__n_estimators": 300
+  },
+  "served_metrics_B_temporal": {
+    "accuracy": 0.6818,
+    "precision": 0.4776,
+    "recall": 0.7257,
+    "f1": 0.5761,
+    "roc_auc": 0.7694
+  },
+  "served_brier_B_temporal": 0.1881,
+  "metrics_B_temporal": {
+    "classification_uncalibrated_full_train_fit_NOT_SERVED": {
+      "accuracy": 0.7021,
+      "precision": 0.5,
+      "recall": 0.6123,
+      "f1": 0.5505,
+      "roc_auc": 0.7655
+    },
+    "classification_calibrated": {
+      "accuracy": 0.6818,
+      "precision": 0.4776,
+      "recall": 0.7257,
+      "f1": 0.5761,
+      "roc_auc": 0.7694
+    },
+    "regression": {
+      "mae_days": 28.92,
+      "rmse_days": 53.32
+    }
+  },
+  "metrics_A_cross_project": {
+    "classification": {
+      "accuracy": 0.8078,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.1873
+    },
+    "note": "single seed-42 split, reported for continuity only; the gate reads A_repeated (RR-19)"
+  },
+  "metrics_A_repeated": {
+    "n_splits": 20,
+    "median_auc": 0.6418,
+    "q25": 0.542,
+    "q75": 0.7023,
+    "min": 0.2747,
+    "max": 0.8556,
+    "share_above_chance": 0.85
+  },
+  "protocol_note": "RR-19 (7.9.26): hyperparameters tuned INSIDE each scenario's own train set (GroupKFold by project); until then they were tuned on A train, which overlaps 80% of B test \u2014 measured non-optimistic. Gate rule for A moved from a single split to 20 repeated splits.",
+  "features_num": [
+    "planned_duration_days",
+    "total_float_hr",
+    "free_float_hr",
+    "rel_position",
+    "proj_n_tasks",
+    "proj_span_days",
+    "n_pred",
+    "n_succ",
+    "upstream_cnt",
+    "downstream_cnt"
+  ],
+  "features_cat": [
+    "task_type"
+  ],
+  "seed": 42,
+  "trained_on": "B_temporal train split (deployment scenario)",
+  "regression_deployed": false,
+  "excluded_duplicate_projects": [
+    "Baseline 15-11-2010",
+    "Beyti plant baseline -b(fm-baseline)",
+    "Enppi",
+    "HHI",
+    "MERGE PROJECTS",
+    "Ma'aden",
+    "el ezz warehouse",
+    "schedule of Medor"
+  ]
+}
