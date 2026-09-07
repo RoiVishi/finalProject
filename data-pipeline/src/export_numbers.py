@@ -98,6 +98,73 @@ def main() -> int:
                                        json.loads(p.read_text())[k].get("models", {}).items()}
                                    for k in ("model_slipped_new_cohort", "model_late_actual")}}
             if p.exists() else None))(OUT / "rr8_nyc.json"),
+
+        # ---- corpus expansion (2.9.26): Cambridge JPF — RR-15 transfer + RR-16 pooled retraining ----
+        "corpus_expansion_JPF": (lambda p15, p16, p16s, pe: (
+            {"source": "JPF Anonymised Project Data (Brilakis, Fitzsimmons & Lu 2020; Apollo doi:10.17863/CAM.53890; CC BY 4.0)",
+             "etl": json.loads(pe.read_text()) if pe.exists() else None,
+             "rr15_transfer_v4": (lambda r: {"n_projects": r["n_projects"], "n_labeled": r["n_labeled"],
+                 "base_rate": r["base_rate_is_late"], "pooled_auc_date_label": r["pooled_auc_is_late"],
+                 "pooled_auc_gt7d": r["pooled_auc_is_late_7"], "pooled_auc_duration_growth": r["pooled_auc_grew"],
+                 "duration_only_reference_auc": r["ref_auc_planned_duration_days"],
+                 "brier_served": r["brier_served"], "brier_dummy": r["brier_dummy_jpf_rate"],
+                 "per_project": {k: v for k, v in r["per_project"].items()},
+                 "excluded_contained_projects": len(r["excluded_contained_projects"])})(json.loads(p15.read_text())) if p15.exists() else None,
+             "rr16_corpus_v2": (lambda r, s: {"config": {k: v for k, v in r["config"].items() if k not in ("own_excluded", "jpf_excluded_contained")},
+                 "scenario_B_auc": {v: {m: r["variants"][v][m]["pooled_test"]["auc"] for m in r["variants"][v]} for v in r["variants"]},
+                 "own_domain_slice_auc": {v: {m: r["variants"][v][m]["own_slice"]["auc"] for m in r["variants"][v]} for v in r["variants"]},
+                 "jpf_slice_auc": {v: {m: r["variants"][v][m]["jpf_slice"]["auc"] for m in r["variants"][v]} for v in r["variants"]},
+                 "own_slice_f1_rf_B": r["variants"]["B"]["random_forest"]["own_slice"],
+                 "lopo": {k: v for k, v in r["lopo"].items() if k != "table"},
+                 "served_candidate_xgb_B": r["served_candidate"],
+                 "served_candidate_rf": s,
+                 "champion_by_prereg_rule": "random_forest (scenario-B AUC 0.784 vs XGBoost 0.749–0.761)",
+                 "status": "v5 CANDIDATE — not published to the live registry; adoption, per-domain calibration and artifact size pending advisor decision"
+                 })(json.loads(p16.read_text()), json.loads(p16s.read_text()) if p16s.exists() else None) if p16.exists() else None}
+        ))(OUT / "rr15_jpf.json", OUT / "rr16_corpus_v2.json", OUT / "rr16_supplement.json", OUT / "jpf_etl_summary.json"),
+
+        # ---- corpus expansion (2.9.26): Ghent DSLIB — RR-17 transfer, corpus v3, buildings calibrator, as-of on real snapshots ----
+        "corpus_expansion_DSLIB": (lambda p17, pe: (
+            {"source": "DSLIB v3.4 — Batselier & Vanhoucke 2015, IJPM 33(3) 697–710; OR-AS / Ghent University; per-project Excel exports",
+             "etl": json.loads(pe.read_text()) if pe.exists() else None,
+             "rr17": (lambda r: {
+                 "dslib_split": r["dslib"],
+                 "transfer_v4": {l: {"pooled_auc": r["part_A_transfer"]["labels"][l]["v4"]["pooled"],
+                                     "per_project": r["part_A_transfer"]["labels"][l]["v4"]["per_project"],
+                                     "buildings_auc": r["part_A_transfer"]["labels"][l]["by_group"]["buildings"]["v4"]} for l in r["part_A_transfer"]["labels"]},
+                 "transfer_v5_candidate": {l: {"pooled_auc": r["part_A_transfer"]["labels"][l]["v5_candidate"]["pooled"],
+                                               "buildings_auc": r["part_A_transfer"]["labels"][l]["by_group"]["buildings"]["v5_candidate"]} for l in r["part_A_transfer"]["labels"]},
+                 "v4_mean_predicted_p": r["part_A_transfer"]["labels"]["is_late"]["v4"]["mean_p"],
+                 "v4_brier_vs_dummy": [r["part_A_transfer"]["labels"]["is_late"]["v4"]["brier"], r["part_A_transfer"]["brier_dummy_is_late"]],
+                 "label_construct": r.get("post_hoc_label_construct"),
+                 "corpus_v3": {k: {"pooled_test_auc": v["pooled_test_auc"], "slices": v["slices"],
+                                   "dslib_holdout_all": {l: v["dslib_holdout"][l]["all"] for l in v["dslib_holdout"]},
+                                   "dslib_holdout_buildings": {l: v["dslib_holdout"][l]["by_group"]["buildings"] for l in v["dslib_holdout"]}}
+                               for k, v in r["part_B_corpus_v3"]["runs"].items()},
+                 "corpus_v3_references": r["part_B_corpus_v3"]["references"],
+                 "calibration": r["part_C_calibration"],
+                 "asof_snapshots": {k: v for k, v in r["part_D_asof_snapshots"].items()},
+                 "asof_post_hoc": r.get("post_hoc_part_D_variants"),
+                 "status": "RR-17 complete 2.9.26 — no registry change; frozen-baseline label is a different construct from the platform's updated-plan label; v6 not proposed"
+                 })(json.loads(p17.read_text())) if p17.exists() else None}
+        ))(OUT / "rr17_dslib.json", OUT / "dslib_etl_summary.json"),
+
+        # ---- RR-18 (2.9.26): per-customer model simulation on DSLIB (train on one customer's history only) ----
+        "customer_model_RR18": (lambda p: (lambda r: {
+            "config": r["config"],
+            "new_project_holdout": {l: {m: {"pooled_auc": r["part_A_new_project_holdout"][l][m]["pooled"],
+                                            "per_project_median": r["part_A_new_project_holdout"][l][m]["per_project"]["median"],
+                                            "buildings_auc": r["part_A_new_project_holdout"][l][m]["buildings"]}
+                                        for m in ("random_forest", "xgboost", "logistic_regression")}
+                                    for l in r["part_A_new_project_holdout"]},
+            "within_project_scenarioB": r["part_B_within_project_scenarioB"]["results"],
+            "learning_curve": {l: {n: {"pooled_median": v["pooled_median"], "per_project_median": v["per_project_median_of_medians"], "rows": v["rows_median"]}
+                                   for n, v in r["part_C_learning_curve"]["curve"][l].items()} for l in r["part_C_learning_curve"]["curve"]},
+            "asof_combination": {l: {k: v for k, v in r["part_D_asof_combination"]["results"][l].items() if not isinstance(v, dict)} for l in r["part_D_asof_combination"]["results"]},
+            "customer_calibration_holdout": r["part_E_customer_calibration"]["holdout"],
+            "reverse_transfer_to_own": {k: v for k, v in r["part_F_reverse_transfer_to_own"].items() if k != "note"},
+            "status": "simulation only — no per-tenant training in the product yet; minimum ~20 customer projects before the gate opens"
+            })(json.loads(p.read_text())) if p.exists() else None)(OUT / "rr18_customer_sim.json"),
         "history": {"auc_2_projects": 0.828, "auc_13_projects": 0.768,
                     "auc_dedup_hardened": b[champ].get("roc_auc"),
                     "note": "each drop = a deliberate hardening; always the lower honest number was adopted"},
