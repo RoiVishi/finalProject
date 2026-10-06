@@ -3,7 +3,8 @@ AI Service — task delay prediction API (FastAPI).
 
 PRED-1  /predict, /predict/batch — probability, label, risk level, estimated delay days
 PRED-2  /health                  — model availability + version
-PRED-3  /explain                 — SHAP top-k signed contributions in domain language
+PRED-3  /explain, /explain/batch — SHAP top-k signed contributions in domain language,
+                                   in calibrated-probability units (KAN-130)
 PRED-4  model registry           — loads newest ai-service/model/registry/<vN>/
 PRED-5  graceful degradation     — 503 with actionable message when no model exists
 
@@ -188,6 +189,11 @@ class Contribution(BaseModel):
 class Explanation(BaseModel):
     prediction: Prediction
     top_contributions: list[Contribution]
+    # KAN-130: contributions are in the SAME units as prediction.late_probability.
+    # base_probability + (sum of ALL contributions) == late_probability (up to rounding);
+    # top_contributions holds the top_k of them.
+    base_probability: float | None = None
+    contribution_space: str = "calibrated_probability"
     note: str
 
 
@@ -251,8 +257,10 @@ def _predict_core(reg: Registry, X: pd.DataFrame) -> list[Prediction]:
 def _unwrap_pipeline(clf):
     """Return the underlying (prep, model) pipeline, looking through a calibration wrapper.
 
-    PRED-13 note: SHAP explains the underlying tree model (margin space); the calibration
-    is a monotonic mapping on top, so contribution directions and ranking are unchanged.
+    SHAP is computed on the underlying tree model, whose output is the RAW (uncalibrated)
+    probability. That is NOT what the service serves (PRED-13 calibrates it), so the raw
+    contributions are mapped into calibrated-probability units by _to_calibrated_space()
+    before they leave the service (KAN-130).
     """
     pipeline = clf
     if clf.__class__.__name__ == "CalibratedClassifierCV":
@@ -275,6 +283,94 @@ def _explainer():
     raise HTTPException(501, detail=(
         f"SHAP explanation not supported for champion type {model.__class__.__name__}; "
         "retrain with a tree-based champion or extend the explainer."))
+
+
+def _calibrators(clf):
+    """Calibration maps raw -> served probability, or [] when the champion is not calibrated."""
+    if clf.__class__.__name__ != "CalibratedClassifierCV":
+        return []
+    return [cc.calibrators[0] for cc in clf.calibrated_classifiers_]
+
+
+def _calibrated(cals, x: float) -> float:
+    """Served probability for a raw model output x (mean over the calibrated folds)."""
+    return float(np.mean([c.predict(np.array([x]))[0] for c in cals]))
+
+
+def _to_calibrated_space(raw_sv: np.ndarray, base_raw: float, p_served: np.ndarray, cals):
+    """KAN-130: map raw-probability SHAP values into calibrated-probability units.
+
+    The calibrator is monotonic, so each feature keeps its direction and rank; the
+    contributions are rescaled by one factor per row so that
+        base_cal + sum(contributions) == p_served   exactly,
+    where base_cal is the calibrated value of the model's expected (base) output.
+    When the raw output equals the base (factor 0/0) the local slope of the
+    calibrator at the base is used instead.
+    """
+    if not cals:                                   # legacy / uncalibrated champion
+        return raw_sv, base_raw
+    base_cal = _calibrated(cals, base_raw)
+    p_raw = base_raw + raw_sv.sum(axis=1)
+    out = np.empty_like(raw_sv)
+    h = 1e-4
+    slope = (_calibrated(cals, base_raw + h) - _calibrated(cals, base_raw - h)) / (2 * h)
+    for i in range(raw_sv.shape[0]):
+        delta_raw = p_raw[i] - base_raw
+        k = (p_served[i] - base_cal) / delta_raw if abs(delta_raw) > 1e-9 else slope
+        out[i] = raw_sv[i] * k
+    return out, base_cal
+
+
+def _explain_rows(reg: Registry, X: pd.DataFrame, top_k: int) -> list[Explanation]:
+    """Exact TreeSHAP for every row in ONE explainer call (no per-request overhead)."""
+    predictions = _predict_core(reg, X)
+    explainer, prep, names = _explainer()
+    Xt = prep.transform(X)
+    Xt = Xt.toarray() if hasattr(Xt, "toarray") else np.asarray(Xt)
+    sv = explainer.shap_values(Xt)
+    # normalize shap output shape: list per class / (n, f, c) / (n, f)
+    if isinstance(sv, list):
+        sv = sv[1] if len(sv) > 1 else sv[0]
+    sv = np.asarray(sv)
+    if sv.ndim == 3:
+        sv = sv[:, :, 1]
+    ev = np.atleast_1d(np.asarray(explainer.expected_value, dtype=float))
+    base_raw = float(ev[1] if ev.size > 1 else ev[0])
+    p_served = reg.clf.predict_proba(X)[:, 1]
+    sv, base = _to_calibrated_space(sv, base_raw, p_served, _calibrators(reg.clf))
+
+    rows = X.to_dict(orient="records")
+    out = []
+    for i, prediction in enumerate(predictions):
+        agg: dict[str, float] = {}
+        for name, val in zip(names, sv[i]):
+            b = base_feature(name)
+            agg[b] = agg.get(b, 0.0) + float(val)
+        top = sorted(agg.items(), key=lambda kv: abs(kv[1]), reverse=True)[:top_k]
+        out.append(Explanation(
+            prediction=prediction,
+            top_contributions=[
+                Contribution(
+                    feature=f,
+                    label_en=DOMAIN_LABELS.get(f, (f, f))[0],
+                    label_he=DOMAIN_LABELS.get(f, (f, f))[1],
+                    value=rows[i].get(f),
+                    contribution=round(c, 4),
+                ) for f, c in top
+            ],
+            base_probability=round(base, 4),
+            note=("Contributions are in probability units: base_probability plus all "
+                  "contributions equals late_probability. Positive pushes toward delay; "
+                  "negative pushes toward on-time."),
+        ))
+    return out
+
+
+# Exact TreeSHAP on the v5 forest (300 deep trees) costs ~65 ms per activity; the batch
+# endpoint removes the per-request overhead but stays linear, so it is bounded. Explanations
+# are meant on demand (an activity or a zone panel), not for a whole project at once —
+# predictions for a whole project come from /predict/batch and /predict/project.
+MAX_EXPLAIN_BATCH = int(os.environ.get("MAX_EXPLAIN_BATCH", "200"))
 
 
 # ---------------------------------------------------------------- endpoints
@@ -380,41 +476,23 @@ def predict_project(payload: ProjectGraphPayload):
 
 @app.post("/explain", response_model=Explanation)
 def explain(task: TaskFeatures, top_k: int = Query(5, ge=1, le=len(DOMAIN_LABELS))):
-    """PRED-3: prediction + top-k signed SHAP contributions, aggregated per base feature."""
+    """PRED-3: prediction + top-k signed SHAP contributions, aggregated per base feature,
+    in calibrated-probability units (KAN-130)."""
     reg = get_registry()
-    X = pd.DataFrame([task.model_dump()])
-    prediction = _predict_core(reg, X)[0]
+    return _explain_rows(reg, pd.DataFrame([task.model_dump()]), top_k)[0]
 
-    explainer, prep, names = _explainer()
-    Xt = prep.transform(X)
-    Xt = Xt.toarray() if hasattr(Xt, "toarray") else np.asarray(Xt)
-    sv = explainer.shap_values(Xt)
-    # normalize shap output shape: list per class / (n, f, c) / (n, f)
-    if isinstance(sv, list):
-        sv = sv[1] if len(sv) > 1 else sv[0]
-    sv = np.asarray(sv)
-    if sv.ndim == 3:
-        sv = sv[:, :, 1]
-    row = sv[0]
 
-    agg: dict[str, float] = {}
-    for name, val in zip(names, row):
-        b = base_feature(name)
-        agg[b] = agg.get(b, 0.0) + float(val)
-
-    raw = task.model_dump()
-    top = sorted(agg.items(), key=lambda kv: abs(kv[1]), reverse=True)[:top_k]
-    contributions = [
-        Contribution(
-            feature=f,
-            label_en=DOMAIN_LABELS.get(f, (f, f))[0],
-            label_he=DOMAIN_LABELS.get(f, (f, f))[1],
-            value=raw.get(f),
-            contribution=round(c, 4),
-        ) for f, c in top
-    ]
-    return Explanation(
-        prediction=prediction,
-        top_contributions=contributions,
-        note="Positive contribution pushes toward delay; negative pushes toward on-time.",
-    )
+@app.post("/explain/batch", response_model=list[Explanation])
+def explain_batch(tasks: list[TaskFeatures],
+                  top_k: int = Query(5, ge=1, le=len(DOMAIN_LABELS))):
+    """KAN-130: explanations for several activities (e.g. a Twin zone) in one call.
+    Order and length preserved 1:1; empty list -> []; more than MAX_EXPLAIN_BATCH -> 413."""
+    if not tasks:
+        return []
+    if len(tasks) > MAX_EXPLAIN_BATCH:
+        raise HTTPException(413, detail=(
+            f"{len(tasks)} activities requested; /explain/batch accepts at most "
+            f"{MAX_EXPLAIN_BATCH} (MAX_EXPLAIN_BATCH). Request explanations per zone or "
+            "per activity; use /predict/batch for whole-project probabilities."))
+    reg = get_registry()
+    return _explain_rows(reg, pd.DataFrame([t.model_dump() for t in tasks]), top_k)
