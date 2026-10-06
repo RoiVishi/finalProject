@@ -433,14 +433,23 @@ export class TasksService {
     for (const r of results) {
       const task = byId.get(r.task_id);
       if (!task) continue;
-      task.reliability = r.reliability;
-      task.predictedAt = now;
+      task.lastPredictionAttemptAt = now;
       if (r.prediction) {
-        // TASK-5 traceability: every displayed number is attributable to a model version
+        // TASK-5 traceability: every displayed number is attributable to a
+        // model version and a time — so the time moves only with the number.
         task.lateProbability = r.prediction.late_probability;
         task.riskLevel = r.prediction.risk_level;
         task.modelVersion = r.prediction.model_version;
+        task.reliability = r.reliability;
+        task.predictionBasis = r.basis ?? null;
+        task.predictedAt = now;
+        task.lastPredictionOutcome = 'stored';
         updated += 1;
+      } else {
+        // KAN-127: abstention (COLD_START_POLICY=abstain). The previous number,
+        // its predictedAt and its reliability stay as they were; only the
+        // outcome records that there is no current prediction.
+        task.lastPredictionOutcome = 'abstained';
       }
       await this.repo.save(task);
     }
