@@ -47,7 +47,9 @@ export interface Prediction {
 
 export interface ProjectPrediction {
   task_id: string;
-  reliability: 'ok' | 'low_transfer_prior';
+  /** What the number rests on — never 'ok' since PRED-10 (7.9.26). */
+  reliability: 'within_project_history' | 'low_transfer_prior';
+  basis?: string;                      // e.g. 'cross_project_model'
   prediction: Prediction | null;       // null under abstain policy on young projects
   note: string | null;
 }
@@ -65,7 +67,8 @@ export class PredictionsService {
   /**
    * Predict for a whole project from raw entities (the PRED-9 path).
    * Callers must persist per task: late_probability, risk_level, reliability,
-   * model_version and predictedAt (= now) — required by TASK-5 traceability.
+   * basis, model_version and predictedAt — required by TASK-5 traceability.
+   * predictedAt moves only when a prediction is present (KAN-127).
    */
   async predictProject(payload: ProjectGraphPayload): Promise<ProjectPrediction[] | null> {
     try {

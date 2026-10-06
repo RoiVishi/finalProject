@@ -103,10 +103,35 @@ export class Task {
   @Column({ nullable: true })
   modelVersion: string;
 
-  /** Cold-start gate verdict from the AI service: 'ok' | 'low_transfer_prior'. */
+  /**
+   * What the cached number rests on, as reported by the AI service with it:
+   * 'within_project_history' | 'low_transfer_prior' (PRED-10). Never 'ok'.
+   */
   @Column({ nullable: true })
   reliability: string;
 
+  /** Basis of the cached number, e.g. 'cross_project_model' (AI service, 7.9.26). */
+  @Column({ nullable: true })
+  predictionBasis: string;
+
+  /**
+   * When the cached number was computed. Changes ONLY when a valid prediction
+   * is stored — an abstention never refreshes it (KAN-127), so an old number
+   * is never shown as if it were computed now.
+   */
   @Column({ type: 'timestamptz', nullable: true })
   predictedAt: Date;
+
+  /** When the AI service was last asked, whatever it answered (KAN-127). */
+  @Column({ type: 'timestamptz', nullable: true })
+  lastPredictionAttemptAt: Date;
+
+  /**
+   * Outcome of that last attempt: 'stored' (a new number replaced the cache)
+   * or 'abstained' (the service withheld a prediction; the cache above is
+   * the previous number, kept with its own predictedAt). See
+   * prediction-freshness.ts for how a reader tells the two apart.
+   */
+  @Column({ nullable: true })
+  lastPredictionOutcome: 'stored' | 'abstained';
 }
