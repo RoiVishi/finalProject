@@ -47,11 +47,31 @@ export class ProjectInvitationsController {
   }
 }
 
-/** Token-addressed: the holder acts on the invitation, not on the project. */
+/**
+ * Token-addressed: the holder acts on the invitation, not on the project.
+ * The /mine and /by-id routes serve the home screen (DASH-5): they act only on
+ * e-mail invitations addressed to the signed-in user.
+ */
 @Controller('invitations')
 @UseGuards(JwtAuthGuard)
 export class InvitationsController {
   constructor(private invitations: InvitationsService) {}
+
+  @Get('mine')
+  mine(@CurrentUser() me: AuthenticatedUser) {
+    return this.invitations.mine(me.userId);
+  }
+
+  @Post('by-id/:id/accept')
+  acceptById(@Param('id') id: string, @CurrentUser() me: AuthenticatedUser) {
+    return this.invitations.acceptById(id, me.userId);
+  }
+
+  @Post('by-id/:id/decline')
+  @HttpCode(204)
+  declineById(@Param('id') id: string, @CurrentUser() me: AuthenticatedUser) {
+    return this.invitations.declineById(id, me.userId);
+  }
 
   @Post(':token/accept')
   accept(@Param('token') token: string, @CurrentUser() me: AuthenticatedUser) {
