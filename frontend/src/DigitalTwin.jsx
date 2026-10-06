@@ -9,8 +9,11 @@ import { Canvas } from '@react-three/fiber';
 import React, { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import * as THREE from 'three';
 import { RoomSet } from './furniture.jsx';
+import { RISK_COLORS } from './ar/riskBands.js';
 
-const COLORS = { low: '#4caf50', medium: '#ff9800', high: '#f44336', done: '#90a4ae' };
+// AR-4 / PRED-11: the risk colour scale has exactly one definition, shared
+// with the AR renderer. Changing a colour or a band there changes both views.
+const COLORS = RISK_COLORS;
 const WINGS = ['מזרח', 'מערב'];
 const ROOM_TYPES = ['living', 'bedroom', 'dining', 'office'];
 
@@ -53,9 +56,9 @@ export function zonesFor(spec) {
   return out;
 }
 
-const floorY = (spec, f) => f * spec.floorHeight;
-const widthAt = (spec, f) => spec.baseWidth * spec.widthFactor(f);
-const zoneCenterX = (spec, f, zi) => (zi === 0 ? -1 : 1) * (widthAt(spec, f) / 4);
+export const floorY = (spec, f) => f * spec.floorHeight;
+export const widthAt = (spec, f) => spec.baseWidth * spec.widthFactor(f);
+export const zoneCenterX = (spec, f, zi) => (zi === 0 ? -1 : 1) * (widthAt(spec, f) / 4);
 
 /** Row of brick arches along a facade edge — the Penda Arcades signature. */
 function ArchRow({ w, fh, y, z, color, map }) {
