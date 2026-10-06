@@ -86,7 +86,7 @@ jobs:
       - name: Build frontend (skipped until scaffold exists)
         run: |
           if [ -f frontend/package.json ]; then
-            cd frontend && npm install && npm run build
+            cd frontend && npm install && npm run build && npm test
           else
             echo 'frontend/package.json not found — scaffold pending, build skipped'
           fi
