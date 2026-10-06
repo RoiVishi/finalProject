@@ -13,6 +13,7 @@ import { InvitationsService } from './invitations.service';
 import {
   buildLayout, expandZones, ProjectLayout, removedZoneIds, TwinZone,
 } from './layout';
+import { projectCardNumbers } from './project-card';
 import { ProjectMembersService } from './project-members.service';
 import { Project } from './project.entity';
 
@@ -120,11 +121,29 @@ export class ProjectsService {
   }
 
   /** Only live projects the user is an active member of. */
+  /**
+   * DASH-5 home screen: the user's projects, each with the card numbers the
+   * home screen shows - myRole, riskIndex (+ riskScope) and blockedCount.
+   * One query loads the tasks of all the user's projects.
+   */
   async findAllForUser(userId: string) {
-    const memberships = await this.members.listForUser(userId);
-    return memberships
-      .map((m) => m.project)
-      .filter((p): p is Project => Boolean(p) && !p.deletedAt);
+    const memberships = (await this.members.listForUser(userId))
+      .filter((m) => Boolean(m.project) && !m.project.deletedAt);
+    if (memberships.length === 0) return [];
+
+    const tasks = await this.tasks.find({
+      where: { project: { id: In(memberships.map((m) => m.project.id)) } },
+      relations: { project: true, assignee: true, predecessors: true },
+    });
+
+    return memberships.map((m) => ({
+      ...m.project,
+      myRole: m.role,
+      ...projectCardNumbers(
+        tasks.filter((t) => t.project?.id === m.project.id),
+        { userId, role: m.role },
+      ),
+    }));
   }
 
   /**
