@@ -105,6 +105,31 @@ describe('AUTH-4 — project invitations', () => {
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
+    it('refuses to revoke an invitation that belongs to another project (404)', async () => {
+      members.findActiveMembership.mockResolvedValue(owner);   // owner of p1 ...
+      const foreign = liveInvite({ id: 'i-other', project: { id: 'p2', name: 'אחר' } });
+      repo.findOne.mockImplementation(async ({ where }) =>
+        where.id === foreign.id && where.project?.id === foreign.project.id ? foreign : null);
+
+      // ... revoking p2's invitation through p1's route
+      await expect(service.revoke(PROJECT, 'u-owner', 'i-other'))
+        .rejects.toBeInstanceOf(NotFoundException);
+      expect(repo.update).not.toHaveBeenCalled();
+    });
+
+    it('revokes a pending invitation of the same project', async () => {
+      members.findActiveMembership.mockResolvedValue(owner);
+      const own = liveInvite();
+      repo.findOne.mockImplementation(async ({ where }) =>
+        where.id === own.id && where.project?.id === PROJECT ? own : null);
+
+      await service.revoke(PROJECT, 'u-owner', 'i1');
+
+      expect(repo.update).toHaveBeenCalledWith('i1', expect.objectContaining({
+        status: InvitationStatus.REVOKED,
+      }));
+    });
+
     it('revokes the previous active link before issuing a new one', async () => {
       members.findActiveMembership.mockResolvedValue(owner);
 
