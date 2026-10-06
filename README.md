@@ -15,6 +15,7 @@
 
 ```bash
 # המודל המאומן כבר בריפו (ai-service/model/registry/) — אין צורך לאמן.
+cp .env.example .env             # פעם אחת: ולמלא JWT_SECRET (openssl rand -hex 32)
 docker compose up --build        # מרים db + ai-service + backend
 
 # אימון מחדש מלא (משחזר את כל המספרים, seed 42):
@@ -95,3 +96,9 @@ python src/export_numbers.py     # outputs/numbers.json — מקור האמת ל
 - [x] Jira מקושר לדרישות; מסמך דרישות v1.9 (+ קו AR v1.4 — ממוזגים ל-v2.0)
 - [x] backend (202 בדיקות, CI) · frontend אב-טיפוס · סקר ספרות (18 מקורות + AR)
 - [ ] פרונט מול backend מקצה לקצה, פריסה לשרת מרוחק, XR מוגדר ומחובר לנתונים
+
+### משתני סביבה חובה (NFR-SEC-1/2)
+
+ה-backend **מסרב לעלות** בלי `JWT_SECRET` אקראי באורך 32 תווים לפחות — אין ערך ברירת מחדל בקוד.
+`CORS_ORIGINS` (מופרד בפסיקים, בלי `*`) קובע מאילו כתובות דפדפן מותר לקרוא ל-API; כשלא מוגדר — רק `http://localhost:5173`.
+הרצת backend בלי docker: `JWT_SECRET=$(openssl rand -hex 32) npm run start:dev`.

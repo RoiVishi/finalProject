@@ -63,10 +63,18 @@ export class PasswordResetService {
       throw new BadRequestException(INVALID_LINK);
     }
 
+    // Burn the link FIRST, and only if it is still unused: of two concurrent
+    // requests with the same link, exactly one wins the conditional update;
+    // the other sees affected = 0 and changes nothing.
+    const claim = await this.tokens.update(
+      { id: record.id, usedAt: IsNull() },
+      { usedAt: new Date() },
+    );
+    if (!claim.affected) throw new BadRequestException(INVALID_LINK);
+
     await this.users.updatePassword(
       record.user.id,
       await bcrypt.hash(newPassword, 10),
     );
-    await this.tokens.update(record.id, { usedAt: new Date() });
   }
 }

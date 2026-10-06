@@ -8,6 +8,7 @@ import { ProjectsModule } from '../projects/projects.module';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { requireJwtSecret } from './jwt-secret';
 import { JwtStrategy } from './jwt.strategy';
 import { PasswordResetToken } from './password-reset.entity';
 import { PasswordResetService } from './password-reset.service';
@@ -22,7 +23,7 @@ import { PasswordResetService } from './password-reset.service';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (cfg: ConfigService) => ({
-        secret: cfg.get('JWT_SECRET', 'dev-secret-change-me'),
+        secret: requireJwtSecret(cfg), // NFR-SEC-1/2: no fallback
         signOptions: { expiresIn: '12h' }, // AUTH-1
       }),
     }),

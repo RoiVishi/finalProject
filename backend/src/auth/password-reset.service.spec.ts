@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
+import { IsNull } from 'typeorm';
 import { MailService } from '../common/mail.service';
 import { hashToken } from '../common/token.util';
 import { PasswordResetService } from './password-reset.service';
@@ -18,7 +19,7 @@ describe('AUTH-7 — password reset via one-time link', () => {
     tokens = {
       create: jest.fn((d) => d),
       save: jest.fn(async (d) => ({ ...d, id: 't1' })),
-      update: jest.fn(),
+      update: jest.fn(async () => ({ affected: 1 })),
       findOne: jest.fn(),
     };
     users = { findByEmail: jest.fn(), updatePassword: jest.fn() };
@@ -90,7 +91,37 @@ describe('AUTH-7 — password reset via one-time link', () => {
       const [userId, hash] = users.updatePassword.mock.calls[0];
       expect(userId).toBe(USER.id);
       expect(await bcrypt.compare('NewPass123', hash)).toBe(true);
-      expect(tokens.update).toHaveBeenCalledWith('t1', { usedAt: expect.any(Date) });
+      expect(tokens.update).toHaveBeenCalledWith(
+        { id: 't1', usedAt: IsNull() }, { usedAt: expect.any(Date) },
+      );
+    });
+
+    it('lets only one of two concurrent requests with the same link change the password', async () => {
+      // Both requests read the token before either burned it ...
+      tokens.findOne.mockResolvedValue(valid());
+      // ... but the conditional update succeeds for exactly one of them.
+      tokens.update
+        .mockResolvedValueOnce({ affected: 1 })
+        .mockResolvedValueOnce({ affected: 0 });
+
+      const results = await Promise.allSettled([
+        service.confirm('raw-token', 'FirstPass123'),
+        service.confirm('raw-token', 'SecondPass123'),
+      ]);
+
+      expect(results.map((r) => r.status).sort()).toEqual(['fulfilled', 'rejected']);
+      expect(users.updatePassword).toHaveBeenCalledTimes(1);
+    });
+
+    it('burns the link before the password is changed', async () => {
+      tokens.findOne.mockResolvedValue(valid());
+      const order: string[] = [];
+      tokens.update.mockImplementation(async () => { order.push('burn'); return { affected: 1 }; });
+      users.updatePassword.mockImplementation(async () => { order.push('password'); });
+
+      await service.confirm('raw-token', 'NewPass123');
+
+      expect(order).toEqual(['burn', 'password']);
     });
 
     it('rejects an expired link', async () => {

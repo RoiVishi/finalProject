@@ -120,7 +120,11 @@ export class InvitationsService {
 
   async revoke(projectId: string, actorId: string, invitationId: string) {
     await this.requirePermission(projectId, actorId, ProjectAction.MANAGE_MEMBERS);
-    const invitation = await this.invitations.findOne({ where: { id: invitationId } });
+    // The permission above is for projectId, so the invitation must belong to
+    // it: an id from another project is "not found", never revocable.
+    const invitation = await this.invitations.findOne({
+      where: { id: invitationId, project: { id: projectId } },
+    });
     if (!invitation) throw new NotFoundException('ההזמנה לא נמצאה');
     if (invitation.status !== InvitationStatus.SENT) {
       throw new BadRequestException('ניתן לבטל רק הזמנה ממתינה');
