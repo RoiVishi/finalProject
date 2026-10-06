@@ -1,9 +1,17 @@
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import DigitalTwin, { DEMO_ZONES, zonesFor } from './DigitalTwin.jsx';
 import RealisticTwin from './RealisticTwin.jsx';
 import RoomView from './RoomView.jsx';
 import { PROJECTS } from './projects.js';
 import './theme.css';
+
+/**
+ * AR-1 / AR-7 / NFR-AR-3: the AR module is a separate chunk, imported only when
+ * the user asks for it. If this import fails or the module throws, everything
+ * below keeps rendering — nothing in the 2D Twin depends on it.
+ */
+const ARView = React.lazy(() => import('./ar/ARView.jsx'));
+import { useArSupport } from './ar/arSupport.js';
 
 const riskColors = { low: 'var(--success)', medium: 'var(--warning)', high: 'var(--danger)', done: 'var(--muted)' };
 const riskLabel = (r) => (r === 'high' ? 'גבוה' : r === 'medium' ? 'בינוני' : r === 'done' ? '—' : 'נמוך');
@@ -14,6 +22,8 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [realistic, setRealistic] = useState(false);
   const [inRoom, setInRoom] = useState(false);
+  const [inAr, setInAr] = useState(false);
+  const arSupport = useArSupport();
   const [fade, setFade] = useState(false);
   const zones = useMemo(() => zonesFor(project), [project]);
 
@@ -50,6 +60,17 @@ export default function App() {
           <DigitalTwin spec={project} selected={selected} onSelect={setSelected} />
         )}
 
+        {inAr && (
+          <Suspense fallback={null}>
+            <ARView
+              spec={project}
+              selected={selected}
+              onSelect={setSelected}
+              onExit={() => setInAr(false)}
+            />
+          </Suspense>
+        )}
+
         {/* transition overlay */}
         <div
           style={{
@@ -58,8 +79,17 @@ export default function App() {
           }}
         />
 
-        {!inRoom && (
+        {!inRoom && !inAr && (
           <div className="glass-chips">
+            {arSupport.status === 'supported' && (
+              <button
+                className="glass-chip"
+                onClick={() => setInAr(true)}
+                title="הצגת הבניין במציאות רבודה"
+              >
+                👓 צפייה ב-AR
+              </button>
+            )}
             {PROJECTS.some((p) => p.model) && (
               <button
                 className={`glass-chip ${realistic ? 'active' : ''}`}
