@@ -10,7 +10,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * Dev-only asset drop endpoint: POST /__save?name=<file> writes the request
  * body into public/rooms (images) or public/models (.glb). Used to deliver
  * AI-generated assets (Higgsfield/NanoBanana) straight into the project.
- * Strict filename whitelist; active only in `vite dev`.
+ * Strict filename whitelist; active only in `vite dev`, and only when explicitly
+ * enabled with ASSET_DROP=1 (e.g. `ASSET_DROP=1 npm run dev`) — off by default, so a
+ * dev server exposed on the network never accepts unauthenticated file writes.
  */
 function assetDropPlugin() {
   return {
@@ -41,7 +43,7 @@ function assetDropPlugin() {
 }
 
 export default defineConfig({
-  plugins: [react(), assetDropPlugin()],
+  plugins: [react(), ...(process.env.ASSET_DROP === '1' ? [assetDropPlugin()] : [])],
   server: {
     proxy: {
       '/api': { target: 'http://localhost:3000', changeOrigin: true, rewrite: (p) => p.replace(/^\/api/, '') },

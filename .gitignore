@@ -22,3 +22,6 @@ ci.yml.sprint1
 data-pipeline/outputs/dslib_labeled_tasks.csv
 data-pipeline/outputs/dslib_snapshots.csv
 data-pipeline/outputs/dslib_asof_instances.csv
+
+# personal Claude Code permissions — never shared
+.claude/settings.local.json
