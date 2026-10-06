@@ -1,6 +1,6 @@
 import {
   BadRequestException, ConflictException, ForbiddenException,
-  Injectable, NotFoundException,
+  Injectable, NotFoundException, ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
@@ -412,7 +412,7 @@ export class TasksService {
       where: { project: { id: projectId } },
       relations: { predecessors: true },
     });
-    if (tasks.length === 0) return { updated: 0, results: [] as ProjectPrediction[] };
+    if (tasks.length === 0) return { updated: 0, results: [] as ProjectPrediction[], aiAvailable: true };
 
     const completed = tasks.filter((t) => t.status === TaskStatus.COMPLETED).length;
     const payload: ProjectGraphPayload = {
@@ -429,7 +429,8 @@ export class TasksService {
     };
 
     const results = await this.predictions.predictProject(payload);
-    if (!results) return { updated: 0, results: [] as ProjectPrediction[] }; // NFR-REL-1: degrade quietly
+    // NFR-REL-1: the platform keeps working; the caller decides how to tell the user.
+    if (!results) return { updated: 0, results: [] as ProjectPrediction[], aiAvailable: false };
 
     const byId = new Map(tasks.map((t) => [t.id, t]));
     const now = new Date();
@@ -457,7 +458,7 @@ export class TasksService {
       }
       await this.repo.save(task);
     }
-    return { updated, results };
+    return { updated, results, aiAvailable: true };
   }
 
   /**
@@ -477,7 +478,27 @@ export class TasksService {
     if (role && predictionScope(role) === 'own' && task.assignee?.id !== userId) {
       throw new ForbiddenException('קבלן משנה רשאי לראות תחזיות למשימות שלו בלבד');
     }
-    const { results } = await this.refreshProjectPredictions(task.project.id);
+    const { results, aiAvailable } = await this.refreshProjectPredictions(task.project.id);
+    if (!aiAvailable) {
+      // PRED-5 / NFR-REL-1: say plainly that the service is down, and hand back
+      // the last number we hold - marked stale, never shown as current.
+      throw new ServiceUnavailableException({
+        statusCode: 503,
+        message: task.predictedAt
+          ? 'שירות החיזוי אינו זמין כרגע; מוצגת התחזית האחרונה שחושבה'
+          : 'שירות החיזוי אינו זמין כרגע ועדיין אין תחזית למשימה הזו',
+        stale: true,
+        lastKnown: task.predictedAt
+          ? {
+            lateProbability: task.lateProbability,
+            riskLevel: task.riskLevel,
+            reliability: task.reliability,
+            modelVersion: task.modelVersion,
+            predictedAt: task.predictedAt,
+          }
+          : null,
+      });
+    }
     const mine = results.find((r) => r.task_id === taskId) ?? null;
     return { task: task.name, prediction: mine?.prediction ?? null, reliability: mine?.reliability ?? null };
   }
