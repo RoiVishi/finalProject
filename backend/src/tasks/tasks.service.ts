@@ -9,6 +9,7 @@ import {
   ProjectGraphPayload,
   ProjectPrediction,
 } from '../predictions/predictions.service';
+import { scopeTaskForViewer, TaskViewer } from './prediction-scope';
 import { predictionScope } from '../auth/permissions';
 import { ActivityLogService } from '../common/activity-log.service';
 import { NotificationsService } from '../common/notifications.service';
@@ -292,10 +293,13 @@ export class TasksService {
     };
   }
 
-  /** One activity, with its computed blocking state (never a stored status). */
-  async findOne(taskId: string) {
+  /**
+   * One activity, with its computed blocking state (never a stored status).
+   * Prediction fields are scoped to the viewer (AUTH-2, KAN-128).
+   */
+  async findOne(taskId: string, viewer: TaskViewer) {
     const task = await this.requireTask(taskId);
-    return { ...task, ...this.blockersOf(task) };
+    return { ...scopeTaskForViewer(task, viewer), ...this.blockersOf(task) };
   }
 
   /**
@@ -303,12 +307,12 @@ export class TasksService {
    * board and the Twin badge both need it per row, and computing it here —
    * from data already loaded — costs one query rather than one per activity.
    */
-  async findByProject(projectId: string) {
+  async findByProject(projectId: string, viewer: TaskViewer) {
     const tasks = await this.repo.find({
       where: { project: { id: projectId } },
       relations: { predecessors: { assignee: true }, assignee: true },
     });
-    return tasks.map((task) => ({ ...task, ...this.blockersOf(task) }));
+    return tasks.map((task) => ({ ...scopeTaskForViewer(task, viewer), ...this.blockersOf(task) }));
   }
 
   /**
