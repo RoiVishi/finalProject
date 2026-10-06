@@ -29,10 +29,7 @@ services:
       interval: 10s
       retries: 12
 
-  # NOTE: enabled once the NestJS scaffold lands (backend/Dockerfile + package.json).
-  # Until then `docker compose up` runs db + ai-service only.
   backend:
-    profiles: ["full"]            # excluded from the default profile while scaffold is pending
     build: ./backend
     environment:
       DB_HOST: db
