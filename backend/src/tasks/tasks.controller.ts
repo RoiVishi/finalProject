@@ -29,14 +29,22 @@ export class TasksController {
 
   @Get()
   @RequirePermission(ProjectAction.VIEW_PROJECT, 'query')
-  byProject(@Query('projectId') projectId: string) {
-    return this.tasks.findByProject(projectId);
+  byProject(
+    @Query('projectId') projectId: string,
+    @CurrentMembership() membership: ProjectMember,
+    @CurrentUser() me: AuthenticatedUser,
+  ) {
+    return this.tasks.findByProject(projectId, { userId: me.userId, role: membership.role });
   }
 
   @Get(':id')
   @RequirePermission(ProjectAction.VIEW_PROJECT, 'task')
-  findOne(@Param('id') id: string) {
-    return this.tasks.findOne(id);
+  findOne(
+    @Param('id') id: string,
+    @CurrentMembership() membership: ProjectMember,
+    @CurrentUser() me: AuthenticatedUser,
+  ) {
+    return this.tasks.findOne(id, { userId: me.userId, role: membership.role });
   }
 
   @Patch(':id')

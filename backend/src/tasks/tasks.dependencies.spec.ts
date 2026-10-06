@@ -3,6 +3,8 @@ import { ProjectRole } from '../projects/project-member.entity';
 import { TasksService } from './tasks.service';
 import { TaskStatus } from './task.entity';
 
+const PM_VIEWER = { userId: 'u-pm', role: ProjectRole.PROJECT_MANAGER };
+
 const ACTOR = { userId: 'u-pm', role: ProjectRole.PROJECT_MANAGER };
 const PROJECT = 'p1';
 
@@ -173,7 +175,7 @@ describe('TASK-3 — dependencies between activities', () => {
     });
 
     it('carries a verdict on every row of the project list', async () => {
-      const list = await service.findByProject(PROJECT);
+      const list = await service.findByProject(PROJECT, PM_VIEWER);
 
       expect(list.find((t) => t.id === 'flooring')).toMatchObject({ blocked: true });
       expect(list.find((t) => t.id === 'structure')).toMatchObject({ blocked: false });

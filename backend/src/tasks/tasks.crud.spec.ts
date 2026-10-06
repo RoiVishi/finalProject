@@ -4,6 +4,8 @@ import { ProjectRole } from '../projects/project-member.entity';
 import { TasksService } from './tasks.service';
 import { TaskStatus, TradeCategory } from './task.entity';
 
+const PM_VIEWER = { userId: 'u-pm', role: ProjectRole.PROJECT_MANAGER };
+
 const ACTOR = { userId: 'u-pm', role: ProjectRole.PROJECT_MANAGER };
 const PROJECT = 'p1';
 
@@ -220,19 +222,19 @@ describe('TASK-2 — activity CRUD', () => {
         { id: 'b', name: 'חשמל', status: TaskStatus.PLANNED },
       ];
 
-      const task = await service.findOne('t1');
+      const task = await service.findOne('t1', PM_VIEWER);
 
       expect(task).toMatchObject({ blocked: true, blockingTasks: ['חשמל'] });
     });
 
     it('reports an activity with no open predecessors as free to start', async () => {
-      expect(await service.findOne('t1')).toMatchObject({ blocked: false, blockingTasks: [] });
+      expect(await service.findOne('t1', PM_VIEWER)).toMatchObject({ blocked: false, blockingTasks: [] });
     });
 
     it('404s on an activity that does not exist', async () => {
       repo.findOne.mockResolvedValueOnce(null);
 
-      await expect(service.findOne('nope')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.findOne('nope', PM_VIEWER)).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 
