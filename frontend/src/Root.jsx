@@ -3,16 +3,20 @@ import { AuthProvider, useAuth } from './auth/AuthContext.jsx';
 import { invitationToken, isPublicPath, safeNext } from './auth/redirect.js';
 import { he } from './i18n/he.js';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import HomePage from './pages/HomePage.jsx';
+import ProjectPage from './pages/ProjectPage.jsx';
+import WizardPage from './pages/WizardPage.jsx';
 import InvitationPage from './pages/InvitationPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
-import { navigate, useLocation } from './router.jsx';
+import { Link, navigate, useLocation } from './router.jsx';
+import { matchAppRoute } from './routes.js';
 
 /**
- * Top-level routing and the session gate. App.jsx (Twin + AR) is rendered
- * unchanged behind the gate, so this branch does not touch files the AR work
- * is changing.
+ * Top-level routing and the session gate. Signed-in routes are in routes.js:
+ * home (/), project wizard, project page, and /twin, where App.jsx (Twin + AR)
+ * is rendered unchanged — so this file never touches what the AR work changes.
  *
  * Dev-only escape hatch: `VITE_DEV_SKIP_AUTH=1 npm run dev` opens the app
  * without a backend (e.g. for AR work on an emulator). It is compiled out of
@@ -33,6 +37,7 @@ function SessionChip() {
   if (!user) return null;
   return (
     <div className="session-chip" dir="rtl">
+      <Link to="/" className="session-home">{he.home.title}</Link>
       <span dir="ltr">{user.email}</span>
       <button onClick={() => { logout(); navigate('/login', { replace: true }); }}>{he.common.logout}</button>
     </div>
@@ -63,6 +68,11 @@ function Routes() {
     return <Redirect to={`/login${next}`} />;
   }
 
+  const route = matchAppRoute(pathname);
+  if (route.name === 'home') return <HomePage />;
+  if (route.name === 'wizard') return <WizardPage />;
+  if (route.name === 'project') return <ProjectPage id={route.id} />;
+  if (route.name === 'notFound') return <Redirect to="/" />;
   return (
     <>
       <SessionChip />
