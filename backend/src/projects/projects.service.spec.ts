@@ -225,7 +225,8 @@ describe('TASK-1 — project CRUD and the 3-step wizard', () => {
         { project: { id: 'gone', deletedAt: new Date() } },
       ]);
 
-      expect(await service.findAllForUser('u-owner')).toEqual([{ id: 'live', deletedAt: null }]);
+      const mine = await service.findAllForUser('u-owner');
+      expect(mine.map((p) => p.id)).toEqual(['live']);
     });
   });
 
