@@ -1,0 +1,18 @@
+{
+  "name": "foresite-lint",
+  "private": true,
+  "description": "Repo-level JS/TS lint toolchain (NFR-MAIN-1). Components keep their own package.json; this one only holds ESLint.",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint frontend backend/src"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "eslint": "9.39.1",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "globals": "16.4.0",
+    "typescript": "5.4.5",
+    "typescript-eslint": "8.46.2"
+  }
+}

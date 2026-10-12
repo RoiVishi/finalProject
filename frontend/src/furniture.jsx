@@ -5,12 +5,10 @@
  */
 import React from 'react';
 import { useTexture } from '@react-three/drei';
-import * as THREE from 'three';
 
 const WOOD = '#8d6e63';
 const WOOD_DARK = '#4e342e';
 const FABRIC = '#37474f';
-const FABRIC_LIGHT = '#b0bec5';
 const ACCENT = '#1565c0';
 const WHITE = '#fafafa';
 const METAL = '#cfd8dc';
@@ -289,7 +287,7 @@ export function KitchenCounter({ position, rotation = [0, 0, 0] }) {
   );
 }
 
-export function Desk({ position, rotation = [0, 0, 0], active }) {
+export function Desk({ position, rotation = [0, 0, 0] }) {
   return (
     <group position={position} rotation={rotation}>
       {/* Wood Tabletop */}

@@ -30,6 +30,18 @@ python src/bias_and_alerts.py && python src/bootstrap_ci.py
 python src/export_numbers.py     # outputs/numbers.json — מקור האמת לכל מסמך
 ```
 
+### CI ובדיקות לפני PR (NFR-MAIN-1)
+
+כל PR ל-`main` עובר את כל הבדיקות האלה, ומיזוג חסום עד שכולן ירוקות:
+lint (ruff ל-Python + ESLint ל-frontend/backend), בדיקות + build לכל ארבעת הרכיבים, שער איכות המודל, וסריקת סודות.
+
+```bash
+npm ci && npm run lint                                   # ESLint מהשורש (frontend + backend/src)
+ruff check data-pipeline/src ai-service/app              # Python
+cd backend && npm ci && npm run build && npm test        # 250 בדיקות
+cd frontend && npm ci && npm run build && npm test
+```
+
 ## תוצאות המודל — מצב עדכני (7.9.2026, registry v5)
 
 דאטה אחרי ETL ודה־דופליקציה מוקשחת (DATA-2, שני סבבים — כולל כפילויות-הכלה): **122,057 משימות** ב־**51 פרויקטים**, מהן **10,609 מתויגות** (41.3% באיחור) ב־15 פרויקטים.
