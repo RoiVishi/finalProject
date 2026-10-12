@@ -30,9 +30,9 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / "ai-service"))
 
-from app import main as service  # the served model, loaded exactly as in production
-from leakage import plan_time  # PRED-14: same whitelist as training
-from train_compare import load_labeled, temporal_split
+from app import main as service  # noqa: E402  — the served model, loaded exactly as in production
+from leakage import plan_time  # noqa: E402  — PRED-14: same whitelist as training
+from train_compare import load_labeled, temporal_split  # noqa: E402
 
 FIG_DIR = ROOT / "data-pipeline" / "outputs" / "figures"
 
