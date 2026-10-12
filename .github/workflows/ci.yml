@@ -17,6 +17,17 @@ jobs:
       # suite silently degrades to asserting 503s and stays green while testing nothing.
       - run: cd ai-service && REQUIRE_MODEL=1 python -m pytest tests/ -q
 
+  # PRED-14 (KAN-93): leakage controls — whitelist = schema, named blacklist, as-of rule.
+  # The committed artifacts are checked by ai-service/tests/test_leakage_guard.py above.
+  data-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r data-pipeline/requirements.txt pytest
+      - run: python -m pytest data-pipeline/tests -q
+
   lint:
     runs-on: ubuntu-latest
     steps:
