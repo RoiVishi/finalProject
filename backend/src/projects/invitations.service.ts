@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import { MailService } from '../common/mail.service';
 import { can, ProjectAction } from '../auth/permissions';
 import { hashToken, newToken } from '../common/token.util';
@@ -167,13 +167,87 @@ export class InvitationsService {
 
   /** Shared by the in-app accept and by signup-via-link (AUTH-1 + AUTH-4). */
   async accept(rawToken: string, userId: string) {
+    return this.applyAccept(await this.usableByToken(rawToken), userId);
+  }
+
+  async decline(rawToken: string, userId: string) {
+    return this.applyDecline(await this.usableByToken(rawToken), userId);
+  }
+
+  // ---- addressed to me: home screen (DASH-5, KAN-52) ----------------------
+
+  /**
+   * E-mail invitations waiting for the signed-in user: addressed to their
+   * e-mail (case-insensitive), still sent and not expired. The token is never
+   * returned - it lives only in the e-mailed link.
+   */
+  async mine(userId: string) {
+    const email = await this.emailOf(userId);
+    if (!email) return [];
+    const rows = await this.invitations.find({
+      where: {
+        type: InvitationType.EMAIL,
+        status: InvitationStatus.SENT,
+        invitedEmail: Raw((col) => `LOWER(${col}) = LOWER(:email)`, { email }),
+      },
+      order: { expiresAt: 'ASC' },
+    });
+    return rows
+      .filter((inv) => effectiveStatus(inv) === InvitationStatus.SENT)
+      .map((inv) => ({
+        id: inv.id,
+        project: { id: inv.project.id, name: inv.project.name },
+        role: inv.role,
+        trade: inv.trade ?? null,
+        invitedBy: inv.invitedBy ? { fullName: inv.invitedBy.fullName } : null,
+        expiresAt: inv.expiresAt,
+      }));
+  }
+
+  /** Accept by id from the home screen; same effect as accepting the link. */
+  async acceptById(invitationId: string, userId: string) {
+    return this.applyAccept(await this.usableById(invitationId, userId), userId);
+  }
+
+  async declineById(invitationId: string, userId: string) {
+    return this.applyDecline(await this.usableById(invitationId, userId), userId);
+  }
+
+  // ---- internals ------------------------------------------------------------
+
+  private async usableByToken(rawToken: string) {
     const invitation = await this.invitations.findOne({
       where: { tokenHash: hashToken(rawToken) },
     });
     if (!invitation || effectiveStatus(invitation) !== InvitationStatus.SENT) {
       throw new BadRequestException(UNUSABLE);
     }
+    return invitation;
+  }
 
+  /**
+   * By id, the invitation must be an e-mail invitation addressed to this
+   * user, still sent and not expired. Every other case is 404, never 403:
+   * a 403 would confirm that an invitation with this id exists.
+   */
+  private async usableById(invitationId: string, userId: string) {
+    const [invitation, email] = await Promise.all([
+      this.invitations.findOne({ where: { id: invitationId, type: InvitationType.EMAIL } }),
+      this.emailOf(userId),
+    ]);
+    const mineAndOpen = invitation && email
+      && invitation.invitedEmail?.toLowerCase() === email.toLowerCase()
+      && effectiveStatus(invitation) === InvitationStatus.SENT;
+    if (!mineAndOpen) throw new NotFoundException('ההזמנה לא נמצאה');
+    return invitation;
+  }
+
+  /** From the database, not the JWT: the token keeps the e-mail it was issued with. */
+  private async emailOf(userId: string): Promise<string | null> {
+    return (await this.users.findById(userId))?.email ?? null;
+  }
+
+  private async applyAccept(invitation: Invitation, userId: string) {
     const projectId = invitation.project.id;
     if (await this.members.findActiveMembership(projectId, userId)) {
       throw new ConflictException('כבר יש לך חברות פעילה בפרויקט זה');
@@ -190,13 +264,7 @@ export class InvitationsService {
     return membership;
   }
 
-  async decline(rawToken: string, userId: string) {
-    const invitation = await this.invitations.findOne({
-      where: { tokenHash: hashToken(rawToken) },
-    });
-    if (!invitation || effectiveStatus(invitation) !== InvitationStatus.SENT) {
-      throw new BadRequestException(UNUSABLE);
-    }
+  private async applyDecline(invitation: Invitation, userId: string) {
     await this.invitations.update(invitation.id, {
       status: InvitationStatus.DECLINED,
       acceptedBy: { id: userId } as never,
