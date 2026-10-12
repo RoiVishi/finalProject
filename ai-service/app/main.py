@@ -70,6 +70,7 @@ class Registry:
         self.clf = None
         self.reg = None
         self.refusal = None      # PRED-8: set when an artifact was refused on schema mismatch
+        self.dir = None          # registry directory of the served version (global_shap.json lives there)
         self._load()
 
     def _load(self):
@@ -100,6 +101,7 @@ class Registry:
                 reg_path = vdir / "regressor.joblib"
                 self.reg = joblib.load(reg_path) if reg_path.exists() else None
                 self.version = self.meta.get("version", vdir.name)
+                self.dir = vdir
                 return
         if LEGACY_MODEL.exists():  # backwards compatibility with the pre-registry artifact
             self.clf = joblib.load(LEGACY_MODEL)
@@ -238,7 +240,52 @@ def risk_level(p: float) -> str:
     return "high" if p >= RISK_BAND_T2 else "medium" if p >= RISK_BAND_T1 else "low"
 
 
+def _known_categories(reg: Registry) -> dict[str, set]:
+    """Categories each categorical feature was fitted with (from the fitted OneHotEncoder)."""
+    cached = getattr(reg, "_known_cats", None)
+    if cached is not None:
+        return cached
+    known: dict[str, set] = {}
+    stack, seen = [reg.clf], 0
+    while stack and seen < 50:
+        seen += 1
+        m = stack.pop()
+        if type(m).__name__ == "ColumnTransformer":
+            for _, trans, cols in m.transformers_:
+                steps = dict(getattr(trans, "steps", []) or [])
+                enc = next((st for st in steps.values() if type(st).__name__ == "OneHotEncoder"), None)
+                if enc is None and type(trans).__name__ == "OneHotEncoder":
+                    enc = trans
+                if enc is not None:
+                    for col, cats in zip(cols, enc.categories_):
+                        known[col] = {c for c in cats if isinstance(c, str)}
+            break
+        stack.extend(getattr(m, "calibrated_classifiers_", []) or [])
+        for attr in ("estimator", "base_estimator"):
+            if getattr(m, attr, None) is not None:
+                stack.append(getattr(m, attr))
+        stack.extend(step for _, step in (getattr(m, "steps", []) or []))
+    reg._known_cats = known
+    return known
+
+
+def _unseen_as_missing(reg: Registry, X: pd.DataFrame) -> pd.DataFrame:
+    """PRED-10: an unseen categorical value is treated as missing (imputed like a null),
+    not as an all-zeros one-hot row the model never saw during training."""
+    known = _known_categories(reg)
+    if not known:
+        return X
+    X = X.copy()
+    for col, cats in known.items():
+        if col in X:
+            unseen = X[col].notna() & ~X[col].isin(cats)
+            if unseen.any():
+                X[col] = X[col].astype(object).where(~unseen, None)
+    return X
+
+
 def _predict_core(reg: Registry, X: pd.DataFrame) -> list[Prediction]:
+    X = _unseen_as_missing(reg, X)
     probas = reg.clf.predict_proba(X)[:, 1]
     delays = reg.reg.predict(X) if reg.reg is not None else [None] * len(X)
     return [
@@ -323,6 +370,7 @@ def _to_calibrated_space(raw_sv: np.ndarray, base_raw: float, p_served: np.ndarr
 
 def _explain_rows(reg: Registry, X: pd.DataFrame, top_k: int) -> list[Explanation]:
     """Exact TreeSHAP for every row in ONE explainer call (no per-request overhead)."""
+    X = _unseen_as_missing(reg, X)
     predictions = _predict_core(reg, X)
     explainer, prep, names = _explainer()
     Xt = prep.transform(X)
@@ -386,6 +434,8 @@ def health():
             "champion": _registry.meta.get("champion_classifier"),
             "risk_bands": {"t1": RISK_BAND_T1, "t2": RISK_BAND_T2},
             "cold_start": {"policy": COLD_START_POLICY, "min_history": COLD_START_MIN_HISTORY},
+            "abstention": {"required_features": list(REQUIRED_FEATURES),
+                           "reasons": [*REQUIRED_FEATURES.values(), ABSTAIN_LOW_HISTORY]},
             "refusal": _registry.refusal}
 
 
@@ -435,11 +485,39 @@ BASIS_NOTE = ("Cross-project model (registry {version}); it is not trained on th
               "The project has completed {share:.0%} of its activities.")
 
 
+# ---- PRED-10: minimum-input policy -------------------------------------------
+# A prediction needs the activity's own planned dates (planned_duration_days) and its
+# place on the project timeline (rel_position). Without them the pipeline would impute
+# medians and return a confident number about an activity it knows nothing about, so the
+# service abstains instead: prediction=null, risk band "unknown", and a machine-readable
+# reason. Other features may be missing (they are imputed, e.g. floats per RR-12).
+REQUIRED_FEATURES: dict[str, str] = {
+    "planned_duration_days": "missing_planned_dates",       # no planned start or finish
+    "rel_position": "missing_project_timeline",             # project span unknown
+}
+ABSTAIN_LOW_HISTORY = "low_project_history"                 # cold start under policy=abstain
+ABSTAIN_NOTES = {
+    "missing_planned_dates": "No prediction: the activity has no planned start and finish dates.",
+    "missing_project_timeline": "No prediction: the project timeline (planned start/finish) is unknown.",
+    ABSTAIN_LOW_HISTORY: LOW_RELIABILITY_NOTE,
+}
+
+
+def abstain_reason(features: dict) -> str | None:
+    """First unmet minimum-input rule, or None when the activity can be scored."""
+    for name, reason in REQUIRED_FEATURES.items():
+        if features.get(name) is None:
+            return reason
+    return None
+
+
 class ProjectPrediction(BaseModel):
     task_id: str
     reliability: str                             # "within_project_history" | "low_transfer_prior"
     basis: str = "cross_project_model"           # what the number rests on — never "ok"
-    prediction: Prediction | None = None         # null when policy=abstain on low reliability
+    prediction: Prediction | None = None         # null when the service abstains (PRED-10)
+    risk_level: str | None = None                # mirrors prediction.risk_level; "unknown" when abstained
+    abstain_reason: str | None = None            # machine-readable, see REQUIRED_FEATURES / ABSTAIN_LOW_HISTORY
     note: str | None = None
 
 
@@ -460,18 +538,75 @@ def predict_project(payload: ProjectGraphPayload):
     reliability = RELIABILITY_HISTORY if reliable else RELIABILITY_LOW
 
     if not reliable and COLD_START_POLICY == "abstain":
-        return [ProjectPrediction(task_id=t.id, reliability=reliability,
-                                  prediction=None, note=LOW_RELIABILITY_NOTE)
+        return [ProjectPrediction(task_id=t.id, reliability=reliability, prediction=None,
+                                  risk_level="unknown", abstain_reason=ABSTAIN_LOW_HISTORY,
+                                  note=ABSTAIN_NOTES[ABSTAIN_LOW_HISTORY])
                 for t in payload.tasks]
 
     reg = get_registry()
     feats = [TaskFeatures(**f) for f in compute_features(payload)]   # range-validated
-    preds = _predict_core(reg, pd.DataFrame([f.model_dump() for f in feats]))
+    reasons = [abstain_reason(f.model_dump()) for f in feats]
+    scored = [i for i, r in enumerate(reasons) if r is None]
+    preds = (_predict_core(reg, pd.DataFrame([feats[i].model_dump() for i in scored]))
+             if scored else [])
+    by_index = dict(zip(scored, preds))
     basis_note = BASIS_NOTE.format(version=reg.version, share=(share or 0.0))
     note = basis_note if reliable else LOW_RELIABILITY_NOTE + " " + basis_note
-    return [ProjectPrediction(task_id=t.id, reliability=reliability,
-                              prediction=p, note=note)
-            for t, p in zip(payload.tasks, preds)]
+    out = []
+    for i, t in enumerate(payload.tasks):
+        if reasons[i] is not None:
+            out.append(ProjectPrediction(task_id=t.id, reliability=reliability, prediction=None,
+                                         risk_level="unknown", abstain_reason=reasons[i],
+                                         note=ABSTAIN_NOTES[reasons[i]]))
+        else:
+            p = by_index[i]
+            out.append(ProjectPrediction(task_id=t.id, reliability=reliability, prediction=p,
+                                         risk_level=p.risk_level, note=note))
+    return out
+
+
+# ---- PRED-15: global explainability ---------------------------------------------
+GLOBAL_SHAP_FILE = "global_shap.json"
+
+
+def global_ranking(reg: Registry, X: pd.DataFrame, *, sample: int = 2000, seed: int = 42) -> dict:
+    """Mean |SHAP| per base feature, in the same calibrated-probability units as the
+    local explanations (KAN-130) — so the global ranking and every per-activity panel
+    speak the same language. Computed offline (data-pipeline/src/global_shap.py) on the
+    deployment-scenario test split and stored next to the model in the registry."""
+    rows = X.sample(n=sample, random_state=seed) if len(X) > sample else X
+    expl = _explain_rows(reg, rows.reset_index(drop=True), top_k=len(DOMAIN_LABELS))
+    totals = dict.fromkeys(DOMAIN_LABELS, 0.0)
+    for e in expl:
+        for c in e.top_contributions:
+            totals[c.feature] += abs(c.contribution)
+    n = max(len(expl), 1)
+    ranking = sorted(
+        ({"feature": f, "label_en": DOMAIN_LABELS[f][0], "label_he": DOMAIN_LABELS[f][1],
+          "mean_abs_contribution": round(v / n, 6)} for f, v in totals.items()),
+        key=lambda r: r["mean_abs_contribution"], reverse=True)
+    for i, r in enumerate(ranking, 1):
+        r["rank"] = i
+    return {"model_version": reg.version, "feature_schema_version": reg.schema_version,
+            "units": "calibrated_probability", "n_rows": len(expl), "seed": seed,
+            "ranking": ranking}
+
+
+@app.get("/explain/global")
+def explain_global():
+    """PRED-15: the served model's global feature ranking (dashboard + project book).
+    Read from the registry; 404 with a reason if the champion has none yet."""
+    reg = get_registry()
+    path = (reg.dir / GLOBAL_SHAP_FILE) if reg.dir else None
+    if path is None or not path.exists():
+        raise HTTPException(404, detail=(
+            f"no {GLOBAL_SHAP_FILE} for registry {reg.version}: run data-pipeline/src/global_shap.py"))
+    data = json.loads(path.read_text())
+    if data.get("model_version") != reg.version:
+        raise HTTPException(409, detail=(
+            f"{GLOBAL_SHAP_FILE} was computed for {data.get('model_version')}, "
+            f"but {reg.version} is served — regenerate it"))
+    return data
 
 
 @app.post("/explain", response_model=Explanation)

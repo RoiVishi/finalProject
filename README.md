@@ -7,7 +7,7 @@
 | תיקייה | תפקיד | טכנולוגיה | סטטוס |
 |---|---|---|---|
 | `data-pipeline/` | ETL, ניסויים ואימון מודלים על דאטהסט P6 | Python, pandas, scikit-learn, XGBoost | פעיל |
-| `ai-service/` | שירות חיזוי עיכובים (REST) | FastAPI | פעיל — registry v5 (7.9.26), 25 בדיקות |
+| `ai-service/` | שירות חיזוי עיכובים (REST) | FastAPI | פעיל — registry v5 (7.9.26), 47 בדיקות: הימנעות לפי סיבה (PRED-10), זמני תגובה (NFR-PERF-1), דירוג SHAP גלובלי `GET /explain/global` (PRED-15), בקרת זליגה על ה-artifact (PRED-14) |
 | `backend/` | מערכת ניהול: AUTH (תפקידים, מטריצת הרשאות, הזמנות, איפוס סיסמה), פרויקטים (CRUD + אשף), משימות (מחזור חיים, תלויות, חסימות בשמות), אינטגרציית PRED-9 | NestJS, TypeORM, PostgreSQL | **פעיל — PRs #1–#10, 202 בדיקות ב-14 קבוצות** (חסר: מסמכים/DOC, התראות, דיווח ביצוע של קבלן-משנה) |
 | `frontend/` | כניסה/הרשמה/איפוס סיסמה (AUTH-1, AUTH-7) מול ה-backend + תאום דיגיטלי סכמטי, מודל ריאליסטי, חדרי 360° ו-AR | React, Three.js (R3F), WebXR | **AUTH מחובר ל-API** (KAN-13); התאום עדיין על נתוני דמו (TWIN-3 ב-S10). `npm test` — בדיקות לקוח ה-API והוולידציה. פיתוח בלי backend: `VITE_DEV_SKIP_AUTH=1 npm run dev` (dev בלבד, לא נכנס ל-build) |
 
@@ -23,7 +23,8 @@ cd data-pipeline
 pip install -r requirements.txt
 git clone --depth 1 https://github.com/EverseDevelopment/Buildings.Historical.Data.git data
 python src/etl.py "data/Buildings Data"
-python src/train_compare.py      # השוואה + כיול + שער + registry vN
+python src/train_compare.py      # השוואה + כיול + שער + registry vN (X נבנה רק מ-plan_time() — PRED-14)
+python src/global_shap.py        # PRED-15: דירוג SHAP גלובלי לאלוף המוגש + הגרף לספר (חובה אחרי כל קידום — CI בודק)
 python src/learning_curve.py && python src/ablation_float.py
 python src/bias_and_alerts.py && python src/bootstrap_ci.py
 python src/export_numbers.py     # outputs/numbers.json — מקור האמת לכל מסמך

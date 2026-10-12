@@ -58,6 +58,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from xgboost import XGBClassifier, XGBRegressor
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from leakage import assert_as_of, plan_time  # PRED-14
+
 SEED = 42
 N_REPEATED_A = 20           # scenario A: repeated GroupShuffleSplits for the gate (RR-19)
 TEMPORAL_Q = 0.7            # scenario B: per-project temporal quantile cut (train = earliest 70%
@@ -199,6 +202,7 @@ def main():
 
     # ---------- scenario B: within-project temporal ----------
     B_tr, B_te, B_projects = temporal_split(lab)
+    assert_as_of(B_tr, B_te)   # PRED-14 rule 3: train strictly earlier than test in every project
 
     results = {
         "config": {
@@ -236,16 +240,16 @@ def main():
             if grid:
                 gs = GridSearchCV(pipe, grid, scoring="roc_auc", n_jobs=-1,
                                   cv=gkf.split(tr, tr["is_late"], groups=tr["project"]))
-                gs.fit(tr, tr["is_late"])
+                gs.fit(plan_time(tr), tr["is_late"])
                 model = gs.best_estimator_
                 params = {k: (v if isinstance(v, (int, float, str)) else str(v)) for k, v in gs.best_params_.items()}
                 (results["best_params"] if scen == "B_temporal" else results["best_params_A"])[name] = params
                 print(f"[tune {scen}] {name}: {gs.best_params_} (cv auc={gs.best_score_:.4f})")
             else:
-                pipe.fit(tr, tr["is_late"])
+                pipe.fit(plan_time(tr), tr["is_late"])
                 model = pipe
-            pred = model.predict(te)
-            proba = model.predict_proba(te)[:, 1] if hasattr(model, "predict_proba") else None
+            pred = model.predict(plan_time(te))
+            proba = model.predict_proba(plan_time(te))[:, 1] if hasattr(model, "predict_proba") else None
             results["classification"][scen][name] = clf_metrics(te["is_late"], pred, proba)
             print(f"[clf {scen}] {name}: {results['classification'][scen][name]}")
             if scen == "B_temporal":
@@ -265,8 +269,8 @@ def main():
             if a_te["is_late"].nunique() < 2:
                 continue
             m = clone(est)
-            m.fit(a_tr, a_tr["is_late"])
-            aucs.append(roc_auc_score(a_te["is_late"], m.predict_proba(a_te)[:, 1]))
+            m.fit(plan_time(a_tr), a_tr["is_late"])
+            aucs.append(roc_auc_score(a_te["is_late"], m.predict_proba(plan_time(a_te))[:, 1]))
         arr = np.array(aucs)
         results["classification"]["A_repeated"][name] = {
             "n_splits": int(len(arr)), "median_auc": round(float(np.median(arr)), 4),
@@ -281,8 +285,8 @@ def main():
         tr_r, te_r = tr[~tr["extreme_delay"].astype(bool)], te[~te["extreme_delay"].astype(bool)]
         for name, est in regressor_zoo().items():
             pipe = Pipeline([("prep", make_preprocessor()), ("model", est)])
-            pipe.fit(tr_r, tr_r["delay_days"])
-            pred = pipe.predict(te_r)
+            pipe.fit(plan_time(tr_r), tr_r["delay_days"])
+            pred = pipe.predict(plan_time(te_r))
             results["regression"][scen][name] = {
                 "mae_days": round(float(mean_absolute_error(te_r["delay_days"], pred)), 2),
                 "rmse_days": round(float(root_mean_squared_error(te_r["delay_days"], pred)), 2),
@@ -309,8 +313,8 @@ def main():
         if name == "dummy_majority" or name.startswith("__reg__"):
             continue
         m = clone(est)
-        m.fit(B_fit, B_fit["is_late"])
-        inner[name] = round(float(roc_auc_score(B_cal["is_late"], m.predict_proba(B_cal)[:, 1])), 4)
+        m.fit(plan_time(B_fit), B_fit["is_late"])
+        inner[name] = round(float(roc_auc_score(B_cal["is_late"], m.predict_proba(plan_time(B_cal))[:, 1])), 4)
         print(f"[select inner] {name}: roc_auc on B_cal = {inner[name]}")
     results["classification"]["B_inner_selection"] = inner
     ranked = sorted(inner, key=lambda n: inner[n], reverse=True)
@@ -343,12 +347,12 @@ def main():
     # comparable). Test data is never touched.
     # (B_fit / B_cal computed above — the same slice selected the champion)
     champ_fit = clone(tuned[champion])
-    champ_fit.fit(B_fit, B_fit["is_late"])
+    champ_fit.fit(plan_time(B_fit), B_fit["is_late"])
     calibrated = CalibratedClassifierCV(FrozenEstimator(champ_fit), method="sigmoid")
-    calibrated.fit(B_cal, B_cal["is_late"])
+    calibrated.fit(plan_time(B_cal), B_cal["is_late"])
 
     def brier(model, te):
-        return round(float(brier_score_loss(te["is_late"], model.predict_proba(te)[:, 1])), 4)
+        return round(float(brier_score_loss(te["is_late"], model.predict_proba(plan_time(te))[:, 1])), 4)
 
     # Calibration is evaluated on scenario B ONLY. The A test set overlaps the B train
     # side (the two splits cut the same corpus differently), so evaluating the calibrated
@@ -360,8 +364,8 @@ def main():
             "brier_calibrated": brier(calibrated, B_te),
         }
     }
-    pred_cal = calibrated.predict(B_te)
-    proba_cal = calibrated.predict_proba(B_te)[:, 1]
+    pred_cal = calibrated.predict(plan_time(B_te))
+    proba_cal = calibrated.predict_proba(plan_time(B_te))[:, 1]
     cal_metrics["B_temporal"]["classification_calibrated"] = clf_metrics(
         B_te["is_late"], pred_cal, proba_cal)
     results["calibration"] = {
@@ -389,7 +393,7 @@ def main():
     # reliability curve figure (project book, RR-6/PRED-13)
     fig_dir = OUT / "figures"
     fig_dir.mkdir(exist_ok=True)
-    frac_u, mean_u = calibration_curve(B_te["is_late"], champ_fit.predict_proba(B_te)[:, 1], n_bins=10)
+    frac_u, mean_u = calibration_curve(B_te["is_late"], champ_fit.predict_proba(plan_time(B_te))[:, 1], n_bins=10)
     frac_c, mean_c = calibration_curve(B_te["is_late"], proba_cal, n_bins=10)
     plt.figure(figsize=(6.4, 5.2), dpi=150)
     plt.plot([0, 1], [0, 1], ls="--", lw=1, color="#9a9a9a", zorder=1)
