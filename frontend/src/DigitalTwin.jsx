@@ -499,7 +499,6 @@ function DigitalTwinInner({ spec, selected, onSelect }) {
 
   const zones = useMemo(() => zonesFor(spec), [spec]);
   const H = spec.floors * spec.floorHeight;
-  const dist = Math.max(spec.baseWidth * 2.2, H * 1.2);
 
   useEffect(() => {
     document.body.style.cursor = hoveredId ? 'pointer' : 'auto';

@@ -55,6 +55,10 @@ jobs:
       # or a new release's new rules turn the build red without any code change.
       - run: pip install ruff==0.15.11
       - run: ruff --version && ruff check data-pipeline/src ai-service/app
+      # NFR-MAIN-1 (KAN-72): JS/TS leg — frontend + backend, pinned toolchain in the root package.json.
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm, cache-dependency-path: package-lock.json }
+      - run: npm ci && npx eslint --version && npm run lint
 
   # Own job (not a step after lint): style noise must never mask a model-quality failure.
   model-quality-gate:
@@ -86,35 +90,30 @@ jobs:
           print(f"OK: {versions[-1].name} serves {meta['champion_classifier']}, matches model_comparison.json")
           EOF
 
-  # backend/frontend jobs are guarded: they run only once real scaffolds exist,
-  # so the pipeline is not permanently red while the platform side is being built.
+  # No scaffold guards any more: both components exist, so a missing package.json
+  # must turn CI red instead of being skipped green. npm ci = the committed lockfile.
   backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with: { node-version: 20, cache: npm, cache-dependency-path: backend/package-lock.json }
       - name: Build and test backend
+        working-directory: backend
         run: |
-          if [ -f backend/package.json ]; then
-            cd backend
-            npm ci || npm install
-            npm run build
-            npm test
-          else
-            echo 'backend/package.json not found — scaffold pending, skipped'
-          fi
+          npm ci
+          npm run build
+          npm test
 
   frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - name: Build frontend (skipped until scaffold exists)
+        with: { node-version: 20, cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - name: Build and test frontend
+        working-directory: frontend
         run: |
-          if [ -f frontend/package.json ]; then
-            cd frontend && npm install && npm run build && npm test
-          else
-            echo 'frontend/package.json not found — scaffold pending, build skipped'
-          fi
+          npm ci
+          npm run build
+          npm test
