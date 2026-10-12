@@ -1,0 +1,57 @@
+# Production overlay for the public server (NFR-PORT-1, NFR-SEC-1/2/5).
+# Run from the repository root, on top of the base file:
+#
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --build
+#
+# Paths below are relative to the repository root (the base file's directory).
+# The base docker-compose.yml is unchanged and still serves local development.
+
+services:
+  db:
+    # Never published on the public server: only the backend reaches it,
+    # over the internal compose network. (!reset drops the base file's 5432.)
+    ports: !reset []
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env - see deploy/README.md}
+    restart: unless-stopped
+
+  ai-service:
+    # Already unpublished in the base file (NFR-SEC-5); only restart policy here.
+    restart: unless-stopped
+
+  backend:
+    # Reached only through Caddy (web) at /api - not published either.
+    ports: !reset []
+    environment:
+      DB_PASS: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      APP_URL: https://${DOMAIN:?set DOMAIN in .env}          # links in e-mails
+      CORS_ORIGINS: https://${DOMAIN:?set DOMAIN in .env}
+      # NODE_ENV is deliberately NOT production yet: there are no migrations,
+      # and production mode turns off TypeORM synchronize (no tables would be
+      # created). Add migrations first, then set NODE_ENV=production.
+    restart: unless-stopped
+
+  web:
+    # The React build served by Caddy, with automatic HTTPS (Let's Encrypt)
+    # for $DOMAIN, and /api/* forwarded to the backend - the same /api
+    # convention the Vite dev proxy uses, so the frontend needs no change.
+    build:
+      context: ./frontend
+      dockerfile: ../deploy/Dockerfile.web
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"     # HTTP/3
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # certificates - keep across restarts
+      - caddy_config:/config
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
