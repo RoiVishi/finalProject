@@ -1,0 +1,26 @@
+# Caddy obtains and renews the HTTPS certificate for {$DOMAIN} by itself
+# (ports 80 and 443 must be open). Plain HTTP is redirected to HTTPS.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# API: /api/auth/login -> backend:3000/auth/login (prefix stripped,
+	# exactly like the Vite dev proxy).
+	handle_path /api/* {
+		reverse_proxy backend:3000
+	}
+
+	# The single-page app: unknown paths fall back to index.html so that
+	# client-side routes (/projects/..., /invitations/...) survive a reload.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
