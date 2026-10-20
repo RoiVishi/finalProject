@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import { AR_REASONS_HE, detectArSupport } from './arSupport.js';
+import { AR_REASONS_HE, detectArSupport, endSessionQuietly } from './arSupport.js';
 
 /**
  * AR-1 acceptance criterion: "capability detection covered by a unit test".
@@ -66,4 +66,26 @@ test('every reason the detector can return has its one Hebrew line', () => {
   for (const reason of ['no-webxr', 'insecure-context', 'no-immersive-ar', 'error']) {
     assert.ok(AR_REASONS_HE[reason]?.length > 0, `missing Hebrew message for ${reason}`);
   }
+});
+
+/* endSessionQuietly — the "XRSession has already ended" rejection seen in the
+   console when leaving AR through the browser's exit control (AR-7). */
+
+test('ending an already-ended session does not leave an unhandled rejection', async () => {
+  const unhandled = [];
+  const onUnhandled = (reason) => unhandled.push(reason);
+  process.on('unhandledRejection', onUnhandled);
+  try {
+    const ended = { end: () => Promise.reject(new Error('InvalidStateError: XRSession has already ended')) };
+    endSessionQuietly(ended);
+    await new Promise((r) => setTimeout(r, 20));
+    assert.deepEqual(unhandled, []);
+  } finally {
+    process.off('unhandledRejection', onUnhandled);
+  }
+});
+
+test('endSessionQuietly tolerates a missing session and a throwing end()', () => {
+  assert.doesNotThrow(() => endSessionQuietly(null));
+  assert.doesNotThrow(() => endSessionQuietly({ end: () => { throw new Error('gone'); } }));
 });

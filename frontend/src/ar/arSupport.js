@@ -67,3 +67,21 @@ export async function requestArSession() {
     optionalFeatures: ['anchors', 'hand-tracking'],
   });
 }
+
+/**
+ * Ends a session without letting an error escape (AR-7).
+ *
+ * XRSession.end() returns a promise that rejects with InvalidStateError when
+ * the session has already ended — which is the normal case when the user left
+ * through the browser's own exit control and React then cleans up. A plain
+ * try/catch does not see that rejection; it surfaced as "Uncaught (in promise)
+ * InvalidStateError: XRSession has already ended" in the console.
+ */
+export function endSessionQuietly(session) {
+  try {
+    const pending = session?.end?.();
+    if (pending && typeof pending.catch === 'function') pending.catch(() => {});
+  } catch {
+    /* already gone */
+  }
+}
