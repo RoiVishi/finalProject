@@ -3,14 +3,15 @@ import { test } from 'node:test';
 import { riskView, roleView } from './card.js';
 import { invitationsApi } from '../api/invitations.js';
 
-test('risk: number + band name, never a bare score (NFR-USE-1)', () => {
-  assert.deepEqual(riskView(0.4215, 'project'), { label: 'מדד סיכון', value: 0.4215, band: 'medium', text: '42.2% · בינוני' });
+test('risk: band name only, never a bare score or a percentage (NFR-USE-1, v6 display rule)', () => {
+  assert.deepEqual(riskView(0.4215, 'project'), { label: 'סיכון חריגה במשך', value: 0.4215, band: 'medium', text: 'בינוני' });
+  assert.doesNotMatch(riskView(0.4215, 'project').text, /%|\d/);
   assert.equal(riskView(0.1, 'project').band, 'low');
   assert.equal(riskView(0.9, 'project').band, 'high');
 });
 
 test('risk: subcontractor scope is labelled as own tasks; null = no current prediction', () => {
-  assert.equal(riskView(0.5, 'own').label, 'הסיכון במשימות שלי');
+  assert.equal(riskView(0.5, 'own').label, 'סיכון חריגה במשימות שלי');
   const none = riskView(null, 'project');
   assert.equal(none.value, null);
   assert.equal(none.band, 'unknown');

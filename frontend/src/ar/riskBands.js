@@ -9,15 +9,24 @@
  * both DigitalTwin.jsx and the AR renderer import from here, and nowhere else
  * defines a risk colour.
  *
- * When the AI service starts serving real bands (PRED-11), replace the literals
- * below with the values it echoes in its response; nothing else has to change.
+ * Since registry v6 the bands ship WITH the served model (meta.json → risk_bands, chosen by a
+ * documented protocol on train-side data; the AI service echoes them in /health). Until the
+ * backend forwards them to the client, the values below are a synced copy: riskBands.test.js
+ * fails the build whenever they differ from the newest registry's meta.json.
+ *
+ * What the probability means since v6: the risk that the activity takes LONGER THAN PLANNED
+ * (duration overrun, target `grew`) — not a late finish date. The UI shows the band, never the
+ * percentage: the bands are ordered correctly, but the upper ones over-state the observed rate.
  */
 
-/** Lower bound of each band on lateProbability, [0..1]. */
+/** Lower bound of each band on the served probability, [0..1] — synced from registry v6 meta.json. */
 export const RISK_BANDS = {
-  medium: 0.30,
-  high: 0.65,
+  medium: 0.29,   // risk_bands.t1 = decision threshold (F1-optimal on the calibration slice)
+  high: 0.8558,   // risk_bands.t2 = top 10% of the calibration slice
 };
+
+/** What the risk is about (shown as the title wherever a band is shown). */
+export const RISK_TITLE_HE = 'סיכון חריגה במשך';
 
 /** The one colour scale used by the 2D Twin and by AR. */
 export const RISK_COLORS = {
@@ -38,7 +47,7 @@ export const RISK_LABELS_HE = {
 };
 
 /**
- * Map a served lateProbability to a band.
+ * Map a served probability (field `late_probability` / `lateProbability`; since v6 = duration overrun) to a band.
  * `null`/`undefined` means the service abstained (PRED-10) — never guess.
  */
 export function bandFor(prob) {

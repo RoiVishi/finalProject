@@ -18,7 +18,7 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import React, { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { LEGEND, RISK_COLORS, RISK_LABELS_HE } from './riskBands.js';
+import { LEGEND, RISK_COLORS, RISK_LABELS_HE, RISK_TITLE_HE } from './riskBands.js';
 
 const PX = 2.5; // canvas pixels per layout unit — texture crispness
 
@@ -98,11 +98,12 @@ export function ZonePanel3D({ zone, position }) {
     ctx.fillText(zone.status, R, y);
     y += 24;
 
-    const pct = zone.prob != null ? Math.round(zone.prob * 100) : null;
-    if (pct != null) {
+    // v6: show the band, never the percentage (upper bands over-state the observed rate)
+    const level = zone.prob != null ? ({ low: 1, medium: 2, high: 3 }[zone.risk] ?? null) : null;
+    if (level != null) {
       ctx.fillStyle = 'rgba(255,255,255,0.72)';
       ctx.font = '13px system-ui, Arial';
-      ctx.fillText('סיכון עיכוב חזוי', R, y);
+      ctx.fillText(RISK_TITLE_HE, R, y);
       y += 19;
 
       // bar
@@ -110,13 +111,13 @@ export function ZonePanel3D({ zone, position }) {
       roundRect(ctx, 16, y + 3, ZONE_W - 32, 10, 5);
       ctx.fill();
       ctx.fillStyle = RISK_COLORS[zone.risk] ?? RISK_COLORS.unknown;
-      const barW = Math.max(6, ((ZONE_W - 32) * pct) / 100);
+      const barW = Math.max(6, ((ZONE_W - 32) * level) / 3);   // a step per band, not a probability
       roundRect(ctx, ZONE_W - 16 - barW, y + 3, barW, 10, 5);
       ctx.fill();
       y += 20;
 
       ctx.font = '700 17px system-ui, Arial';
-      ctx.fillText(`${pct}% · ${RISK_LABELS_HE[zone.risk] ?? ''}`, R, y);
+      ctx.fillText(RISK_LABELS_HE[zone.risk] ?? '', R, y);
       y += 26;
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.72)';
@@ -167,7 +168,7 @@ export function Legend3D({ position }) {
     let y = 12;
     ctx.fillStyle = '#ffffff';
     ctx.font = '700 15px system-ui, Arial';
-    ctx.fillText('סיכון עיכוב', R, y);
+    ctx.fillText(RISK_TITLE_HE, R, y);
     y += 22;
     ctx.font = '13px system-ui, Arial';
     LEGEND.forEach((row) => {

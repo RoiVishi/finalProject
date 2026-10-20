@@ -169,7 +169,7 @@ export default function ARView({ spec, selected, onSelect, onExit, scale = 0.02 
             <div style={{ fontWeight: 700, marginBottom: 6 }}>תצוגת מציאות רבודה</div>
             <div style={{ opacity: 0.85, marginBottom: 10 }}>
               הרכיבו את המשקפיים, כוונו אל הרצפה או אל שולחן ולחצו על ההדק כדי להניח את הבניין.
-              קומות שהושלמו יופיעו אטומות והקומות המתוכננות בשקיפות, צבועות לפי סיכון העיכוב החזוי.
+              קומות שהושלמו יופיעו אטומות והקומות המתוכננות בשקיפות, צבועות לפי סיכון החריגה במשך.
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={start} style={buttonStyle}>
