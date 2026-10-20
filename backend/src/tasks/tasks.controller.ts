@@ -1,6 +1,7 @@
 import {
   Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards,
 } from '@nestjs/common';
+import { UuidPipe } from '../common/uuid';
 import { CurrentMembership, CurrentUser, AuthenticatedUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ProjectAction } from '../auth/permissions';
@@ -30,7 +31,7 @@ export class TasksController {
   @Get()
   @RequirePermission(ProjectAction.VIEW_PROJECT, 'query')
   byProject(
-    @Query('projectId') projectId: string,
+    @Query('projectId', UuidPipe) projectId: string,
     @CurrentMembership() membership: ProjectMember,
     @CurrentUser() me: AuthenticatedUser,
   ) {
@@ -40,7 +41,7 @@ export class TasksController {
   @Get(':id')
   @RequirePermission(ProjectAction.VIEW_PROJECT, 'task')
   findOne(
-    @Param('id') id: string,
+    @Param('id', UuidPipe) id: string,
     @CurrentMembership() membership: ProjectMember,
     @CurrentUser() me: AuthenticatedUser,
   ) {
@@ -50,7 +51,7 @@ export class TasksController {
   @Patch(':id')
   @RequirePermission(ProjectAction.MANAGE_TASKS, 'task')
   update(
-    @Param('id') id: string,
+    @Param('id', UuidPipe) id: string,
     @Body() dto: UpdateTaskDto,
     @CurrentMembership() membership: ProjectMember,
     @CurrentUser() me: AuthenticatedUser,
@@ -67,7 +68,7 @@ export class TasksController {
   @Post(':id/status')
   @RequirePermission(ProjectAction.MANAGE_TASKS, 'task')
   changeStatus(
-    @Param('id') id: string,
+    @Param('id', UuidPipe) id: string,
     @Body() dto: ChangeTaskStatusDto,
     @CurrentMembership() membership: ProjectMember,
     @CurrentUser() me: AuthenticatedUser,
@@ -81,7 +82,7 @@ export class TasksController {
   @HttpCode(204)
   @RequirePermission(ProjectAction.MANAGE_TASKS, 'task')
   remove(
-    @Param('id') id: string,
+    @Param('id', UuidPipe) id: string,
     @CurrentMembership() membership: ProjectMember,
     @CurrentUser() me: AuthenticatedUser,
   ) {
@@ -91,14 +92,14 @@ export class TasksController {
   /** TASK-3 — both directions of the dependency graph for one activity. */
   @Get(':id/dependencies')
   @RequirePermission(ProjectAction.VIEW_PROJECT, 'task')
-  dependencies(@Param('id') id: string) {
+  dependencies(@Param('id', UuidPipe) id: string) {
     return this.tasks.dependencies(id);
   }
 
   @Post(':id/dependencies')
   @RequirePermission(ProjectAction.MANAGE_TASKS, 'task')
   addDependency(
-    @Param('id') id: string,
+    @Param('id', UuidPipe) id: string,
     @Body() dto: AddDependencyDto,
     @CurrentMembership() membership: ProjectMember,
     @CurrentUser() me: AuthenticatedUser,
@@ -112,8 +113,8 @@ export class TasksController {
   @HttpCode(204)
   @RequirePermission(ProjectAction.MANAGE_TASKS, 'task')
   removeDependency(
-    @Param('id') id: string,
-    @Param('predecessorId') predecessorId: string,
+    @Param('id', UuidPipe) id: string,
+    @Param('predecessorId', UuidPipe) predecessorId: string,
     @CurrentMembership() membership: ProjectMember,
     @CurrentUser() me: AuthenticatedUser,
   ) {
@@ -124,7 +125,7 @@ export class TasksController {
 
   @Get(':id/blocked')
   @RequirePermission(ProjectAction.VIEW_PROJECT, 'task')
-  blocked(@Param('id') id: string) {
+  blocked(@Param('id', UuidPipe) id: string) {
     return this.tasks.computeBlocked(id);
   }
 
@@ -132,7 +133,7 @@ export class TasksController {
   @Post(':id/predict')
   @RequirePermission(ProjectAction.VIEW_PREDICTIONS, 'task')
   predict(
-    @Param('id') id: string,
+    @Param('id', UuidPipe) id: string,
     @CurrentMembership() membership: ProjectMember,
     @CurrentUser() me: AuthenticatedUser,
   ) {

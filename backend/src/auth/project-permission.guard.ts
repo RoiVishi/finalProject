@@ -6,6 +6,7 @@ import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProjectMembersService } from '../projects/project-members.service';
+import { requireUuid } from '../common/uuid';
 import { Task } from '../tasks/task.entity';
 import { can, ProjectAction } from './permissions';
 
@@ -55,12 +56,15 @@ export class ProjectPermissionGuard implements CanActivate {
   }
 
   private async resolveProjectId(req: any, source: ProjectSource) {
-    if (source === 'param') return req.params?.projectId ?? req.params?.id;
-    if (source === 'query') return req.query?.projectId;
-    if (source === 'body') return req.body?.projectId;
+    // A missing id stays "not found"; a present but malformed one is a 400
+    // here, before it reaches Postgres (which would answer with a 500).
+    const checked = (value: unknown) => (value === undefined ? undefined : requireUuid(value));
+    if (source === 'param') return checked(req.params?.projectId ?? req.params?.id);
+    if (source === 'query') return checked(req.query?.projectId);
+    if (source === 'body') return checked(req.body?.projectId);
     // 'task': the route identifies a task; its project decides the permission.
     const task = await this.tasks.findOne({
-      where: { id: req.params?.id },
+      where: { id: requireUuid(req.params?.id) },
       relations: { project: true },
     });
     return task?.project?.id;

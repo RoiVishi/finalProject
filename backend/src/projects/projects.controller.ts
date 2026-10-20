@@ -1,6 +1,7 @@
 import {
   Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards,
 } from '@nestjs/common';
+import { UuidPipe } from '../common/uuid';
 import { AuthenticatedUser, CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Profession } from '../users/user.entity';
@@ -34,19 +35,19 @@ export class ProjectsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() me: AuthenticatedUser) {
+  findOne(@Param('id', UuidPipe) id: string, @CurrentUser() me: AuthenticatedUser) {
     return this.projects.findOne(id, me.userId);
   }
 
   /** The F×Z zone list the Digital Twin renders (TWIN-1). */
   @Get(':id/zones')
-  zones(@Param('id') id: string, @CurrentUser() me: AuthenticatedUser) {
+  zones(@Param('id', UuidPipe) id: string, @CurrentUser() me: AuthenticatedUser) {
     return this.projects.zones(id, me.userId);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', UuidPipe) id: string,
     @Body() dto: UpdateProjectDto,
     @CurrentUser() me: AuthenticatedUser,
   ) {
@@ -55,7 +56,7 @@ export class ProjectsController {
 
   @Delete(':id')
   @HttpCode(204)
-  remove(@Param('id') id: string, @CurrentUser() me: AuthenticatedUser) {
+  remove(@Param('id', UuidPipe) id: string, @CurrentUser() me: AuthenticatedUser) {
     return this.projects.remove(id, me.userId);
   }
 }

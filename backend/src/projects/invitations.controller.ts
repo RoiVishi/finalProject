@@ -1,6 +1,7 @@
 import {
   Body, Controller, Delete, Get, HttpCode, Param, Post, UseGuards,
 } from '@nestjs/common';
+import { UuidPipe } from '../common/uuid';
 import { AuthenticatedUser, CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateInviteLinkDto, InviteByEmailDto } from './dto/invitation.dto';
@@ -12,14 +13,14 @@ export class ProjectInvitationsController {
   constructor(private invitations: InvitationsService) {}
 
   @Get()
-  list(@Param('projectId') projectId: string, @CurrentUser() me: AuthenticatedUser) {
+  list(@Param('projectId', UuidPipe) projectId: string, @CurrentUser() me: AuthenticatedUser) {
     return this.invitations.list(projectId, me.userId);
   }
 
   /** Owner or project manager (§2). */
   @Post('email')
   inviteByEmail(
-    @Param('projectId') projectId: string,
+    @Param('projectId', UuidPipe) projectId: string,
     @CurrentUser() me: AuthenticatedUser,
     @Body() dto: InviteByEmailDto,
   ) {
@@ -29,7 +30,7 @@ export class ProjectInvitationsController {
   /** Owner only (§2). Returns the raw token once; it is not recoverable. */
   @Post('link')
   createLink(
-    @Param('projectId') projectId: string,
+    @Param('projectId', UuidPipe) projectId: string,
     @CurrentUser() me: AuthenticatedUser,
     @Body() dto: CreateInviteLinkDto,
   ) {
@@ -39,8 +40,8 @@ export class ProjectInvitationsController {
   @Delete(':invitationId')
   @HttpCode(204)
   revoke(
-    @Param('projectId') projectId: string,
-    @Param('invitationId') invitationId: string,
+    @Param('projectId', UuidPipe) projectId: string,
+    @Param('invitationId', UuidPipe) invitationId: string,
     @CurrentUser() me: AuthenticatedUser,
   ) {
     return this.invitations.revoke(projectId, me.userId, invitationId);
@@ -63,13 +64,13 @@ export class InvitationsController {
   }
 
   @Post('by-id/:id/accept')
-  acceptById(@Param('id') id: string, @CurrentUser() me: AuthenticatedUser) {
+  acceptById(@Param('id', UuidPipe) id: string, @CurrentUser() me: AuthenticatedUser) {
     return this.invitations.acceptById(id, me.userId);
   }
 
   @Post('by-id/:id/decline')
   @HttpCode(204)
-  declineById(@Param('id') id: string, @CurrentUser() me: AuthenticatedUser) {
+  declineById(@Param('id', UuidPipe) id: string, @CurrentUser() me: AuthenticatedUser) {
     return this.invitations.declineById(id, me.userId);
   }
 
