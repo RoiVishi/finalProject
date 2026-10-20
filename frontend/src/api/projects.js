@@ -6,6 +6,7 @@
  *   POST /projects             TASK-1 wizard, one payload { details, layout, team? }
  *                              -> project + zoneCount + team: [{ email, status: 'sent'|'failed', reason? }]
  *                              403 when the profession may not open projects (§2 note 3)
+ *   GET  /projects/:projectId/members   AUTH-5 membership rows: { id, role, trade, status, user: { id, fullName, email } }
  */
 export function projectsApi(client) {
   const id = (x) => encodeURIComponent(x);
@@ -13,6 +14,7 @@ export function projectsApi(client) {
     list: () => client.get('/projects'),
     get: (projectId) => client.get(`/projects/${id(projectId)}`),
     zones: (projectId) => client.get(`/projects/${id(projectId)}/zones`),
+    members: (projectId) => client.get(`/projects/${id(projectId)}/members`),
     create: (payload) => client.post('/projects', payload),
   };
 }
