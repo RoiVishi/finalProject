@@ -59,9 +59,12 @@ export interface ProjectPrediction {
 export class PredictionsService {
   private readonly log = new Logger(PredictionsService.name);
   private readonly baseUrl: string;
+  /** NFR-SEC-5: shared secret; the AI service answers 401 without it. */
+  private readonly token: string;
 
   constructor(cfg: ConfigService) {
     this.baseUrl = cfg.get('AI_SERVICE_URL', 'http://localhost:8001');
+    this.token = cfg.get('AI_SERVICE_TOKEN', '');
   }
 
   /**
@@ -73,12 +76,16 @@ export class PredictionsService {
   async predictProject(payload: ProjectGraphPayload): Promise<ProjectPrediction[] | null> {
     try {
       const { data } = await axios.post<ProjectPrediction[]>(
-        `${this.baseUrl}/predict/project`, payload, { timeout: 20000 });
+        `${this.baseUrl}/predict/project`, payload,
+        { timeout: 20000, headers: { 'X-Internal-Token': this.token } });
       return data;
     } catch (e) {
       if (axios.isAxiosError(e) && e.response?.status === 422) {
         // contract violation (bad field / out-of-range value) — a bug, not an outage
         this.log.error(`AI service rejected payload (422): ${JSON.stringify(e.response.data)}`);
+      } else if (axios.isAxiosError(e) && e.response?.status === 401) {
+        // NFR-SEC-5: configuration error, not an outage - the tokens do not match
+        this.log.error('AI service refused the service token (401): check AI_SERVICE_TOKEN in .env');
       } else {
         this.log.warn(`AI service unavailable: ${(e as Error).message}`);
       }

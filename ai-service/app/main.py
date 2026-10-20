@@ -7,11 +7,13 @@ PRED-3  /explain, /explain/batch — SHAP top-k signed contributions in domain l
                                    in calibrated-probability units (KAN-130)
 PRED-4  model registry           — loads newest ai-service/model/registry/<vN>/
 PRED-5  graceful degradation     — 503 with actionable message when no model exists
+NFR-SEC-5 service token          — every endpoint except /health requires X-Internal-Token
 
 Run:  uvicorn app.main:app --reload --port 8001
 """
 from __future__ import annotations
 
+import hmac
 import json
 import os
 from functools import lru_cache
@@ -20,7 +22,8 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .adapter import ProjectGraphPayload, compute_features
@@ -58,6 +61,40 @@ SCHEMA_RANGES: dict[str, tuple[float, float]] = {
 }
 
 app = FastAPI(title="Construction Delay Prediction Service", version="0.3.1")
+
+# ---------------------------------------------------------------- NFR-SEC-5
+
+# The AI service answers the backend only. The backend sends a shared secret in
+# this header; anything else gets 401. /health stays open because the Docker
+# healthcheck (PRED-2) calls it from inside the container without a token, and
+# it exposes no prediction data.
+AUTH_HEADER = "X-Internal-Token"
+OPEN_PATHS = frozenset({"/health"})
+MIN_TOKEN_LEN = 32
+
+
+def service_token() -> str:
+    """Read the shared secret; refuse to start without a real one (no default)."""
+    token = os.environ.get("AI_SERVICE_TOKEN", "")
+    if len(token) < MIN_TOKEN_LEN:
+        raise RuntimeError(
+            "AI_SERVICE_TOKEN must be a random value of at least 32 characters "
+            "(openssl rand -hex 32), shared with the backend. NFR-SEC-5."
+        )
+    return token
+
+
+SERVICE_TOKEN = service_token()
+
+
+@app.middleware("http")
+async def require_service_token(request: Request, call_next):
+    if request.url.path not in OPEN_PATHS:
+        sent = request.headers.get(AUTH_HEADER, "")
+        # constant-time comparison, so the token cannot be guessed byte by byte
+        if not hmac.compare_digest(sent.encode(), SERVICE_TOKEN.encode()):
+            return JSONResponse(status_code=401, content={"detail": "missing or invalid service token"})
+    return await call_next(request)
 
 # ---------------------------------------------------------------- registry
 

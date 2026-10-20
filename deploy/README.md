@@ -20,8 +20,8 @@
 git clone https://github.com/RoiVishi/finalProject.git
 cd finalProject
 cp deploy/env.prod.example .env
-sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/; s/^DB_PASSWORD=.*/DB_PASSWORD=$(openssl rand -hex 32)/" .env
-cat .env        # לוודא ש-DOMAIN, JWT_SECRET ו-DB_PASSWORD מלאים
+sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/; s/^DB_PASSWORD=.*/DB_PASSWORD=$(openssl rand -hex 32)/; s/^AI_SERVICE_TOKEN=.*/AI_SERVICE_TOKEN=$(openssl rand -hex 32)/" .env
+cat .env        # לוודא ש-DOMAIN, JWT_SECRET, DB_PASSWORD ו-AI_SERVICE_TOKEN מלאים
 docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --build
 ```
 
