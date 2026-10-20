@@ -1,0 +1,79 @@
+/* TASK-8 activity list + TASK-2/3/4 detail panel — built on the tokens in theme.css. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.tasks-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+.tasks-layout.with-detail { grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); }
+
+.tl { display: flex; flex-direction: column; gap: 12px; }
+.tl-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.tl-title { font-size: 17px; font-weight: 800; margin: 0; }
+.tl-count { font-size: 13px; color: var(--muted); }
+.tl-count-blocked { color: #9a6a0d; font-weight: 600; }
+
+.tl-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.tl-filter { display: flex; flex-direction: column; gap: 3px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.tl-filter select, .td-add select {
+  font: inherit; font-size: 13px; color: var(--fg); padding: 6px 8px; min-width: 104px;
+  border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface);
+}
+.tl-filter select:focus, .td-add select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.tl-reset { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 4px; }
+
+.tl-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tl-row {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  text-align: start; font: inherit; color: inherit; cursor: pointer;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+  border-inline-start: 4px solid var(--border-strong); transition: background 120ms, border-color 120ms;
+}
+.tl-row:hover { background: #f6f8fa; }
+.tl-row.blocked { border-inline-start-color: var(--warning); }
+.tl-row.active { border-color: var(--primary); background: var(--primary-soft); }
+.tl-row:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-soft); border-color: var(--primary); }
+.tl-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tl-name { font-weight: 700; font-size: 14px; }
+.tl-meta { font-size: 12px; color: var(--muted); }
+.tl-blocker { font-size: 12px; color: #9a6a0d; }
+.tl-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+
+.chip.progress { background: var(--primary-soft); color: #1a3c9e; }
+
+.risk-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 10px;
+  border-radius: 999px; background: #f2f5f9; color: var(--fg); white-space: nowrap; }
+.risk-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--risk, var(--muted)); }
+.risk-chip.none, .risk-chip.unknown, .risk-chip.done, .risk-chip.hidden { color: var(--muted); font-weight: 500; }
+
+.td { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 84px; } /* clear of the sticky shell header */
+.td-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.td-title { font-size: 17px; font-weight: 800; margin: 0; }
+.td-close { border: 0; background: #eef1f5; border-radius: 8px; width: 30px; height: 30px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
+.td-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.td-risk { display: inline-flex; align-items: center; gap: 6px; }
+.td-risk-title { font-size: 12px; color: var(--muted); }
+.td-facts { margin: 0; }
+.td-blocked { font-size: 13px; line-height: 1.5; padding: 10px 12px; border-radius: 10px; background: rgba(229, 155, 24, 0.12); color: #7a540a; }
+.td-free { font-size: 13px; padding: 10px 12px; border-radius: 10px; background: rgba(34, 163, 94, 0.1); color: #187547; }
+.td-section { display: flex; flex-direction: column; gap: 6px; }
+.td-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.td-actions .cta, .td-actions .back-btn { width: auto; height: 38px; padding-inline: 14px; font-size: 13px; }
+.td-actions button:disabled, .td-add button:disabled, .td-remove:disabled { opacity: 0.6; cursor: progress; }
+.td-links { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.td-links li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; padding: 6px 8px; border-radius: 8px; background: #f6f8fa; }
+.td-link-meta { font-size: 12px; color: var(--muted); }
+.td-done { color: #187547; }
+.td-remove { margin-inline-start: auto; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 6px; }
+.td-remove:hover { background: #e7ebf0; color: var(--danger); }
+.td-add { display: flex; gap: 8px; align-items: center; }
+.td-add select { flex: 1; min-width: 0; }
+.td-add .back-btn { width: auto; height: 34px; padding-inline: 14px; font-size: 13px; }
+
+@media (max-width: 860px) {
+  .tasks-layout.with-detail { grid-template-columns: minmax(0, 1fr); }
+  .td { position: static; order: -1; }
+}
+@media (max-width: 640px) {
+  .tl-row { flex-direction: column; align-items: stretch; }
+  .tl-side { flex-direction: row; align-items: center; }
+  .tl-filter { flex: 1 1 140px; }
+  .tl-filter select { width: 100%; }
+}
