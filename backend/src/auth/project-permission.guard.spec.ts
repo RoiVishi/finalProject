@@ -1,7 +1,11 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { MemberStatus, ProjectRole } from '../projects/project-member.entity';
 import { ProjectAction } from './permissions';
 import { ProjectPermissionGuard } from './project-permission.guard';
+
+const P1 = '6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b';
+const T1 = '0b9a8c7d-6e5f-4a3b-9c2d-1e0f2a3b4c5d';
+const GHOST = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 
 const ctxFor = (req: Record<string, unknown>) =>
   ({
@@ -39,7 +43,7 @@ describe('AUTH-2 — ProjectPermissionGuard', () => {
     });
     members.findActiveMembership.mockResolvedValue(null);
 
-    const ctx = ctxFor({ params: { projectId: 'p1' }, user: { userId: 'u-stranger' } });
+    const ctx = ctxFor({ params: { projectId: P1 }, user: { userId: 'u-stranger' } });
     await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(NotFoundException);
   });
 
@@ -49,7 +53,7 @@ describe('AUTH-2 — ProjectPermissionGuard', () => {
     });
     members.findActiveMembership.mockResolvedValue(engineer);
 
-    const ctx = ctxFor({ params: { projectId: 'p1' }, user: { userId: 'u-eng' } });
+    const ctx = ctxFor({ params: { projectId: P1 }, user: { userId: 'u-eng' } });
     await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(ForbiddenException);
   });
 
@@ -60,7 +64,7 @@ describe('AUTH-2 — ProjectPermissionGuard', () => {
     members.findActiveMembership.mockResolvedValue(engineer);
 
     const req: Record<string, unknown> = {
-      params: { projectId: 'p1' }, user: { userId: 'u-eng' },
+      params: { projectId: P1 }, user: { userId: 'u-eng' },
     };
     await expect(guard.canActivate(ctxFor(req))).resolves.toBe(true);
     expect(req.membership).toBe(engineer);
@@ -70,10 +74,10 @@ describe('AUTH-2 — ProjectPermissionGuard', () => {
     reflector.getAllAndOverride.mockReturnValue({
       action: ProjectAction.VIEW_PREDICTIONS, source: 'task',
     });
-    tasks.findOne.mockResolvedValue({ id: 't1', project: { id: 'p-from-task' } });
+    tasks.findOne.mockResolvedValue({ id: T1, project: { id: 'p-from-task' } });
     members.findActiveMembership.mockResolvedValue(engineer);
 
-    const ctx = ctxFor({ params: { id: 't1' }, user: { userId: 'u-eng' } });
+    const ctx = ctxFor({ params: { id: T1 }, user: { userId: 'u-eng' } });
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
     expect(members.findActiveMembership).toHaveBeenCalledWith('p-from-task', 'u-eng');
   });
@@ -84,7 +88,45 @@ describe('AUTH-2 — ProjectPermissionGuard', () => {
     });
     tasks.findOne.mockResolvedValue(null);
 
-    const ctx = ctxFor({ params: { id: 'ghost' }, user: { userId: 'u-eng' } });
+    const ctx = ctxFor({ params: { id: GHOST }, user: { userId: 'u-eng' } });
     await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  describe('malformed ids are 400 before any database query', () => {
+    const viewBy = (source: string) =>
+      reflector.getAllAndOverride.mockReturnValue({ action: ProjectAction.VIEW_PROJECT, source });
+
+    it('a non-uuid project id in the path', async () => {
+      viewBy('param');
+      const ctx = ctxFor({ params: { id: 'not-a-uuid' }, user: { userId: 'u-eng' } });
+      await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(BadRequestException);
+      expect(members.findActiveMembership).not.toHaveBeenCalled();
+    });
+
+    it('a repeated ?projectId= (arrives as an array)', async () => {
+      viewBy('query');
+      const ctx = ctxFor({ query: { projectId: [P1, P1] }, user: { userId: 'u-eng' } });
+      await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(BadRequestException);
+      expect(members.findActiveMembership).not.toHaveBeenCalled();
+    });
+
+    it('a non-uuid projectId in the body', async () => {
+      viewBy('body');
+      const ctx = ctxFor({ body: { projectId: 42 }, user: { userId: 'u-eng' } });
+      await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('a non-uuid task id on task-scoped routes', async () => {
+      viewBy('task');
+      const ctx = ctxFor({ params: { id: 'abc' }, user: { userId: 'u-eng' } });
+      await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(BadRequestException);
+      expect(tasks.findOne).not.toHaveBeenCalled();
+    });
+
+    it('a missing project id stays 404, as before', async () => {
+      viewBy('query');
+      const ctx = ctxFor({ query: {}, user: { userId: 'u-eng' } });
+      await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(NotFoundException);
+    });
   });
 });

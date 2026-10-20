@@ -1,6 +1,7 @@
 import {
   Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards,
 } from '@nestjs/common';
+import { UuidPipe } from '../common/uuid';
 import { CurrentUser, AuthenticatedUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AddMemberDto, ChangeMemberRoleDto } from './dto/project-member.dto';
@@ -14,13 +15,13 @@ export class ProjectMembersController {
   constructor(private members: ProjectMembersService) {}
 
   @Get()
-  list(@Param('projectId') projectId: string, @CurrentUser() me: AuthenticatedUser) {
+  list(@Param('projectId', UuidPipe) projectId: string, @CurrentUser() me: AuthenticatedUser) {
     return this.members.list(projectId, me.userId);
   }
 
   @Post()
   add(
-    @Param('projectId') projectId: string,
+    @Param('projectId', UuidPipe) projectId: string,
     @CurrentUser() me: AuthenticatedUser,
     @Body() dto: AddMemberDto,
   ) {
@@ -29,8 +30,8 @@ export class ProjectMembersController {
 
   @Patch(':memberId')
   changeRole(
-    @Param('projectId') projectId: string,
-    @Param('memberId') memberId: string,
+    @Param('projectId', UuidPipe) projectId: string,
+    @Param('memberId', UuidPipe) memberId: string,
     @CurrentUser() me: AuthenticatedUser,
     @Body() dto: ChangeMemberRoleDto,
   ) {
@@ -40,8 +41,8 @@ export class ProjectMembersController {
   @Delete(':memberId')
   @HttpCode(204)
   remove(
-    @Param('projectId') projectId: string,
-    @Param('memberId') memberId: string,
+    @Param('projectId', UuidPipe) projectId: string,
+    @Param('memberId', UuidPipe) memberId: string,
     @CurrentUser() me: AuthenticatedUser,
   ) {
     return this.members.remove(projectId, me.userId, memberId);
