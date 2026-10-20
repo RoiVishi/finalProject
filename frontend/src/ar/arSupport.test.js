@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import { AR_REASONS_HE, detectArSupport, endSessionQuietly } from './arSupport.js';
+import { AR_REASONS_HE, AR_UNAVAILABLE_HE, arEntryFor, detectArSupport, endSessionQuietly } from './arSupport.js';
 
 /**
  * AR-1 acceptance criterion: "capability detection covered by a unit test".
@@ -88,4 +88,39 @@ test('ending an already-ended session does not leave an unhandled rejection', as
 test('endSessionQuietly tolerates a missing session and a throwing end()', () => {
   assert.doesNotThrow(() => endSessionQuietly(null));
   assert.doesNotThrow(() => endSessionQuietly({ end: () => { throw new Error('gone'); } }));
+});
+
+/* arEntryFor — AR-1: the button only on a capable device, otherwise one line. */
+
+test('a capable device gets the AR button', () => {
+  assert.deepEqual(arEntryFor({ status: 'supported', supported: true }), { kind: 'button' });
+});
+
+test('while detection is running nothing is shown, so the row does not flicker', () => {
+  assert.deepEqual(arEntryFor({ status: 'checking' }), { kind: 'none' });
+  assert.deepEqual(arEntryFor(undefined), { kind: 'none' });
+});
+
+test('every unsupported reason becomes a one-line note with the long reason as detail', () => {
+  for (const reason of ['no-webxr', 'insecure-context', 'no-immersive-ar', 'error']) {
+    const entry = arEntryFor({ status: 'unsupported', supported: false, reason });
+    assert.equal(entry.kind, 'note');
+    assert.equal(entry.label, AR_UNAVAILABLE_HE[reason]);
+    assert.equal(entry.detail, AR_REASONS_HE[reason]);
+    assert.ok(!entry.label.includes('\n'), 'one line');
+  }
+});
+
+test('an unknown reason falls back to the generic note instead of an empty chip', () => {
+  const entry = arEntryFor({ status: 'unsupported', reason: 'something-new' });
+  assert.equal(entry.label, AR_UNAVAILABLE_HE.error);
+  assert.equal(entry.detail, AR_REASONS_HE.error);
+});
+
+test('an iPhone-like browser (no navigator.xr) ends up with the note, not the button', async () => {
+  setNavigator({});
+  const r = await detectArSupport();
+  const entry = arEntryFor({ status: r.supported ? 'supported' : 'unsupported', ...r });
+  assert.equal(entry.kind, 'note');
+  assert.equal(entry.label, 'AR לא נתמך בדפדפן זה');
 });

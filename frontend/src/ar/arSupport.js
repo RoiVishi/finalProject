@@ -15,6 +15,31 @@ export const AR_REASONS_HE = {
   error: 'לא ניתן לבדוק תמיכה ב-AR במכשיר הזה.',
 };
 
+/** Short form for the Twin's chip row: one line, in place of the AR button. */
+export const AR_UNAVAILABLE_HE = {
+  'no-webxr': 'AR לא נתמך בדפדפן זה',
+  'insecure-context': 'AR דורש חיבור מאובטח',
+  'no-immersive-ar': 'AR לא נתמך במכשיר זה',
+  error: 'לא ניתן לבדוק תמיכה ב-AR',
+};
+
+/**
+ * What the Twin shows in place of the AR entry point (AR-1: "offered only when
+ * the device reports AR capability and otherwise hidden behind a one-line
+ * explanation").
+ *   checking    -> nothing, so the row does not flicker
+ *   supported   -> the button
+ *   unsupported -> a one-line note; the longer reason goes in its tooltip
+ */
+export function arEntryFor(support) {
+  if (support?.status === 'supported') return { kind: 'button' };
+  if (support?.status === 'unsupported') {
+    const reason = AR_UNAVAILABLE_HE[support.reason] ? support.reason : 'error';
+    return { kind: 'note', label: AR_UNAVAILABLE_HE[reason], detail: AR_REASONS_HE[reason] };
+  }
+  return { kind: 'none' };
+}
+
 /** @returns {Promise<{supported: boolean, reason?: string, detail?: string}>} */
 export async function detectArSupport() {
   try {
