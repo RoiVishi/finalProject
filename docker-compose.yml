@@ -22,6 +22,7 @@ services:
       FEATURE_SCHEMA: /srv/feature_schema.json          # PRED-8: running schema
       RISK_BAND_T1: ${RISK_BAND_T1:-0.33}               # PRED-12: bands via config
       RISK_BAND_T2: ${RISK_BAND_T2:-0.66}
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?set AI_SERVICE_TOKEN in .env - copy .env.example}   # NFR-SEC-5
     volumes:
       - ./feature_schema.json:/srv/feature_schema.json:ro
     healthcheck:                                        # PRED-2: readiness, not liveness
@@ -37,6 +38,7 @@ services:
       DB_PASS: app
       DB_NAME: construction
       AI_SERVICE_URL: http://ai-service:8001
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?set AI_SERVICE_TOKEN in .env - copy .env.example}   # NFR-SEC-5
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env - copy .env.example}   # NFR-SEC-1/2: no default
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
     ports: ["3000:3000"]
