@@ -17,7 +17,7 @@
  * brings us back to the Twin.
  */
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
-import { AR_REASONS_HE, requestArSession, useArSupport } from './arSupport.js';
+import { AR_REASONS_HE, endSessionQuietly, requestArSession, useArSupport } from './arSupport.js';
 
 const ARScene = React.lazy(() => import('./ARScene.jsx'));
 
@@ -61,6 +61,14 @@ const cardStyle = {
   maxWidth: 360,
   direction: 'rtl',
 };
+
+/**
+ * Distance of the pre-session cards from the bottom of the viewport. The
+ * signed-in session chip (pages/auth.css, .session-chip) is fixed to the same
+ * bottom corner and sits above us in z-order, so a card placed lower than this
+ * has its buttons hidden behind the chip.
+ */
+const CARD_BOTTOM = 96;
 
 const buttonStyle = {
   background: '#2e7d32',
@@ -110,22 +118,13 @@ export default function ARView({ spec, selected, onSelect, onExit, scale = 0.02 
   }, [session, onExit]);
 
   // Never leave a session running behind us.
-  useEffect(
-    () => () => {
-      try {
-        session?.end?.();
-      } catch {
-        /* already gone */
-      }
-    },
-    [session],
-  );
+  useEffect(() => () => endSessionQuietly(session), [session]);
 
   if (support.status === 'checking') return null;
 
   if (support.status === 'unsupported') {
     return (
-      <div style={{ ...cardStyle, position: 'absolute', bottom: 16, insetInlineStart: 16, zIndex: 6 }}>
+      <div style={{ ...cardStyle, position: 'absolute', bottom: CARD_BOTTOM, insetInlineStart: 16, zIndex: 6 }}>
         {AR_REASONS_HE[support.reason] ?? AR_REASONS_HE.error}
         <div style={{ marginTop: 10 }}>
           <button onClick={onExit} style={buttonStyle}>
@@ -164,7 +163,7 @@ export default function ARView({ spec, selected, onSelect, onExit, scale = 0.02 
       {/* Pre-session screen. Once the session starts the page DOM is no longer
           visible, and everything moves into the scene. */}
       {!session && (
-        <div style={{ position: 'absolute', bottom: 18, insetInlineStart: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ position: 'absolute', bottom: CARD_BOTTOM, insetInlineStart: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {failed && <div style={{ ...cardStyle, borderInlineStart: '3px solid #f44336' }}>{failed}</div>}
           <div style={cardStyle}>
             <div style={{ fontWeight: 700, marginBottom: 6 }}>תצוגת מציאות רבודה</div>

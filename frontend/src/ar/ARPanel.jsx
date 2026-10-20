@@ -200,8 +200,13 @@ export function Legend3D({ position }) {
 /* Status line — one sentence, follows the view                        */
 /* ------------------------------------------------------------------ */
 
-const ST_W = 380;
-const ST_H = 52;
+// Sized for reading at arm's length: 22 px on a 600-unit panel 0.62 m wide,
+// 1.1 m from the eye, is ~2.3 cm tall text (about 1.2 degrees). The first
+// version used 15 px on 0.40 m (~1.6 cm) and was hard to read.
+const ST_W = 600;
+const ST_H = 64;
+const ST_FONT = 22;
+const ST_MAX = 60; // characters before the line is cut with an ellipsis
 
 export function StatusLine3D({ text }) {
   const ref = useRef();
@@ -213,11 +218,11 @@ export function StatusLine3D({ text }) {
     ctx.clearRect(0, 0, ST_W, ST_H);
     if (text) {
       ctx.fillStyle = 'rgba(14,20,27,0.88)';
-      roundRect(ctx, 0, 0, ST_W, ST_H, 12);
+      roundRect(ctx, 0, 0, ST_W, ST_H, 14);
       ctx.fill();
       ctx.fillStyle = '#ffffff';
-      ctx.font = '15px system-ui, Arial';
-      ctx.fillText(text.length > 52 ? `${text.slice(0, 51)}…` : text, ST_W - 16, 16);
+      ctx.font = `${ST_FONT}px system-ui, Arial`;
+      ctx.fillText(text.length > ST_MAX ? `${text.slice(0, ST_MAX - 1)}…` : text, ST_W - 20, (ST_H - ST_FONT) / 2);
     }
     texture.needsUpdate = true;
   }, [text, surface]);
@@ -232,7 +237,7 @@ export function StatusLine3D({ text }) {
   });
 
   if (!text) return null;
-  const scale = 0.40 / ST_W;
+  const scale = 0.62 / ST_W;
   return (
     <group ref={ref}>
       <mesh scale={[ST_W * scale, ST_H * scale, 1]}>
