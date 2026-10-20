@@ -16,6 +16,12 @@ Rules (all against results of the SAME run):
        dummy F1 of exactly 0.0, any model that predicts zero positives in the hard transfer setting
        would fail on a technicality.
   Calibration:                         calibrated Brier <= uncalibrated (same base).
+  Within project (since v6, external review 20.10.26) — the product's main use is ranking the
+  activities of ONE project, which pooled AUC does not measure:
+    B served: median per-project AUC > 0.5 AND >= 60% of test projects above chance;
+    A nested: same floor over the UNIQUE held-out projects of the 20 splits.
+  These are floors (better than chance for most projects), not quality claims; the measured
+  values are reported in model_comparison.json and meta.json.
 
 The regression row does NOT block (PRED-11): it decides whether the regressor is
 served. train_compare omits the artifact when the row fails; here we only print the
@@ -71,6 +77,20 @@ def check(r: dict) -> list[str]:
         if rep.get("share_above_chance", 0) < 0.75:
             failures.append(f"[A repeated] champion {champ} only {rep.get('share_above_chance')} of splits above chance (< 0.75)")
 
+    # within-project floors. REQUIRED from v6 on (results carry config.target); only pre-v6 artifacts,
+    # which never computed them, are exempt — a v6+ run that lacks them fails.
+    floor_med, floor_share = 0.5, 0.6
+    required = "target" in r.get("config", {})
+    for label, block in (("B served within-project", r.get("calibration", {}).get("B_temporal", {}).get("within_project", {}).get("all")),
+                         ("A nested within-project", (rep or {}).get("within_project", {}).get("all"))):
+        if not block:
+            if required:
+                failures.append(f"[{label}] missing — v6+ results must report within-project ranking")
+            continue
+        share = block.get("share_point_estimate_above_0.5", block.get("share_above_chance")) or 0
+        if (block.get("median_auc") or 0) <= floor_med or share < floor_share:
+            failures.append(f"[{label}] {block} — below the floor (median > {floor_med}, share >= {floor_share})")
+
     # PRED-13: calibration must not worsen Brier (scenario B)
     cal = r.get("calibration", {}).get("B_temporal", {})
     if cal and cal.get("brier_calibrated", 1) > cal.get("brier_uncalibrated_same_base", 0):
@@ -85,11 +105,13 @@ def main() -> int:
         print("GATE FAIL: outputs/model_comparison.json not found — run train_compare.py first.")
         return 1
     r = json.loads(path.read_text())
-    champ_reg = r["champion"]["regressor"]
+    champ_reg = r["champion"].get("regressor")
 
-    # PRED-11 consistency note (non-blocking)
-    g = r["regression"]["B_temporal"]
-    if not g[champ_reg]["mae_days"] < g["dummy_median"]["mae_days"]:
+    # PRED-11 consistency note (non-blocking). Registry v6 trains no regressor at all.
+    g = r.get("regression", {}).get("B_temporal")
+    if champ_reg is None or g is None:
+        print("NOTE [PRED-11]: no regressor trained — classification-only deployment.")
+    elif not g[champ_reg]["mae_days"] < g["dummy_median"]["mae_days"]:
         print(f"NOTE [PRED-11]: regression gated off (MAE {g[champ_reg]['mae_days']} "
               f">= dummy {g['dummy_median']['mae_days']}) — classification-only deployment.")
 
@@ -99,8 +121,8 @@ def main() -> int:
         for f in failures:
             print("  -", f)
         return 1
-    print(f"MODEL QUALITY GATE: PASSED (classifier={r['champion']['classifier']}, "
-          f"regressor={champ_reg})")
+    print(f"MODEL QUALITY GATE: PASSED (target={r['config'].get('target', 'is_late')}, "
+          f"classifier={r['champion']['classifier']}, regressor={champ_reg})")
     return 0
 
 

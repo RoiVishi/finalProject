@@ -45,13 +45,13 @@ def make_prep(num, cat):
 
 
 def champ_params():
-    r = json.loads((OUT / "model_comparison.json").read_text())
+    r = json.loads((OUT / "model_comparison_v5_is_late.json").read_text())
     return {k.replace("model__", ""): v for k, v in r["best_params"][r["champion"]["classifier"]].items()}
 
 
 def champ_estimator():
     """The current champion by name (RR-19: the champion is no longer hard-wired to XGBoost)."""
-    r = json.loads((OUT / "model_comparison.json").read_text())
+    r = json.loads((OUT / "model_comparison_v5_is_late.json").read_text())
     name, params = r["champion"]["classifier"], champ_params()
     if name == "xgboost":
         return XGBClassifier(random_state=SEED, n_jobs=-1, eval_metric="logloss", tree_method="hist", **params)

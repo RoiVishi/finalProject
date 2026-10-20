@@ -1,8 +1,15 @@
 """
-Model comparison for task-delay prediction (RR-3, RR-4, RR-5, PRED-4, PRED-6).
+Model comparison for task-risk prediction (RR-3, RR-4, RR-5, PRED-4, PRED-6).
 
-Classification (is_late): dummy, Logistic Regression, Random Forest, XGBoost, MLP
-Regression (delay_days):  dummy, Random Forest, XGBoost
+Registry v6 (RR-21c, 20.10.2026): the SERVED model is trained on corpus v3 — building projects
+only (own 9 + DSLIB authentic-tracking 57, src/build_corpus_v3.py) — with target `grew`
+(the activity takes longer than planned). Rationale and experiments: RR-21 / RR-21b / RR-21c.
+Until v5 the target was is_late on all 15 own projects; that comparison is archived in
+outputs/model_comparison_v5_is_late.json and the RR-11/12/13 scripts still reproduce it.
+
+Classification (grew): dummy, Logistic Regression, Random Forest, XGBoost, MLP
+Regression (delay_days): not trained for v6 — DSLIB has no comparable delay-days target and
+the regressor was never served (PRED-11 gate failed in v3–v5).
 
 Two leakage-aware evaluation scenarios (RR-4):
   A) cross-project GroupShuffleSplit — "new, unseen project"
@@ -49,8 +56,8 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
-    accuracy_score, brier_score_loss, f1_score, mean_absolute_error,
-    precision_score, recall_score, roc_auc_score, root_mean_squared_error,
+    accuracy_score, brier_score_loss, f1_score,
+    precision_score, recall_score, roc_auc_score,
 )
 from sklearn.model_selection import GridSearchCV, GroupKFold, GroupShuffleSplit
 from sklearn.neural_network import MLPClassifier
@@ -96,6 +103,22 @@ EXCLUDE_PROJECTS = {
 }
 
 
+# Registry v6 target and corpus (RR-21c). load_labeled() below is the is_late-era corpus,
+# kept for the research scripts that reproduce registry v5.
+TARGET = "grew"
+CORPUS_V3 = OUT / "corpus_v3_buildings.csv"
+RISK_BAND_QUANTILES = (None, 0.90)   # PRED-12: t1 = F1-optimal threshold; high = top 10% of the calibration slice
+
+
+def load_corpus() -> pd.DataFrame:
+    """Corpus v3 — building projects only, target `grew` (build with src/build_corpus_v3.py)."""
+    if not CORPUS_V3.exists():
+        raise SystemExit(f"{CORPUS_V3} missing — run etl.py, rr17_dslib_etl.py, then build_corpus_v3.py")
+    df = pd.read_csv(CORPUS_V3, low_memory=False)
+    df[TARGET] = df[TARGET].astype(int)
+    return df
+
+
 def load_labeled() -> pd.DataFrame:
     """Labeled corpus with duplicate projects removed — single entry point for all experiments."""
     df = pd.read_csv(OUT / "labeled_tasks.csv")
@@ -113,6 +136,59 @@ def make_preprocessor():
             ("oh", OneHotEncoder(handle_unknown="ignore")),
         ]), CAT_FEATURES),
     ])
+
+
+N_BOOT = 2000   # bootstrap resamples for the within-project uncertainty (seeded)
+
+
+def summarise_aucs(x: pd.Series, ci_lower: pd.Series | None = None) -> dict:
+    """Per-project AUCs (one value per UNIQUE project) -> median with a 95% bootstrap CI over projects,
+    share above 0.5 (a point estimate above 0.5 — NOT a demonstrated advantage), and, when per-project
+    CIs exist, the share whose 95% CI lies entirely above 0.5."""
+    x = pd.Series(x, dtype=float).reset_index(drop=True)
+    out = {"n_projects": int(len(x)), "median_auc": None, "median_ci95": None, "share_point_estimate_above_0.5": None}
+    if len(x):
+        rng = np.random.default_rng(SEED)
+        meds = np.median(rng.choice(x.values, size=(N_BOOT, len(x)), replace=True), axis=1)
+        out.update(median_auc=round(float(x.median()), 4),
+                   median_ci95=[round(float(q), 4) for q in np.quantile(meds, [0.025, 0.975])],
+                   **{"share_point_estimate_above_0.5": round(float((x > 0.5).mean()), 3)})
+        if ci_lower is not None:
+            out["share_ci95_entirely_above_0.5"] = round(float((pd.Series(ci_lower).reset_index(drop=True) > 0.5).mean()), 3)
+    return out
+
+
+def eligibility(g: pd.DataFrame) -> str | None:
+    """Why a project cannot get a within-project AUC (None = eligible). A stable AUC needs enough
+    activities and both outcomes; the reasons are reported so readers know whom the number describes."""
+    if len(g) < MIN_LABELED:
+        return f"fewer than {MIN_LABELED} test activities"
+    if min(g[TARGET].sum(), len(g) - g[TARGET].sum()) < 5:
+        return "fewer than 5 activities in one outcome class"
+    return None
+
+
+def within_project_aucs(df: pd.DataFrame, proba) -> tuple[pd.DataFrame, dict]:
+    """AUC inside every eligible project, with a per-project 95% bootstrap CI (activities resampled
+    within the project). The product's main use is ranking the activities of ONE project.
+    Returns (rows, exclusion report)."""
+    rows, excluded = [], {}
+    rng = np.random.default_rng(SEED)
+    for proj, g in df.assign(_p=proba).groupby("project"):
+        why = eligibility(g)
+        if why:
+            excluded[why] = excluded.get(why, 0) + 1
+            continue
+        y, pp = g[TARGET].to_numpy(), g["_p"].to_numpy()
+        boots = []
+        for _ in range(500):
+            i = rng.integers(0, len(y), len(y))
+            if y[i].min() != y[i].max():
+                boots.append(roc_auc_score(y[i], pp[i]))
+        lo, hi = np.quantile(boots, [0.025, 0.975])
+        rows.append((proj, g["source"].iloc[0], roc_auc_score(y, pp), lo, hi))
+    report = {"projects_in_test": int(df["project"].nunique()), "eligible": len(rows), "excluded": excluded}
+    return pd.DataFrame(rows, columns=["project", "source", "auc", "ci_lo", "ci_hi"]), report
 
 
 def clf_metrics(y_true, y_pred, y_proba=None):
@@ -164,17 +240,22 @@ def regressor_zoo():
     }
 
 
-def temporal_split(lab: pd.DataFrame):
+def temporal_split(lab: pd.DataFrame, ineligible_to_train: bool = False):
     """Scenario B: per-project temporal split at the project's own rel_position quantile.
 
     A fixed global cut (v1: rel_position <= 0.7) covered only 2 projects, because most
     projects concentrate their labeled activities on one side of a global cut. Cutting at
     each project's own 70th percentile keeps the split temporally valid (train strictly
     earlier than test within the project) while covering every project with enough labels.
+
+    With ineligible_to_train=True (corpus v3), a project too small to be cut contributes ALL its
+    rows to train: it is another project, so it cannot leak into any test project's future.
     """
     tr_parts, te_parts, projects = [], [], []
     for name, g in lab.groupby("project"):
         if len(g) < MIN_LABELED:
+            if ineligible_to_train:
+                tr_parts.append(g[g["rel_position"].notna()])
             continue
         cut = g["rel_position"].quantile(TEMPORAL_Q)
         tr_g = g[g["rel_position"] <= cut]
@@ -183,6 +264,8 @@ def temporal_split(lab: pd.DataFrame):
             tr_parts.append(tr_g)
             te_parts.append(te_g)
             projects.append(name)
+        elif ineligible_to_train:
+            tr_parts.append(g[g["rel_position"].notna()])
     tr_all, te_all = pd.concat(tr_parts), pd.concat(te_parts)
     n_nan = int(lab[lab["project"].isin(projects)]["rel_position"].isna().sum())
     if n_nan:
@@ -191,9 +274,9 @@ def temporal_split(lab: pd.DataFrame):
 
 
 def main():
-    lab = load_labeled()
-    print(f"labeled corpus after dedup: {len(lab)} tasks, "
-          f"{lab['project'].nunique()} projects (excluded: {sorted(EXCLUDE_PROJECTS)})")
+    lab = load_corpus()
+    print(f"corpus v3 (buildings, target={TARGET}): {len(lab)} activities, {lab['project'].nunique()} projects "
+          f"({lab.groupby('source')['project'].nunique().to_dict()})")
 
     # ---------- scenario A: cross-project ----------
     gss = GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=SEED)
@@ -201,7 +284,7 @@ def main():
     A_tr, A_te = lab.iloc[a_tr_idx], lab.iloc[a_te_idx]
 
     # ---------- scenario B: within-project temporal ----------
-    B_tr, B_te, B_projects = temporal_split(lab)
+    B_tr, B_te, B_projects = temporal_split(lab, ineligible_to_train=True)
     assert_as_of(B_tr, B_te)   # PRED-14 rule 3: train strictly earlier than test in every project
 
     results = {
@@ -209,12 +292,18 @@ def main():
             "seed": SEED,
             "generated_by": "data-pipeline/src/train_compare.py",
             "feature_schema_version": SCHEMA_VERSION,
+            "target": TARGET,
+            "corpus": "corpus_v3_buildings (src/build_corpus_v3.py): own buildings + DSLIB buildings with authentic tracking",
+            "corpus_by_source": {s_: {"projects": int(g_["project"].nunique()), "activities": int(len(g_)),
+                                      "target_rate": round(float(g_[TARGET].mean()), 3)}
+                                 for s_, g_ in lab.groupby("source")},
             "scenario_A": {"split": "GroupShuffleSplit by project, test_size=0.25",
                            "n_train": len(A_tr), "n_test": len(A_te)},
             "scenario_B": {"split": f"per-project temporal quantile cut q={TEMPORAL_Q} on rel_position",
                            "min_labeled": MIN_LABELED, "min_per_side": MIN_PER_SIDE,
                            "n_train": len(B_tr), "n_test": len(B_te),
-                           "n_projects": len(B_projects), "projects": B_projects},
+                           "n_projects": len(B_projects), "projects": B_projects,
+                           "ineligible_projects": "all rows to train (other projects — no temporal leakage into test projects)"},
             "features_num": NUM_FEATURES, "features_cat": CAT_FEATURES,
             "tuning": "GridSearchCV, GroupKFold(3) by project INSIDE each scenario's own train set (RR-19, 7.9.26; before: tuned on A train and reused in B — 80% of B test rows were in A train)",
             "calibration": ("sigmoid (Platt) via CalibratedClassifierCV(FrozenEstimator): per-project temporal "
@@ -239,61 +328,88 @@ def main():
             pipe = Pipeline([("prep", make_preprocessor()), ("model", est)])
             if grid:
                 gs = GridSearchCV(pipe, grid, scoring="roc_auc", n_jobs=-1,
-                                  cv=gkf.split(tr, tr["is_late"], groups=tr["project"]))
-                gs.fit(plan_time(tr), tr["is_late"])
+                                  cv=gkf.split(tr, tr[TARGET], groups=tr["project"]))
+                gs.fit(plan_time(tr), tr[TARGET])
                 model = gs.best_estimator_
                 params = {k: (v if isinstance(v, (int, float, str)) else str(v)) for k, v in gs.best_params_.items()}
                 (results["best_params"] if scen == "B_temporal" else results["best_params_A"])[name] = params
                 print(f"[tune {scen}] {name}: {gs.best_params_} (cv auc={gs.best_score_:.4f})")
             else:
-                pipe.fit(plan_time(tr), tr["is_late"])
+                pipe.fit(plan_time(tr), tr[TARGET])
                 model = pipe
             pred = model.predict(plan_time(te))
             proba = model.predict_proba(plan_time(te))[:, 1] if hasattr(model, "predict_proba") else None
-            results["classification"][scen][name] = clf_metrics(te["is_late"], pred, proba)
+            results["classification"][scen][name] = clf_metrics(te[TARGET], pred, proba)
             print(f"[clf {scen}] {name}: {results['classification'][scen][name]}")
             if scen == "B_temporal":
                 tuned[name] = model
 
-    # ---------- scenario A, repeated (RR-13 follow-up; the gate reads the champion's row) ----------
-    # 20 GroupShuffleSplits by project with the B-tuned params of each classifier. Reported: median AUC,
-    # IQR, min/max, share of splits above chance. Replaces the single seed-42 split as the blocking rule.
+    # ---------- scenario A, repeated — NESTED (RR-13 follow-up; the gate reads the champion's row) ----------
+    # 20 GroupShuffleSplits by project. Since v6 the hyperparameters are tuned INSIDE each split's own
+    # train set (GridSearchCV, GroupKFold(3) by project): the B-tuned params used until v5 had seen rows
+    # of projects that later sit in an A test set (external review, 20.10.26; measured effect on the v6
+    # champion's median: 0.734 -> 0.728). Reported per family:
+    #   pooled AUC per split (median, IQR, min/max, share above chance) — mixes between- and within-project
+    #   ranking; within-project AUC — every test project with >=30 labels and >=5 per class, averaged per
+    #   UNIQUE project over the splits it appears in, then summarised across projects (each project counts
+    #   once), overall and per source; project-level diagnostic — Spearman of each project's mean predicted
+    #   risk vs its observed rate across unique test projects (what the pooled-vs-within gap could reflect).
     results["classification"]["A_repeated"] = {}
-    for name, est in tuned.items():
+    for name, (est, grid) in classifier_zoo().items():
         if name == "dummy_majority":
             continue
-        aucs = []
+        aucs, within, proj_level, not_eligible = [], {}, {}, {}
         for seed in range(N_REPEATED_A):
             tr_i, te_i = next(GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=seed).split(lab, groups=lab["project"]))
             a_tr, a_te = lab.iloc[tr_i], lab.iloc[te_i]
-            if a_te["is_late"].nunique() < 2:
+            if a_te[TARGET].nunique() < 2:
                 continue
-            m = clone(est)
-            m.fit(plan_time(a_tr), a_tr["is_late"])
-            aucs.append(roc_auc_score(a_te["is_late"], m.predict_proba(plan_time(a_te))[:, 1]))
+            pipe = Pipeline([("prep", make_preprocessor()), ("model", clone(est))])
+            if grid:
+                gs = GridSearchCV(pipe, grid, scoring="roc_auc", n_jobs=-1,
+                                  cv=GroupKFold(n_splits=3).split(a_tr, a_tr[TARGET], groups=a_tr["project"]))
+                gs.fit(plan_time(a_tr), a_tr[TARGET])
+                m = gs.best_estimator_
+            else:
+                m = pipe.fit(plan_time(a_tr), a_tr[TARGET])
+            p = m.predict_proba(plan_time(a_te))[:, 1]
+            aucs.append(roc_auc_score(a_te[TARGET], p))
+            for proj, g in a_te.assign(_p=p).groupby("project"):
+                proj_level.setdefault(proj, []).append((g["source"].iloc[0], float(g["_p"].mean()), float(g[TARGET].mean())))
+                if eligibility(g) is None:
+                    within.setdefault(proj, []).append((g["source"].iloc[0], roc_auc_score(g[TARGET], g["_p"])))
+                else:
+                    not_eligible.setdefault(proj, eligibility(g))
         arr = np.array(aucs)
+        w = pd.DataFrame([(src, float(np.mean([a for _, a in v]))) for v in within.values() for src in [v[0][0]]],
+                         columns=["source", "auc"])
+        pl = pd.DataFrame([(v[0][0], float(np.mean([x[1] for x in v])), float(np.mean([x[2] for x in v])))
+                           for v in proj_level.values()], columns=["source", "mean_pred", "observed"])
         results["classification"]["A_repeated"][name] = {
+            "tuning": "nested — GridSearchCV inside each split's train set",
             "n_splits": int(len(arr)), "median_auc": round(float(np.median(arr)), 4),
             "q25": round(float(np.percentile(arr, 25)), 4), "q75": round(float(np.percentile(arr, 75)), 4),
             "min": round(float(arr.min()), 4), "max": round(float(arr.max()), 4),
             "share_above_chance": round(float((arr > 0.5).mean()), 3),
+            "within_project": {"all": summarise_aucs(w["auc"]),
+                               **{s_: summarise_aucs(g_["auc"]) for s_, g_ in w.groupby("source")},
+                               "coverage": {"unique_projects_tested": len(proj_level),
+                                            "eligible_in_at_least_one_split": len(within),
+                                            "never_eligible": {why: sum(1 for p_, r_ in not_eligible.items()
+                                                                        if r_ == why and p_ not in within)
+                                                               for why in set(not_eligible.values())},
+                                            "note": "a project is averaged over the splits where it was eligible; "
+                                                    "the summary describes eligible projects only"}},
+            "project_level_spearman": {s_: {"n_projects": int(len(g_)),
+                                            "rho": round(float(g_["mean_pred"].corr(g_["observed"], method="spearman")), 3)}
+                                       for s_, g_ in pl.groupby("source") if len(g_) >= 5},
         }
-        print(f"[clf A_repeated] {name}: {results['classification']['A_repeated'][name]}")
+        print(f"[clf A_repeated nested] {name}: {results['classification']['A_repeated'][name]}")
 
-    # ---------- regression ----------
-    for scen, (tr, te) in {"A_cross_project": (A_tr, A_te), "B_temporal": (B_tr, B_te)}.items():
-        tr_r, te_r = tr[~tr["extreme_delay"].astype(bool)], te[~te["extreme_delay"].astype(bool)]
-        for name, est in regressor_zoo().items():
-            pipe = Pipeline([("prep", make_preprocessor()), ("model", est)])
-            pipe.fit(plan_time(tr_r), tr_r["delay_days"])
-            pred = pipe.predict(plan_time(te_r))
-            results["regression"][scen][name] = {
-                "mae_days": round(float(mean_absolute_error(te_r["delay_days"], pred)), 2),
-                "rmse_days": round(float(root_mean_squared_error(te_r["delay_days"], pred)), 2),
-            }
-            print(f"[reg {scen}] {name}: {results['regression'][scen][name]}")
-            if scen == "B_temporal":
-                tuned[f"__reg__{name}"] = pipe
+    # ---------- regression: not trained for v6 ----------
+    # PRED-11: the delay-days regressor failed its gate in v3–v5 (never served), and the v6 corpus
+    # has no common delay-days target (DSLIB delays are against a frozen baseline). Classification only.
+    results["regression"] = {"skipped": "registry v6 is classification-only (target grew); see PRED-11 in model_comparison_v5_is_late.json"}
 
     # ---------- champion selection — NESTED, on the inner slice of B train (RR-19b, 7.9.26) ----------
     # Until 7.9.26 the family (RF vs XGB vs ...) was chosen by roc_auc on B_test and then reported on the
@@ -310,21 +426,20 @@ def main():
     B_fit, B_cal = pd.concat(fit_parts), pd.concat(cal_parts)
     inner = {}
     for name, est in tuned.items():
-        if name == "dummy_majority" or name.startswith("__reg__"):
+        if name == "dummy_majority":
             continue
         m = clone(est)
-        m.fit(plan_time(B_fit), B_fit["is_late"])
-        inner[name] = round(float(roc_auc_score(B_cal["is_late"], m.predict_proba(plan_time(B_cal))[:, 1])), 4)
+        m.fit(plan_time(B_fit), B_fit[TARGET])
+        inner[name] = round(float(roc_auc_score(B_cal[TARGET], m.predict_proba(plan_time(B_cal))[:, 1])), 4)
         print(f"[select inner] {name}: roc_auc on B_cal = {inner[name]}")
     results["classification"]["B_inner_selection"] = inner
     ranked = sorted(inner, key=lambda n: inner[n], reverse=True)
     champion, runner_up = ranked[0], (ranked[1] if len(ranked) > 1 else None)
-    b_reg = results["regression"]["B_temporal"]
-    champion_reg = min((n for n in b_reg if n != "dummy_median"), key=lambda n: b_reg[n]["mae_days"])
+    champion_reg = None
     test_ranked = sorted((n for n in b_clf if n != "dummy_majority"), key=lambda n: b_clf[n].get("roc_auc", 0), reverse=True)
     results["champion"] = {
         "classifier": champion, "regressor": champion_reg,
-        "selected_by": "roc_auc on the inner temporal slice of B TRAIN (q0.75) — nested selection, B_test untouched (RR-19b); reg: B mae",
+        "selected_by": "roc_auc on the inner temporal slice of B TRAIN (q0.75) — nested selection, B_test untouched (RR-19b)",
         "inner_selection_auc": inner,
         "runner_up_classifier": runner_up,
         "delta_auc_vs_runner_up": (round(b_clf[champion]["roc_auc"] - b_clf[runner_up]["roc_auc"], 4)
@@ -347,12 +462,12 @@ def main():
     # comparable). Test data is never touched.
     # (B_fit / B_cal computed above — the same slice selected the champion)
     champ_fit = clone(tuned[champion])
-    champ_fit.fit(plan_time(B_fit), B_fit["is_late"])
+    champ_fit.fit(plan_time(B_fit), B_fit[TARGET])
     calibrated = CalibratedClassifierCV(FrozenEstimator(champ_fit), method="sigmoid")
-    calibrated.fit(plan_time(B_cal), B_cal["is_late"])
+    calibrated.fit(plan_time(B_cal), B_cal[TARGET])
 
     def brier(model, te):
-        return round(float(brier_score_loss(te["is_late"], model.predict_proba(plan_time(te))[:, 1])), 4)
+        return round(float(brier_score_loss(te[TARGET], model.predict_proba(plan_time(te))[:, 1])), 4)
 
     # Calibration is evaluated on scenario B ONLY. The A test set overlaps the B train
     # side (the two splits cut the same corpus differently), so evaluating the calibrated
@@ -367,7 +482,62 @@ def main():
     pred_cal = calibrated.predict(plan_time(B_te))
     proba_cal = calibrated.predict_proba(plan_time(B_te))[:, 1]
     cal_metrics["B_temporal"]["classification_calibrated"] = clf_metrics(
-        B_te["is_late"], pred_cal, proba_cal)
+        B_te[TARGET], pred_cal, proba_cal)
+    # per source: the product claim is about OWN-style building projects; DSLIB is reported beside it
+    by_source = {}
+    for src, g in B_te.assign(_p=proba_cal).groupby("source"):
+        if g[TARGET].nunique() == 2:
+            by_source[src] = {"n_test": int(len(g)), "target_rate": round(float(g[TARGET].mean()), 3),
+                              "roc_auc": round(float(roc_auc_score(g[TARGET], g["_p"])), 4),
+                              "brier": round(float(brier_score_loss(g[TARGET], g["_p"])), 4)}
+    cal_metrics["B_temporal"]["by_source"] = by_source
+    wp, wp_cov = within_project_aucs(B_te, proba_cal)
+    within_B = {"all": summarise_aucs(wp["auc"], wp["ci_lo"]),
+                **{s_: summarise_aucs(g_["auc"], g_["ci_lo"]) for s_, g_ in wp.groupby("source")},
+                "coverage": {**wp_cov, "note": "test projects of scenario B; the summary describes eligible projects only"},
+                "per_project": {r.project: {"auc": round(float(r.auc), 4), "ci95": [round(float(r.ci_lo), 3), round(float(r.ci_hi), 3)]}
+                                for r in wp.itertuples()}}
+    cal_metrics["B_temporal"]["within_project"] = within_B
+
+    # ---------- PRED-12: risk bands + decision threshold by a documented protocol ----------
+    # Selected on TRAIN-side data only (the calibration slice B_cal), never on test:
+    #   decision_threshold — the calibrated probability that maximises F1 on B_cal; it is the binary
+    #                        label of /predict AND the low|medium boundary (t1), so "flagged" and
+    #                        "medium or high" can never disagree in the UI;
+    #   t2 (high)          — the 90th percentile of the calibrated probability on B_cal: "high" is the
+    #                        top 10% (the quantile idea of bias_and_alerts.py, which avoided the 21.5%
+    #                        "red" flood of fixed 0.33/0.66). If the quantile falls below t1, t2 = t1.
+    p_cal = calibrated.predict_proba(plan_time(B_cal))[:, 1]
+    grid = np.round(np.arange(0.05, 0.951, 0.01), 2)
+    f1s = [f1_score(B_cal[TARGET], (p_cal >= t).astype(int), zero_division=0) for t in grid]
+    decision = float(grid[int(np.argmax(f1s))])
+    t1 = decision
+    t2 = round(max(float(np.quantile(p_cal, RISK_BAND_QUANTILES[1])), t1), 4)
+    risk_bands = {"t1": t1, "t2": t2, "decision_threshold": decision,
+                  "protocol": ("t1 = decision_threshold = argmax F1 of the calibrated probability on the train-side "
+                               f"calibration slice B_cal (grid 0.05..0.95); t2 = its {RISK_BAND_QUANTILES[1]:.0%} quantile on "
+                               "B_cal (high = top 10%), floored at t1; test never used"),
+                  "selected_on": f"B_cal ({len(B_cal)} activities)"}
+    pred_thr = (proba_cal >= decision).astype(int)
+    cal_metrics["B_temporal"]["classification_at_decision_threshold"] = clf_metrics(B_te[TARGET], pred_thr, proba_cal)
+    te_band = np.where(proba_cal >= t2, "high", np.where(proba_cal >= t1, "medium", "low"))
+    risk_bands["test_band_shares"] = {b_: round(float((te_band == b_).mean()), 3) for b_ in ("low", "medium", "high")}
+    risk_bands["test_target_rate_by_band"] = {b_: round(float(B_te[TARGET][te_band == b_].mean()), 3)
+                                              for b_ in ("low", "medium", "high") if (te_band == b_).any()}
+    cal_tab = pd.DataFrame({"band": te_band, "p": proba_cal, "y": B_te[TARGET].values, "src": B_te["source"].values})
+    risk_bands["test_calibration_by_band"] = {
+        b_: {"n": int(len(g_)), "mean_predicted": round(float(g_["p"].mean()), 3), "observed": round(float(g_["y"].mean()), 3)}
+        for b_, g_ in cal_tab.groupby("band")}
+    risk_bands["test_calibration_by_source_band"] = {
+        f"{s_}/{b_}": {"n": int(len(g_)), "mean_predicted": round(float(g_["p"].mean()), 3), "observed": round(float(g_["y"].mean()), 3)}
+        for (s_, b_), g_ in cal_tab.groupby(["src", "band"])}
+    gaps = [v["mean_predicted"] - v["observed"] for v in risk_bands["test_calibration_by_band"].values()]
+    risk_bands["display_rule"] = (
+        "show the BAND, not the percentage: the bands are ordered correctly, but in the upper bands the "
+        f"calibrated probability over-states the observed rate by up to {max(gaps):.2f} on test")
+    results["risk_bands"] = risk_bands
+    print(f"[PRED-12] {json.dumps(risk_bands)}")
+
     results["calibration"] = {
         "method": "sigmoid (Platt)",
         "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
@@ -383,7 +553,11 @@ def main():
     # must hold to. Book headline = served metrics; selection metrics answer "why XGB".
     results["served_model"] = {
         "artifact": "calibrated pipeline (champion fitted on B_fit + sigmoid calibrator on B_cal)",
+        "target": TARGET,
         "metrics_B_test": cal_metrics["B_temporal"]["classification_calibrated"],
+        "metrics_B_test_at_decision_threshold": cal_metrics["B_temporal"]["classification_at_decision_threshold"],
+        "by_source_B_test": by_source,
+        "within_project_B_test": within_B,
         "brier_B_test": cal_metrics["B_temporal"]["brier_calibrated"],
         "selection_metrics_note": ("champion selection used the full-B_tr fit "
                                    f"(roc_auc {b_clf[champion]['roc_auc']}); that fit is NOT the served artifact"),
@@ -393,8 +567,8 @@ def main():
     # reliability curve figure (project book, RR-6/PRED-13)
     fig_dir = OUT / "figures"
     fig_dir.mkdir(exist_ok=True)
-    frac_u, mean_u = calibration_curve(B_te["is_late"], champ_fit.predict_proba(plan_time(B_te))[:, 1], n_bins=10)
-    frac_c, mean_c = calibration_curve(B_te["is_late"], proba_cal, n_bins=10)
+    frac_u, mean_u = calibration_curve(B_te[TARGET], champ_fit.predict_proba(plan_time(B_te))[:, 1], n_bins=10)
+    frac_c, mean_c = calibration_curve(B_te[TARGET], proba_cal, n_bins=10)
     plt.figure(figsize=(6.4, 5.2), dpi=150)
     plt.plot([0, 1], [0, 1], ls="--", lw=1, color="#9a9a9a", zorder=1)
     plt.plot(mean_u, frac_u, marker="o", ms=6, lw=2, color="#eb6834", zorder=2)
@@ -404,8 +578,8 @@ def main():
                  textcoords="offset points", color="#3a3a3a", fontsize=10)
     plt.annotate("Calibrated (sigmoid)", xy=(mean_c[-1], frac_c[-1]), xytext=(6, 8),
                  textcoords="offset points", color="#3a3a3a", fontsize=10)
-    plt.xlabel("Predicted probability of delay")
-    plt.ylabel("Observed fraction delayed")
+    plt.xlabel("Predicted probability of duration overrun")
+    plt.ylabel("Observed fraction overrun")
     plt.title("Reliability curve — scenario B test (champion classifier)")
     plt.grid(alpha=0.25, lw=0.5)
     plt.tight_layout()
@@ -430,34 +604,44 @@ def main():
     vdir = REGISTRY / version
     vdir.mkdir()
     joblib.dump(calibrated, vdir / "classifier.joblib", compress=3)   # served = calibrated
-    # PRED-11: the regressor is deployed ONLY while it clears its gate row (beats the
-    # dummy MAE on scenario B). If it fails, we ship classification-only — the service
-    # then returns estimated_delay_days = null and the UI omits the field.
-    reg_gate_passed = b_reg[champion_reg]["mae_days"] < b_reg["dummy_median"]["mae_days"]
-    if reg_gate_passed:
-        joblib.dump(tuned[f"__reg__{champion_reg}"], vdir / "regressor.joblib", compress=3)
-    else:
-        print(f"[PRED-11] regression gated OFF: {champion_reg} MAE "
-              f"{b_reg[champion_reg]['mae_days']} >= dummy {b_reg['dummy_median']['mae_days']}")
+    reg_gate_passed = False   # PRED-11: v6 is classification-only (see regression note above)
     shutil.copy(SCHEMA_PATH, vdir / "feature_schema.json")        # self-contained artifact
     meta = {
         "version": version,
         "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "feature_schema_version": SCHEMA_VERSION,
+        "target": TARGET,
+        "target_definition": "grew = the activity takes longer than planned (actual duration > planned duration)",
+        "corpus": results["config"]["corpus"],
+        "corpus_by_source": results["config"]["corpus_by_source"],
         "champion_classifier": champion,
         "champion_regressor": champion_reg,
+        "risk_bands": risk_bands,
         "calibration": results["calibration"],
         "best_params": results["best_params"].get(champion, {}),
         "served_metrics_B_temporal": cal_metrics["B_temporal"]["classification_calibrated"],
         "served_brier_B_temporal": cal_metrics["B_temporal"]["brier_calibrated"],
+        "served_by_source_B_temporal": by_source,
+        "served_within_project_B_temporal": within_B,
         "metrics_B_temporal": {
             "classification_uncalibrated_full_train_fit_NOT_SERVED": b_clf[champion],
             "classification_calibrated": cal_metrics["B_temporal"]["classification_calibrated"],
-            "regression": b_reg[champion_reg],
+            "classification_at_decision_threshold": cal_metrics["B_temporal"]["classification_at_decision_threshold"],
         },
         "metrics_A_cross_project": {"classification": results["classification"]["A_cross_project"][champion],
                                     "note": "single seed-42 split, reported for continuity only; the gate reads A_repeated (RR-19)"},
         "metrics_A_repeated": results["classification"]["A_repeated"].get(champion),
+        "claims": {
+            "supported": ("historical evaluation ordered by PLANNED position (scenario B): ranks activities of running "
+                          "building projects, pooled and within project (within-project on few eligible projects — see coverage)"),
+            "weak": ("NEW project: pooled AUC is well above the within-project AUC; the source of that gap "
+                     "(project-level risk vs corpus differences) is not established — see A_repeated.within_project "
+                     "and project_level_spearman"),
+            "not_supported": "exact probabilities in the medium/high bands (see risk_bands.display_rule)",
+            "time_limitation": ("scenario B orders activities by planned position (rel_position), not by when their "
+                                "outcome became known, and uses the exported plan, not the plan as of prediction time (risk R19); "
+                                "RR-14 is a direction to address it, not a demonstrated fix"),
+        },
         "protocol_note": ("RR-19 (7.9.26): hyperparameters tuned INSIDE each scenario's own train set (GroupKFold by project); "
                           "until then they were tuned on A train, which overlaps 80% of B test — measured non-optimistic. "
                           "Gate rule for A moved from a single split to 20 repeated splits. RR-19b: model family selected on the inner "
@@ -467,6 +651,8 @@ def main():
         "trained_on": "B_temporal train split (deployment scenario)",
         "regression_deployed": reg_gate_passed,
         "excluded_duplicate_projects": sorted(EXCLUDE_PROJECTS),
+        "rr21_note": ("RR-21c (20.10.26): building projects only; removing the 5 non-building own projects raised the "
+                      "leave-one-project-out median AUC on grew from 0.551 to 0.623; adding DSLIB authentic buildings 0.630"),
     }
     (vdir / "meta.json").write_text(json.dumps(meta, indent=2))
     print(f"Registry: {vdir}\nSaved {OUT / 'model_comparison.json'}")

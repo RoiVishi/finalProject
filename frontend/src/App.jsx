@@ -12,9 +12,12 @@ import './theme.css';
  */
 const ARView = React.lazy(() => import('./ar/ARView.jsx'));
 import { arEntryFor, useArSupport } from './ar/arSupport.js';
+import { RISK_LABELS_HE, RISK_TITLE_HE } from './ar/riskBands.js';
 
 const riskColors = { low: 'var(--success)', medium: 'var(--warning)', high: 'var(--danger)', done: 'var(--muted)' };
-const riskLabel = (r) => (r === 'high' ? 'גבוה' : r === 'medium' ? 'בינוני' : r === 'done' ? '—' : 'נמוך');
+const riskLabel = (r) => (r === 'done' ? '—' : RISK_LABELS_HE[r] ?? RISK_LABELS_HE.unknown);
+// v6 display rule: show the band, never the percentage — the marker sits at the centre of its band.
+const BAND_POS = { low: 17, medium: 50, high: 83 };
 const statusChipClass = (s) => (s === 'הושלם' ? 'ok' : s === 'בתהליך' ? 'warn' : 'muted');
 
 export default function App() {
@@ -42,7 +45,7 @@ export default function App() {
     setInRoom(false);
   };
 
-  const riskPct = selected?.prob != null ? Math.round(selected.prob * 100) : null;
+  const riskPct = selected?.prob != null ? (BAND_POS[selected.risk] ?? null) : null;
 
   return (
     <div className="app-shell" dir="rtl">
@@ -161,9 +164,9 @@ export default function App() {
             {riskPct != null && (
               <div>
                 <div className="risk-row">
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>סיכון עיכוב חזוי</span>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>{RISK_TITLE_HE}</span>
                   <span className="risk-value" style={{ color: riskColors[selected.risk] }}>
-                    {riskPct}% · {riskLabel(selected.risk)}
+                    {riskLabel(selected.risk)}
                   </span>
                 </div>
                 <div className="risk-track">
@@ -213,13 +216,13 @@ export default function App() {
         ) : (
           <div className="card">
             <p className="hint" style={{ margin: 0 }}>
-              בחר אזור בבניין כדי לראות סטטוס, סיכון עיכוב חזוי ומשימות — ולהיכנס אל החדר ב-360°.
+              בחר אזור בבניין כדי לראות סטטוס, סיכון חריגה במשך ומשימות — ולהיכנס אל החדר ב-360°.
             </p>
           </div>
         )}
 
         <div className="footer-note">
-          ההדמיה נבנית אוטומטית ממפרט הפרויקט; סיכוני העיכוב יגיעו משירות ה-AI (דמו). © 2026
+          ההדמיה נבנית אוטומטית ממפרט הפרויקט; סיכוני החריגה יגיעו משירות ה-AI (דמו). © 2026
         </div>
       </aside>
     </div>

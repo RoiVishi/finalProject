@@ -28,6 +28,7 @@ from train_compare import EXCLUDE_PROJECTS, NUM_FEATURES, load_labeled, temporal
 BASE = Path(__file__).resolve().parents[1]
 OUT = BASE / "outputs"
 REGISTRY = BASE.parent / "ai-service" / "model" / "registry"
+# is_late era (registry v5): this RR experiment reproduces the v5 numbers; the served model moved to v6/grew (RR-21c)
 
 
 def label_bias() -> dict:
@@ -74,7 +75,7 @@ def alert_volume() -> dict:
                       key=lambda p: int(p.name[1:]))
     if not versions:
         raise SystemExit("no registry versions found — run train_compare.py first")
-    clf = joblib.load(versions[-1] / "classifier.joblib")
+    clf = joblib.load((REGISTRY / "v5") / "classifier.joblib")
     lab = load_labeled()
     tr, te, _ = temporal_split(lab)
     te = te.copy()
@@ -94,7 +95,7 @@ def alert_volume() -> dict:
         "placeholder_0.33_0.66": (0.33, 0.66),
         f"quantile_top10_high (t1={q80:.2f}, t2={q90:.2f})": (float(q80), float(q90)),
     }
-    result = {"model_version": versions[-1].name, "n_test": len(te), "schemes": {}}
+    result = {"model_version": (REGISTRY / "v5").name, "n_test": len(te), "schemes": {}}
     for name, (t1, t2) in schemes.items():
         per_proj = te.groupby("project")["p"].apply(
             lambda s: pd.Series({"high": int((s >= t2).sum()),

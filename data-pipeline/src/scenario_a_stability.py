@@ -65,7 +65,7 @@ def zoo(best):
 
 
 def main() -> int:
-    r = json.loads((OUT / "model_comparison.json").read_text())
+    r = json.loads((OUT / "model_comparison_v5_is_late.json").read_text())
     best = r["best_params"]
     champ = r["champion"]["classifier"]
     lab = load_labeled()

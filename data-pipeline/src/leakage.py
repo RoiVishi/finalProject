@@ -55,6 +55,8 @@ BLACKLIST: frozenset[str] = frozenset({
     # progress / state at extraction time — reflects how the activity turned out
     "status_code", "phys_complete_pct", "complete_pct", "remain_drtn_hr_cnt",
     "remain_work_qty", "reend_date", "restart_date",
+    # registry v6 target and its relatives (RR-21: duration overrun; DSLIB / JPF ETL columns)
+    "grew", "own_delay", "start_delay_days", "start_late", "started_early_days",
 })
 
 # Defensive patterns for columns not named above (a new export, a renamed field).

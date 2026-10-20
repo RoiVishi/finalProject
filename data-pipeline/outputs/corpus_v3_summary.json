@@ -1,0 +1,42 @@
+{
+  "target": "grew",
+  "sources": {
+    "dslib": {
+      "projects": 57,
+      "activities": 2861,
+      "grew_rate": 0.174
+    },
+    "own": {
+      "projects": 9,
+      "activities": 6389,
+      "grew_rate": 0.483
+    }
+  },
+  "total": {
+    "projects": 66,
+    "activities": 9250,
+    "grew_rate": 0.387
+  },
+  "own_buildings": {
+    "129 trial": "GRG and HDF finishing, concrete (same schedule family as 130 TRIAL)",
+    "130 TRIAL": "GRG and HDF finishing, concrete",
+    "CCA R03 dt 24Oct11SC": "clinic — WBS 'All Areas - Clinic', public areas, HV/LV rooms, sprinklers, lifts",
+    "PORTO MATROUH": "hotel — WBS 'HOTEL AREA', 'Building 1'; slabs, columns, footings",
+    "Update 01-09-2010": "multi-storey frame — WBS 'Ground Floor' .. '6th Floor'",
+    "cairo alex-road": "WBS 'Architectural Design Template for Mid Rise Commercial Office' (name is misleading)",
+    "jumaira": "Jumeirah Islands apartments — tiles, doors, fire alarm, ducts",
+    "rehab-2": "building rehabilitation — CSI divisions 03/04/08/10/12/16, resource 'Edison High' (school)",
+    "update of jungle 20-07-2010": "villa — WBS 'Villa Number D9'; foundations, brickwork, plastering"
+  },
+  "own_excluded_not_buildings": {
+    "Convention _ Exhibition Center Project Roads _ Utilities": "bridge — box girder, piers, abutments",
+    "Detailed Program": "bridge approach slabs (keystone, elastomeric)",
+    "EBCF-4 070127 Forecast Original": "industrial plant — piping, equipment, plant layout",
+    "Petrofac": "storage tanks — shell welding, tank erection",
+    "hela-2l": "oil & gas — piping, valves, sea fastening (GUPCO)"
+  },
+  "own_excluded_unknown": {
+    "trial for me": "15 labels, no WBS/task/resource names to classify by — excluded"
+  },
+  "dslib_filter": "sector_group == 'buildings' (residential/commercial/institutional) AND tracking flag G"
+}

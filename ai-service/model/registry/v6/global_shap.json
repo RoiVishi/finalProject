@@ -1,0 +1,87 @@
+{
+  "model_version": "v6",
+  "feature_schema_version": "1.1",
+  "units": "calibrated_probability",
+  "n_rows": 2000,
+  "seed": 42,
+  "ranking": [
+    {
+      "feature": "proj_span_days",
+      "label_en": "Project span (days)",
+      "label_he": "משך הפרויקט (ימים)",
+      "mean_abs_contribution": 0.302969,
+      "rank": 1
+    },
+    {
+      "feature": "proj_n_tasks",
+      "label_en": "Project size (number of tasks)",
+      "label_he": "גודל הפרויקט (מספר משימות)",
+      "mean_abs_contribution": 0.078096,
+      "rank": 2
+    },
+    {
+      "feature": "planned_duration_days",
+      "label_en": "Planned duration (days)",
+      "label_he": "משך מתוכנן (ימים)",
+      "mean_abs_contribution": 0.066203,
+      "rank": 3
+    },
+    {
+      "feature": "upstream_cnt",
+      "label_en": "Tasks upstream in the chain",
+      "label_he": "משימות במעלה השרשרת",
+      "mean_abs_contribution": 0.052226,
+      "rank": 4
+    },
+    {
+      "feature": "rel_position",
+      "label_en": "Position within project timeline",
+      "label_he": "מיקום בציר הזמן של הפרויקט",
+      "mean_abs_contribution": 0.03801,
+      "rank": 5
+    },
+    {
+      "feature": "downstream_cnt",
+      "label_en": "Tasks depending on this one downstream",
+      "label_he": "משימות במורד השרשרת",
+      "mean_abs_contribution": 0.035207,
+      "rank": 6
+    },
+    {
+      "feature": "total_float_hr",
+      "label_en": "Total float (hours)",
+      "label_he": "מרווח כולל (שעות)",
+      "mean_abs_contribution": 0.029557,
+      "rank": 7
+    },
+    {
+      "feature": "n_succ",
+      "label_en": "Direct successors",
+      "label_he": "משימות תלויות ישירות",
+      "mean_abs_contribution": 0.018625,
+      "rank": 8
+    },
+    {
+      "feature": "n_pred",
+      "label_en": "Direct predecessors",
+      "label_he": "משימות קדם ישירות",
+      "mean_abs_contribution": 0.008799,
+      "rank": 9
+    },
+    {
+      "feature": "task_type",
+      "label_en": "Task type",
+      "label_he": "סוג המשימה",
+      "mean_abs_contribution": 0.006921,
+      "rank": 10
+    },
+    {
+      "feature": "free_float_hr",
+      "label_en": "Free float (hours)",
+      "label_he": "מרווח חופשי (שעות)",
+      "mean_abs_contribution": 0.006874,
+      "rank": 11
+    }
+  ],
+  "computed_on": "scenario-B test split (per-project temporal cut, q=0.7)"
+}

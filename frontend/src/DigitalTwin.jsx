@@ -9,7 +9,7 @@ import { Canvas } from '@react-three/fiber';
 import React, { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import * as THREE from 'three';
 import { RoomSet } from './furniture.jsx';
-import { RISK_COLORS } from './ar/riskBands.js';
+import { RISK_COLORS, RISK_LABELS_HE, RISK_TITLE_HE } from './ar/riskBands.js';
 
 // AR-4 / PRED-11: the risk colour scale has exactly one definition, shared
 // with the AR renderer. Changing a colour or a band there changes both views.
@@ -26,7 +26,7 @@ function zoneRisk(f, zi, floors) {
   if (f === 0) return { risk: 'done', prob: null, status: 'הושלם' };
   const r = ['low', 'medium', 'high'][(f * 2 + zi * 3) % 3];
   const status = f < Math.ceil(floors / 3) ? 'בתהליך' : 'טרם החל';
-  const prob = r === 'high' ? 0.82 : r === 'medium' ? 0.45 : 0.12;
+  const prob = r === 'high' ? 0.9 : r === 'medium' ? 0.45 : 0.12;   // demo values inside the v6 bands
   return { risk: r, prob, status };
 }
 
@@ -310,7 +310,7 @@ function ZoneHotspot({ spec, zone, selected, hovered, onHover, onSelect }) {
             }}
           >
             {zone.label}
-            {zone.prob != null ? ` · סיכון ${Math.round(zone.prob * 100)}%` : ''}
+            {zone.prob != null ? ` · ${RISK_TITLE_HE}: ${RISK_LABELS_HE[zone.risk]}` : ''}
           </div>
         </Html>
       )}
