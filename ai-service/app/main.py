@@ -262,19 +262,42 @@ def base_feature(transformed_name: str) -> str:
     return name
 
 
-# PRED-12: risk-band boundaries are explicit configuration, never constants.
-# Defaults are placeholders until the banding protocol (validation-set quantiles or a
-# cost-weighted operating point) is approved by the advisor; they are injected via env
-# (NFR-DEMO-1 style) and echoed in /health so Twin colouring, DASH-4 escalation and the
-# DASH-5 index all consume one source.
-RISK_BAND_T1 = float(os.environ.get("RISK_BAND_T1", "0.33"))
-RISK_BAND_T2 = float(os.environ.get("RISK_BAND_T2", "0.66"))
-if not 0.0 <= RISK_BAND_T1 <= RISK_BAND_T2 <= 1.0:
-    raise RuntimeError(f"invalid risk bands: T1={RISK_BAND_T1} T2={RISK_BAND_T2} (need 0<=T1<=T2<=1)")
+# PRED-12: risk-band boundaries and the decision threshold are explicit configuration,
+# never constants. Source of truth (since registry v6): the served model's meta.json —
+# train_compare.py selects them by a documented protocol on train-side data and writes
+# them next to the model, so a new model always ships with its own bands. An env
+# override (RISK_BAND_T1 / RISK_BAND_T2 / DECISION_THRESHOLD) wins for demos
+# (NFR-DEMO-1 style); the fallback 0.33 / 0.66 / 0.5 applies only to legacy artifacts
+# without bands. Echoed in /health so Twin colouring, DASH-4 escalation and the DASH-5
+# index all consume one source.
+DEFAULT_BANDS = {"t1": 0.33, "t2": 0.66, "decision_threshold": 0.5}
 
 
-def risk_level(p: float) -> str:
-    return "high" if p >= RISK_BAND_T2 else "medium" if p >= RISK_BAND_T1 else "low"
+def _env_float(name: str) -> float | None:
+    v = os.environ.get(name)
+    return float(v) if v not in (None, "") else None
+
+
+def active_bands(reg: "Registry | None" = None) -> dict:
+    """t1, t2, decision_threshold and where they came from (env > registry > default)."""
+    meta_bands = ((reg.meta if reg is not None else {}) or {}).get("risk_bands") or {}
+    out, source = {}, {}
+    for key, env in (("t1", "RISK_BAND_T1"), ("t2", "RISK_BAND_T2"), ("decision_threshold", "DECISION_THRESHOLD")):
+        env_v = _env_float(env)
+        if env_v is not None:
+            out[key], source[key] = env_v, "env"
+        elif meta_bands.get(key) is not None:
+            out[key], source[key] = float(meta_bands[key]), "registry"
+        else:
+            out[key], source[key] = DEFAULT_BANDS[key], "default"
+    if not 0.0 <= out["t1"] <= out["t2"] <= 1.0 or not 0.0 <= out["decision_threshold"] <= 1.0:
+        raise RuntimeError(f"invalid risk bands {out} (need 0<=t1<=t2<=1 and 0<=threshold<=1)")
+    return {**out, "source": source}
+
+
+def risk_level(p: float, bands: dict | None = None) -> str:
+    b = bands or active_bands()
+    return "high" if p >= b["t2"] else "medium" if p >= b["t1"] else "low"
 
 
 def _known_categories(reg: Registry) -> dict[str, set]:
@@ -323,13 +346,14 @@ def _unseen_as_missing(reg: Registry, X: pd.DataFrame) -> pd.DataFrame:
 
 def _predict_core(reg: Registry, X: pd.DataFrame) -> list[Prediction]:
     X = _unseen_as_missing(reg, X)
+    bands = active_bands(reg)
     probas = reg.clf.predict_proba(X)[:, 1]
     delays = reg.reg.predict(X) if reg.reg is not None else [None] * len(X)
     return [
         Prediction(
             late_probability=round(float(p), 4),
-            is_late=bool(p >= 0.5),
-            risk_level=risk_level(float(p)),
+            is_late=bool(p >= bands["decision_threshold"]),   # v6: "flagged" = medium or high
+            risk_level=risk_level(float(p), bands),
             estimated_delay_days=(round(float(d), 1) if d is not None else None),
             model_version=reg.version,
             feature_schema_version=reg.schema_version,
@@ -381,7 +405,27 @@ def _calibrated(cals, x: float) -> float:
     return float(np.mean([c.predict(np.array([x]))[0] for c in cals]))
 
 
-def _to_calibrated_space(raw_sv: np.ndarray, base_raw: float, p_served: np.ndarray, cals):
+def _identity(x: float) -> float:
+    return x
+
+
+def _sigmoid(x: float) -> float:
+    return float(1.0 / (1.0 + np.exp(-x)))
+
+
+def _shap_link(model):
+    """TreeSHAP's raw output space -> the probability the calibrator was fitted on.
+
+    RandomForest: TreeSHAP explains predict_proba directly (identity).
+    XGBoost: TreeSHAP explains the margin (log-odds); the calibrator was fitted on
+    predict_proba = sigmoid(margin). Without this link the v6 XGBoost champion's
+    contributions came out in mixed units (found 20.10.26: mean |contribution| 0.80).
+    """
+    return _sigmoid if model.__class__.__name__ in {"XGBClassifier", "GradientBoostingClassifier"} else _identity
+
+
+def _to_calibrated_space(raw_sv: np.ndarray, base_raw: float, p_served: np.ndarray, cals,
+                         link=_identity):
     """KAN-130: map raw-probability SHAP values into calibrated-probability units.
 
     The calibrator is monotonic, so each feature keeps its direction and rank; the
@@ -390,14 +434,19 @@ def _to_calibrated_space(raw_sv: np.ndarray, base_raw: float, p_served: np.ndarr
     where base_cal is the calibrated value of the model's expected (base) output.
     When the raw output equals the base (factor 0/0) the local slope of the
     calibrator at the base is used instead.
+
+    `link` maps the explainer's raw space to the calibrator's input (identity for a
+    forest, sigmoid for a margin-space booster); the per-row factor then runs from raw
+    units straight to served probability, so the identity above holds in both cases.
     """
-    if not cals:                                   # legacy / uncalibrated champion
+    if not cals and link is _identity:             # legacy / uncalibrated forest
         return raw_sv, base_raw
-    base_cal = _calibrated(cals, base_raw)
+    cal = (lambda x: _calibrated(cals, link(x))) if cals else link
+    base_cal = cal(base_raw)
     p_raw = base_raw + raw_sv.sum(axis=1)
     out = np.empty_like(raw_sv)
     h = 1e-4
-    slope = (_calibrated(cals, base_raw + h) - _calibrated(cals, base_raw - h)) / (2 * h)
+    slope = (cal(base_raw + h) - cal(base_raw - h)) / (2 * h)
     for i in range(raw_sv.shape[0]):
         delta_raw = p_raw[i] - base_raw
         k = (p_served[i] - base_cal) / delta_raw if abs(delta_raw) > 1e-9 else slope
@@ -422,7 +471,8 @@ def _explain_rows(reg: Registry, X: pd.DataFrame, top_k: int) -> list[Explanatio
     ev = np.atleast_1d(np.asarray(explainer.expected_value, dtype=float))
     base_raw = float(ev[1] if ev.size > 1 else ev[0])
     p_served = reg.clf.predict_proba(X)[:, 1]
-    sv, base = _to_calibrated_space(sv, base_raw, p_served, _calibrators(reg.clf))
+    link = _shap_link(_unwrap_pipeline(reg.clf).named_steps["model"])
+    sv, base = _to_calibrated_space(sv, base_raw, p_served, _calibrators(reg.clf), link)
 
     rows = X.to_dict(orient="records")
     out = []
@@ -469,7 +519,9 @@ def health():
             "model_version": _registry.version,
             "feature_schema_version": _registry.schema_version,
             "champion": _registry.meta.get("champion_classifier"),
-            "risk_bands": {"t1": RISK_BAND_T1, "t2": RISK_BAND_T2},
+            "target": (_registry.meta or {}).get("target", "is_late"),
+            "target_definition": (_registry.meta or {}).get("target_definition"),
+            "risk_bands": active_bands(_registry),
             "cold_start": {"policy": COLD_START_POLICY, "min_history": COLD_START_MIN_HISTORY},
             "abstention": {"required_features": list(REQUIRED_FEATURES),
                            "reasons": [*REQUIRED_FEATURES.values(), ABSTAIN_LOW_HISTORY]},

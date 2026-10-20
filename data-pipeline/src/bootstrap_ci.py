@@ -28,6 +28,7 @@ from train_compare import SEED, load_labeled, make_preprocessor, temporal_split
 BASE = Path(__file__).resolve().parents[1]
 OUT = BASE / "outputs"
 REGISTRY = BASE.parent / "ai-service" / "model" / "registry"
+# is_late era (registry v5): this RR experiment reproduces the v5 numbers; the served model moved to v6/grew (RR-21c)
 B = 5000
 
 
@@ -48,7 +49,7 @@ def ci(a, lo=2.5, hi=97.5):
 
 def main() -> int:
     rng = np.random.default_rng(SEED)
-    r = json.loads((OUT / "model_comparison.json").read_text())
+    r = json.loads((OUT / "model_comparison_v5_is_late.json").read_text())
 
     lab = load_labeled()
     tr, te, _ = temporal_split(lab)
@@ -57,9 +58,7 @@ def main() -> int:
     idx = rng.integers(0, n, size=(B, n))
 
     # ---------- part 1: Brier of the served artifact ----------
-    versions = sorted((p for p in REGISTRY.glob("v*") if p.name[1:].isdigit()),
-                      key=lambda p: int(p.name[1:]))
-    served = joblib.load(versions[-1] / "classifier.joblib")
+    served = joblib.load((REGISTRY / "v5") / "classifier.joblib")
     p_served = served.predict_proba(te)[:, 1]
 
     r_oracle = float(y.mean())                       # test base rate (oracle, not deployable)
@@ -75,7 +74,7 @@ def main() -> int:
     d_cal = bs_model - bs_calslice
 
     brier_part = {
-        "served_version": versions[-1].name,
+        "served_version": (REGISTRY / "v5").name,
         "point": {
             "model": round(float(((p_served - y) ** 2).mean()), 4),
             "dummy_oracle_rate": round(float(((r_oracle - y) ** 2).mean()), 4),

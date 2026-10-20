@@ -1086,6 +1086,256 @@
       "asof_combination": 0.6725
     }
   },
+  "served_v6": {
+    "target": "grew",
+    "target_definition": "grew = the activity takes longer than planned (actual duration > planned duration)",
+    "corpus": {
+      "dslib": {
+        "projects": 57,
+        "activities": 2861,
+        "grew_rate": 0.174
+      },
+      "own": {
+        "projects": 9,
+        "activities": 6389,
+        "grew_rate": 0.483
+      }
+    },
+    "corpus_total": {
+      "projects": 66,
+      "activities": 9250,
+      "grew_rate": 0.387
+    },
+    "own_buildings": [
+      "129 trial",
+      "130 TRIAL",
+      "CCA R03 dt 24Oct11SC",
+      "PORTO MATROUH",
+      "Update 01-09-2010",
+      "cairo alex-road",
+      "jumaira",
+      "rehab-2",
+      "update of jungle 20-07-2010"
+    ],
+    "own_excluded_not_buildings": [
+      "Convention _ Exhibition Center Project Roads _ Utilities",
+      "Detailed Program",
+      "EBCF-4 070127 Forecast Original",
+      "Petrofac",
+      "hela-2l"
+    ],
+    "champion": "xgboost",
+    "best_params": {
+      "model__learning_rate": 0.05,
+      "model__max_depth": 6,
+      "model__n_estimators": 300,
+      "model__subsample": 0.8
+    },
+    "served_B": {
+      "accuracy": 0.7655,
+      "precision": 0.6472,
+      "recall": 0.7805,
+      "f1": 0.7076,
+      "roc_auc": 0.8452,
+      "brier": 0.1608
+    },
+    "served_B_by_source": {
+      "dslib": {
+        "n_test": 605,
+        "target_rate": 0.179,
+        "roc_auc": 0.638,
+        "brier": 0.1451
+      },
+      "own": {
+        "n_test": 1851,
+        "target_rate": 0.424,
+        "roc_auc": 0.8407,
+        "brier": 0.1659
+      }
+    },
+    "scenario_A_repeated_nested": {
+      "tuning": "nested — GridSearchCV inside each split's train set",
+      "n_splits": 20,
+      "median_auc": 0.7283,
+      "q25": 0.6038,
+      "q75": 0.7743,
+      "min": 0.4172,
+      "max": 0.8257,
+      "share_above_chance": 0.85
+    },
+    "scenario_A_within_project": {
+      "all": {
+        "n_projects": 23,
+        "median_auc": 0.5463,
+        "median_ci95": [
+          0.5,
+          0.6447
+        ],
+        "share_point_estimate_above_0.5": 0.696
+      },
+      "dslib": {
+        "n_projects": 17,
+        "median_auc": 0.5099,
+        "median_ci95": [
+          0.494,
+          0.6396
+        ],
+        "share_point_estimate_above_0.5": 0.647
+      },
+      "own": {
+        "n_projects": 6,
+        "median_auc": 0.6016,
+        "median_ci95": [
+          0.5179,
+          0.7806
+        ],
+        "share_point_estimate_above_0.5": 0.833
+      },
+      "coverage": {
+        "unique_projects_tested": 66,
+        "eligible_in_at_least_one_split": 23,
+        "never_eligible": {
+          "fewer than 5 activities in one outcome class": 9,
+          "fewer than 30 test activities": 34
+        },
+        "note": "a project is averaged over the splits where it was eligible; the summary describes eligible projects only"
+      }
+    },
+    "scenario_A_project_level_spearman": {
+      "dslib": {
+        "n_projects": 57,
+        "rho": 0.479
+      },
+      "own": {
+        "n_projects": 9,
+        "rho": 0.167
+      }
+    },
+    "served_B_within_project": {
+      "all": {
+        "n_projects": 7,
+        "median_auc": 0.6277,
+        "median_ci95": [
+          0.539,
+          0.8005
+        ],
+        "share_point_estimate_above_0.5": 0.857,
+        "share_ci95_entirely_above_0.5": 0.429
+      },
+      "dslib": {
+        "n_projects": 3,
+        "median_auc": 0.5841,
+        "median_ci95": [
+          0.378,
+          0.6701
+        ],
+        "share_point_estimate_above_0.5": 0.667,
+        "share_ci95_entirely_above_0.5": 0.0
+      },
+      "own": {
+        "n_projects": 4,
+        "median_auc": 0.7141,
+        "median_ci95": [
+          0.539,
+          0.8159
+        ],
+        "share_point_estimate_above_0.5": 1.0,
+        "share_ci95_entirely_above_0.5": 0.75
+      },
+      "coverage": {
+        "projects_in_test": 29,
+        "eligible": 7,
+        "excluded": {
+          "fewer than 30 test activities": 18,
+          "fewer than 5 activities in one outcome class": 4
+        },
+        "note": "test projects of scenario B; the summary describes eligible projects only"
+      }
+    },
+    "claims": {
+      "supported": "historical evaluation ordered by PLANNED position (scenario B): ranks activities of running building projects, pooled and within project (within-project on few eligible projects — see coverage)",
+      "weak": "NEW project: pooled AUC is well above the within-project AUC; the source of that gap (project-level risk vs corpus differences) is not established — see A_repeated.within_project and project_level_spearman",
+      "not_supported": "exact probabilities in the medium/high bands (see risk_bands.display_rule)",
+      "time_limitation": "scenario B orders activities by planned position (rel_position), not by when their outcome became known, and uses the exported plan, not the plan as of prediction time (risk R19); RR-14 is a direction to address it, not a demonstrated fix"
+    },
+    "risk_bands": {
+      "t1": 0.29,
+      "t2": 0.8558,
+      "decision_threshold": 0.29,
+      "test_band_shares": {
+        "low": 0.489,
+        "medium": 0.408,
+        "high": 0.103
+      },
+      "test_target_rate_by_band": {
+        "low": 0.098,
+        "medium": 0.576,
+        "high": 0.779
+      },
+      "test_calibration_by_band": {
+        "high": {
+          "n": 253,
+          "mean_predicted": 0.869,
+          "observed": 0.779
+        },
+        "low": {
+          "n": 1200,
+          "mean_predicted": 0.101,
+          "observed": 0.098
+        },
+        "medium": {
+          "n": 1003,
+          "mean_predicted": 0.678,
+          "observed": 0.576
+        }
+      },
+      "display_rule": "show the BAND, not the percentage: the bands are ordered correctly, but in the upper bands the calibrated probability over-states the observed rate by up to 0.10 on test"
+    },
+    "rr21_three_corpora_E1": {
+      "own": 0.8046,
+      "own+dslib": 0.807,
+      "own+jpf": 0.8022,
+      "all_three": 0.8002,
+      "all_three_source_balanced": 0.8022,
+      "all_three_source_feature": 0.8012
+    },
+    "rr21_three_corpora_E2_median": {
+      "own": 0.551,
+      "own+dslib": 0.5846,
+      "all_three": 0.5569,
+      "all_three_source_balanced": 0.5475,
+      "all_three_source_feature": 0.5451
+    },
+    "rr21c_buildings_E1": {
+      "own_all15_reference": 0.8694,
+      "own_buildings": 0.8624,
+      "own_buildings+dslib_buildings": 0.8655,
+      "own_buildings+dslib_buildings_G": 0.865,
+      "dslib_buildings_G_only": 0.4935
+    },
+    "rr21c_buildings_E2_median": {
+      "own_all15_reference": 0.551,
+      "own_buildings": 0.6228,
+      "own_buildings+dslib_buildings": 0.6091,
+      "own_buildings+dslib_buildings_G": 0.6296,
+      "dslib_buildings_G_only": 0.5872
+    },
+    "rr21c_buildings_E2_projects": 6,
+    "signature_grew": {
+      "own": {
+        "projects": 10,
+        "auc_position_median": 0.479
+      },
+      "dslib": {
+        "projects": 56,
+        "auc_position_median": 0.493
+      },
+      "jpf": {
+        "projects": 154,
+        "auc_position_median": 0.514
+      }
+    }
+  },
   "history": {
     "auc_2_projects": 0.828,
     "auc_13_projects": 0.768,

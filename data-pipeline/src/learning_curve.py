@@ -44,7 +44,7 @@ USABILITY_AUC = 0.70
 
 def champion():
     """Build the current champion from model_comparison.json (name + tuned params)."""
-    r = json.loads((OUT / "model_comparison.json").read_text())
+    r = json.loads((OUT / "model_comparison_v5_is_late.json").read_text())
     name = r["champion"]["classifier"]
     params = {k.replace("model__", ""): v for k, v in r.get("best_params", {}).get(name, {}).items()}
     if name == "xgboost":
@@ -112,7 +112,7 @@ def main() -> int:
                            "n_test": int(len(test)),
                            "n_projects": len(trains_by_project)},
             "model": ("tuned champion from model_comparison.json: "
-                      + json.loads((OUT / 'model_comparison.json').read_text())["champion"]["classifier"]),
+                      + json.loads((OUT / 'model_comparison_v5_is_late.json').read_text())["champion"]["classifier"]),
             "usability_criterion": f"first fraction with AUC >= {USABILITY_AUC}",
         },
         "points": points,

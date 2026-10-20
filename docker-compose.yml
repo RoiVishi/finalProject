@@ -20,8 +20,11 @@ services:
     # ports: ["8001:8001"]
     environment:
       FEATURE_SCHEMA: /srv/feature_schema.json          # PRED-8: running schema
-      RISK_BAND_T1: ${RISK_BAND_T1:-0.33}               # PRED-12: bands via config
-      RISK_BAND_T2: ${RISK_BAND_T2:-0.66}
+      # PRED-12: empty = use the bands shipped with the served model (registry meta.json, v6+);
+      # set a value only to override for a demo
+      RISK_BAND_T1: ${RISK_BAND_T1:-}
+      RISK_BAND_T2: ${RISK_BAND_T2:-}
+      DECISION_THRESHOLD: ${DECISION_THRESHOLD:-}
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?set AI_SERVICE_TOKEN in .env - copy .env.example}   # NFR-SEC-5
     volumes:
       - ./feature_schema.json:/srv/feature_schema.json:ro

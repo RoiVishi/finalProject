@@ -2,32 +2,65 @@
   "config": {
     "seed": 42,
     "generated_by": "data-pipeline/src/train_compare.py",
-    "feature_schema_version": "1.0",
+    "feature_schema_version": "1.1",
+    "target": "grew",
+    "corpus": "corpus_v3_buildings (src/build_corpus_v3.py): own buildings + DSLIB buildings with authentic tracking",
+    "corpus_by_source": {
+      "dslib": {
+        "projects": 57,
+        "activities": 2861,
+        "target_rate": 0.174
+      },
+      "own": {
+        "projects": 9,
+        "activities": 6389,
+        "target_rate": 0.483
+      }
+    },
     "scenario_A": {
       "split": "GroupShuffleSplit by project, test_size=0.25",
-      "n_train": 8429,
-      "n_test": 2180
+      "n_train": 7256,
+      "n_test": 1994
     },
     "scenario_B": {
       "split": "per-project temporal quantile cut q=0.7 on rel_position",
       "min_labeled": 30,
       "min_per_side": 10,
-      "n_train": 7396,
-      "n_test": 3108,
-      "n_projects": 11,
+      "n_train": 6794,
+      "n_test": 2456,
+      "n_projects": 29,
       "projects": [
-        "129 trial",
-        "130 TRIAL",
-        "CCA R03 dt 24Oct11SC",
-        "Convention _ Exhibition Center Project Roads _ Utilities",
-        "Detailed Program",
-        "EBCF-4 070127 Forecast Original",
-        "PORTO MATROUH",
-        "cairo alex-road",
-        "hela-2l",
-        "jumaira",
-        "rehab-2"
-      ]
+        "dslib::C2013-03",
+        "dslib::C2013-04",
+        "dslib::C2013-06",
+        "dslib::C2013-07",
+        "dslib::C2013-08",
+        "dslib::C2013-09",
+        "dslib::C2014-01",
+        "dslib::C2014-08",
+        "dslib::C2015-04",
+        "dslib::C2015-05",
+        "dslib::C2015-06",
+        "dslib::C2015-08",
+        "dslib::C2015-29",
+        "dslib::C2015-30",
+        "dslib::C2015-32",
+        "dslib::C2016-06",
+        "dslib::C2016-07",
+        "dslib::C2016-11",
+        "dslib::C2016-12",
+        "dslib::C2016-13",
+        "dslib::C2016-14",
+        "dslib::C2023-07",
+        "own::129 trial",
+        "own::130 TRIAL",
+        "own::CCA R03 dt 24Oct11SC",
+        "own::PORTO MATROUH",
+        "own::cairo alex-road",
+        "own::jumaira",
+        "own::rehab-2"
+      ],
+      "ineligible_projects": "all rows to train (other projects \u2014 no temporal leakage into test projects)"
     },
     "features_num": [
       "planned_duration_days",
@@ -50,160 +83,329 @@
   "classification": {
     "A_cross_project": {
       "dummy_majority": {
-        "accuracy": 0.8128,
+        "accuracy": 0.9157,
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
         "roc_auc": 0.5
       },
       "logistic_regression": {
-        "accuracy": 0.8128,
+        "accuracy": 0.8887,
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "roc_auc": 0.8936
+        "roc_auc": 0.216
       },
       "random_forest": {
-        "accuracy": 0.8078,
+        "accuracy": 0.6926,
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "roc_auc": 0.1873
+        "roc_auc": 0.1754
       },
       "xgboost": {
-        "accuracy": 0.7743,
-        "precision": 0.0116,
-        "recall": 0.0025,
-        "f1": 0.004,
-        "roc_auc": 0.5653
-      },
-      "mlp": {
-        "accuracy": 0.7936,
+        "accuracy": 0.8831,
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "roc_auc": 0.6699
+        "roc_auc": 0.5083
+      },
+      "mlp": {
+        "accuracy": 0.6555,
+        "precision": 0.0038,
+        "recall": 0.0119,
+        "f1": 0.0058,
+        "roc_auc": 0.3123
       }
     },
     "B_temporal": {
       "dummy_majority": {
-        "accuracy": 0.7021,
+        "accuracy": 0.6364,
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
         "roc_auc": 0.5
       },
       "logistic_regression": {
-        "accuracy": 0.5672,
-        "precision": 0.3985,
-        "recall": 0.8888,
-        "f1": 0.5503,
-        "roc_auc": 0.6004
+        "accuracy": 0.7195,
+        "precision": 0.5806,
+        "recall": 0.8231,
+        "f1": 0.6809,
+        "roc_auc": 0.7972
       },
       "random_forest": {
-        "accuracy": 0.7021,
-        "precision": 0.5,
-        "recall": 0.6123,
-        "f1": 0.5505,
-        "roc_auc": 0.7655
+        "accuracy": 0.7887,
+        "precision": 0.6643,
+        "recall": 0.8466,
+        "f1": 0.7445,
+        "roc_auc": 0.8734
       },
       "xgboost": {
-        "accuracy": 0.7017,
-        "precision": 0.4996,
-        "recall": 0.6782,
-        "f1": 0.5754,
-        "roc_auc": 0.7621
+        "accuracy": 0.7944,
+        "precision": 0.71,
+        "recall": 0.7346,
+        "f1": 0.7221,
+        "roc_auc": 0.8736
       },
       "mlp": {
-        "accuracy": 0.6602,
-        "precision": 0.4149,
-        "recall": 0.3423,
-        "f1": 0.3751,
-        "roc_auc": 0.6849
+        "accuracy": 0.73,
+        "precision": 0.6123,
+        "recall": 0.7021,
+        "f1": 0.6541,
+        "roc_auc": 0.8022
       }
     },
     "A_repeated": {
       "logistic_regression": {
+        "tuning": "nested \u2014 GridSearchCV inside each split's train set",
         "n_splits": 20,
-        "median_auc": 0.6254,
-        "q25": 0.4869,
-        "q75": 0.6948,
-        "min": 0.1913,
-        "max": 0.8703,
-        "share_above_chance": 0.7
+        "median_auc": 0.6784,
+        "q25": 0.5274,
+        "q75": 0.7361,
+        "min": 0.2733,
+        "max": 0.8497,
+        "share_above_chance": 0.75,
+        "within_project": {
+          "all": {
+            "n_projects": 23,
+            "median_auc": 0.5266,
+            "median_ci95": [
+              0.5101,
+              0.5523
+            ],
+            "share_point_estimate_above_0.5": 0.783
+          },
+          "dslib": {
+            "n_projects": 17,
+            "median_auc": 0.5298,
+            "median_ci95": [
+              0.5101,
+              0.5946
+            ],
+            "share_point_estimate_above_0.5": 0.765
+          },
+          "own": {
+            "n_projects": 6,
+            "median_auc": 0.513,
+            "median_ci95": [
+              0.4637,
+              0.7643
+            ],
+            "share_point_estimate_above_0.5": 0.833
+          },
+          "coverage": {
+            "unique_projects_tested": 66,
+            "eligible_in_at_least_one_split": 23,
+            "never_eligible": {
+              "fewer than 5 activities in one outcome class": 9,
+              "fewer than 30 test activities": 34
+            },
+            "note": "a project is averaged over the splits where it was eligible; the summary describes eligible projects only"
+          }
+        },
+        "project_level_spearman": {
+          "dslib": {
+            "n_projects": 57,
+            "rho": 0.068
+          },
+          "own": {
+            "n_projects": 9,
+            "rho": 0.517
+          }
+        }
       },
       "random_forest": {
+        "tuning": "nested \u2014 GridSearchCV inside each split's train set",
         "n_splits": 20,
-        "median_auc": 0.6418,
-        "q25": 0.542,
-        "q75": 0.7023,
-        "min": 0.2747,
-        "max": 0.8556,
-        "share_above_chance": 0.85
+        "median_auc": 0.7336,
+        "q25": 0.606,
+        "q75": 0.7939,
+        "min": 0.2704,
+        "max": 0.8433,
+        "share_above_chance": 0.85,
+        "within_project": {
+          "all": {
+            "n_projects": 23,
+            "median_auc": 0.5444,
+            "median_ci95": [
+              0.4611,
+              0.641
+            ],
+            "share_point_estimate_above_0.5": 0.609
+          },
+          "dslib": {
+            "n_projects": 17,
+            "median_auc": 0.5329,
+            "median_ci95": [
+              0.4611,
+              0.6413
+            ],
+            "share_point_estimate_above_0.5": 0.588
+          },
+          "own": {
+            "n_projects": 6,
+            "median_auc": 0.5927,
+            "median_ci95": [
+              0.4259,
+              0.6742
+            ],
+            "share_point_estimate_above_0.5": 0.667
+          },
+          "coverage": {
+            "unique_projects_tested": 66,
+            "eligible_in_at_least_one_split": 23,
+            "never_eligible": {
+              "fewer than 5 activities in one outcome class": 9,
+              "fewer than 30 test activities": 34
+            },
+            "note": "a project is averaged over the splits where it was eligible; the summary describes eligible projects only"
+          }
+        },
+        "project_level_spearman": {
+          "dslib": {
+            "n_projects": 57,
+            "rho": 0.54
+          },
+          "own": {
+            "n_projects": 9,
+            "rho": 0.383
+          }
+        }
       },
       "xgboost": {
+        "tuning": "nested \u2014 GridSearchCV inside each split's train set",
         "n_splits": 20,
-        "median_auc": 0.5679,
-        "q25": 0.5254,
-        "q75": 0.6827,
-        "min": 0.3529,
-        "max": 0.7874,
-        "share_above_chance": 0.8
+        "median_auc": 0.7283,
+        "q25": 0.6038,
+        "q75": 0.7743,
+        "min": 0.4172,
+        "max": 0.8257,
+        "share_above_chance": 0.85,
+        "within_project": {
+          "all": {
+            "n_projects": 23,
+            "median_auc": 0.5463,
+            "median_ci95": [
+              0.5,
+              0.6447
+            ],
+            "share_point_estimate_above_0.5": 0.696
+          },
+          "dslib": {
+            "n_projects": 17,
+            "median_auc": 0.5099,
+            "median_ci95": [
+              0.494,
+              0.6396
+            ],
+            "share_point_estimate_above_0.5": 0.647
+          },
+          "own": {
+            "n_projects": 6,
+            "median_auc": 0.6016,
+            "median_ci95": [
+              0.5179,
+              0.7806
+            ],
+            "share_point_estimate_above_0.5": 0.833
+          },
+          "coverage": {
+            "unique_projects_tested": 66,
+            "eligible_in_at_least_one_split": 23,
+            "never_eligible": {
+              "fewer than 5 activities in one outcome class": 9,
+              "fewer than 30 test activities": 34
+            },
+            "note": "a project is averaged over the splits where it was eligible; the summary describes eligible projects only"
+          }
+        },
+        "project_level_spearman": {
+          "dslib": {
+            "n_projects": 57,
+            "rho": 0.479
+          },
+          "own": {
+            "n_projects": 9,
+            "rho": 0.167
+          }
+        }
       },
       "mlp": {
+        "tuning": "nested \u2014 GridSearchCV inside each split's train set",
         "n_splits": 20,
-        "median_auc": 0.5703,
-        "q25": 0.4645,
-        "q75": 0.6477,
-        "min": 0.3585,
-        "max": 0.876,
-        "share_above_chance": 0.55
+        "median_auc": 0.6529,
+        "q25": 0.5078,
+        "q75": 0.6936,
+        "min": 0.2836,
+        "max": 0.7699,
+        "share_above_chance": 0.8,
+        "within_project": {
+          "all": {
+            "n_projects": 23,
+            "median_auc": 0.5386,
+            "median_ci95": [
+              0.4945,
+              0.5714
+            ],
+            "share_point_estimate_above_0.5": 0.609
+          },
+          "dslib": {
+            "n_projects": 17,
+            "median_auc": 0.5405,
+            "median_ci95": [
+              0.4961,
+              0.6211
+            ],
+            "share_point_estimate_above_0.5": 0.706
+          },
+          "own": {
+            "n_projects": 6,
+            "median_auc": 0.4853,
+            "median_ci95": [
+              0.4103,
+              0.7223
+            ],
+            "share_point_estimate_above_0.5": 0.333
+          },
+          "coverage": {
+            "unique_projects_tested": 66,
+            "eligible_in_at_least_one_split": 23,
+            "never_eligible": {
+              "fewer than 5 activities in one outcome class": 9,
+              "fewer than 30 test activities": 34
+            },
+            "note": "a project is averaged over the splits where it was eligible; the summary describes eligible projects only"
+          }
+        },
+        "project_level_spearman": {
+          "dslib": {
+            "n_projects": 57,
+            "rho": 0.087
+          },
+          "own": {
+            "n_projects": 9,
+            "rho": 0.517
+          }
+        }
       }
     },
     "B_inner_selection": {
-      "logistic_regression": 0.6897,
-      "random_forest": 0.8305,
-      "xgboost": 0.8154,
-      "mlp": 0.786
+      "logistic_regression": 0.8437,
+      "random_forest": 0.8859,
+      "xgboost": 0.8889,
+      "mlp": 0.8673
     }
   },
   "regression": {
-    "A_cross_project": {
-      "dummy_median": {
-        "mae_days": 9.61,
-        "rmse_days": 30.59
-      },
-      "random_forest_reg": {
-        "mae_days": 88.13,
-        "rmse_days": 109.34
-      },
-      "xgboost_reg": {
-        "mae_days": 64.79,
-        "rmse_days": 76.05
-      }
-    },
-    "B_temporal": {
-      "dummy_median": {
-        "mae_days": 28.81,
-        "rmse_days": 55.29
-      },
-      "random_forest_reg": {
-        "mae_days": 28.92,
-        "rmse_days": 53.32
-      },
-      "xgboost_reg": {
-        "mae_days": 31.58,
-        "rmse_days": 54.71
-      }
-    }
+    "skipped": "registry v6 is classification-only (target grew); see PRED-11 in model_comparison_v5_is_late.json"
   },
   "best_params": {
     "logistic_regression": {
       "model__C": 10.0
     },
     "random_forest": {
-      "model__max_features": "sqrt",
-      "model__min_samples_leaf": 2,
+      "model__max_features": 0.5,
+      "model__min_samples_leaf": 20,
       "model__n_estimators": 300
     },
     "xgboost": {
@@ -213,7 +415,7 @@
       "model__subsample": 0.8
     },
     "mlp": {
-      "model__alpha": 0.001,
+      "model__alpha": 0.0001,
       "model__hidden_layer_sizes": "(64, 32)"
     }
   },
@@ -233,59 +435,348 @@
       "model__subsample": 0.8
     },
     "mlp": {
-      "model__alpha": 0.0001,
+      "model__alpha": 0.001,
       "model__hidden_layer_sizes": "(64,)"
     }
   },
   "champion": {
-    "classifier": "random_forest",
-    "regressor": "random_forest_reg",
-    "selected_by": "roc_auc on the inner temporal slice of B TRAIN (q0.75) \u2014 nested selection, B_test untouched (RR-19b); reg: B mae",
+    "classifier": "xgboost",
+    "regressor": null,
+    "selected_by": "roc_auc on the inner temporal slice of B TRAIN (q0.75) \u2014 nested selection, B_test untouched (RR-19b)",
     "inner_selection_auc": {
-      "logistic_regression": 0.6897,
-      "random_forest": 0.8305,
-      "xgboost": 0.8154,
-      "mlp": 0.786
+      "logistic_regression": 0.8437,
+      "random_forest": 0.8859,
+      "xgboost": 0.8889,
+      "mlp": 0.8673
     },
-    "runner_up_classifier": "xgboost",
-    "delta_auc_vs_runner_up": 0.0034,
+    "runner_up_classifier": "random_forest",
+    "delta_auc_vs_runner_up": 0.0002,
     "b_test_ranking_for_transparency": [
-      "random_forest",
       "xgboost",
+      "random_forest",
       "mlp",
       "logistic_regression"
     ],
     "same_champion_as_b_test_ranking": true,
     "note": "see outputs/bootstrap_ci.json for the CI of the champion-vs-runner-up AUC delta (task- and project-level)"
   },
+  "risk_bands": {
+    "t1": 0.29,
+    "t2": 0.8558,
+    "decision_threshold": 0.29,
+    "protocol": "t1 = decision_threshold = argmax F1 of the calibrated probability on the train-side calibration slice B_cal (grid 0.05..0.95); t2 = its 90% quantile on B_cal (high = top 10%), floored at t1; test never used",
+    "selected_on": "B_cal (1609 activities)",
+    "test_band_shares": {
+      "low": 0.489,
+      "medium": 0.408,
+      "high": 0.103
+    },
+    "test_target_rate_by_band": {
+      "low": 0.098,
+      "medium": 0.576,
+      "high": 0.779
+    },
+    "test_calibration_by_band": {
+      "high": {
+        "n": 253,
+        "mean_predicted": 0.869,
+        "observed": 0.779
+      },
+      "low": {
+        "n": 1200,
+        "mean_predicted": 0.101,
+        "observed": 0.098
+      },
+      "medium": {
+        "n": 1003,
+        "mean_predicted": 0.678,
+        "observed": 0.576
+      }
+    },
+    "test_calibration_by_source_band": {
+      "dslib/low": {
+        "n": 536,
+        "mean_predicted": 0.116,
+        "observed": 0.153
+      },
+      "dslib/medium": {
+        "n": 69,
+        "mean_predicted": 0.433,
+        "observed": 0.377
+      },
+      "own/high": {
+        "n": 253,
+        "mean_predicted": 0.869,
+        "observed": 0.779
+      },
+      "own/low": {
+        "n": 664,
+        "mean_predicted": 0.089,
+        "observed": 0.054
+      },
+      "own/medium": {
+        "n": 934,
+        "mean_predicted": 0.696,
+        "observed": 0.591
+      }
+    },
+    "display_rule": "show the BAND, not the percentage: the bands are ordered correctly, but in the upper bands the calibrated probability over-states the observed rate by up to 0.10 on test"
+  },
   "calibration": {
     "method": "sigmoid (Platt)",
     "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
     "evaluated_on": "B_temporal only (A test overlaps B train \u2014 evaluating there would be leakage)",
-    "n_fit": 5810,
-    "n_cal": 1586,
+    "n_fit": 5185,
+    "n_cal": 1609,
     "B_temporal": {
-      "brier_uncalibrated_same_base": 0.2165,
-      "brier_calibrated": 0.1881,
+      "brier_uncalibrated_same_base": 0.1677,
+      "brier_calibrated": 0.1608,
       "classification_calibrated": {
-        "accuracy": 0.6818,
-        "precision": 0.4776,
-        "recall": 0.7257,
-        "f1": 0.5761,
-        "roc_auc": 0.7694
+        "accuracy": 0.7655,
+        "precision": 0.6472,
+        "recall": 0.7805,
+        "f1": 0.7076,
+        "roc_auc": 0.8452
+      },
+      "by_source": {
+        "dslib": {
+          "n_test": 605,
+          "target_rate": 0.179,
+          "roc_auc": 0.638,
+          "brier": 0.1451
+        },
+        "own": {
+          "n_test": 1851,
+          "target_rate": 0.424,
+          "roc_auc": 0.8407,
+          "brier": 0.1659
+        }
+      },
+      "within_project": {
+        "all": {
+          "n_projects": 7,
+          "median_auc": 0.6277,
+          "median_ci95": [
+            0.539,
+            0.8005
+          ],
+          "share_point_estimate_above_0.5": 0.857,
+          "share_ci95_entirely_above_0.5": 0.429
+        },
+        "dslib": {
+          "n_projects": 3,
+          "median_auc": 0.5841,
+          "median_ci95": [
+            0.378,
+            0.6701
+          ],
+          "share_point_estimate_above_0.5": 0.667,
+          "share_ci95_entirely_above_0.5": 0.0
+        },
+        "own": {
+          "n_projects": 4,
+          "median_auc": 0.7141,
+          "median_ci95": [
+            0.539,
+            0.8159
+          ],
+          "share_point_estimate_above_0.5": 1.0,
+          "share_ci95_entirely_above_0.5": 0.75
+        },
+        "coverage": {
+          "projects_in_test": 29,
+          "eligible": 7,
+          "excluded": {
+            "fewer than 30 test activities": 18,
+            "fewer than 5 activities in one outcome class": 4
+          },
+          "note": "test projects of scenario B; the summary describes eligible projects only"
+        },
+        "per_project": {
+          "dslib::C2013-06": {
+            "auc": 0.5841,
+            "ci95": [
+              0.451,
+              0.727
+            ]
+          },
+          "dslib::C2015-06": {
+            "auc": 0.6701,
+            "ci95": [
+              0.382,
+              0.886
+            ]
+          },
+          "dslib::C2015-29": {
+            "auc": 0.378,
+            "ci95": [
+              0.233,
+              0.543
+            ]
+          },
+          "own::129 trial": {
+            "auc": 0.6277,
+            "ci95": [
+              0.555,
+              0.699
+            ]
+          },
+          "own::CCA R03 dt 24Oct11SC": {
+            "auc": 0.539,
+            "ci95": [
+              0.474,
+              0.596
+            ]
+          },
+          "own::PORTO MATROUH": {
+            "auc": 0.8005,
+            "ci95": [
+              0.677,
+              0.912
+            ]
+          },
+          "own::rehab-2": {
+            "auc": 0.8159,
+            "ci95": [
+              0.78,
+              0.847
+            ]
+          }
+        }
+      },
+      "classification_at_decision_threshold": {
+        "accuracy": 0.7561,
+        "precision": 0.617,
+        "recall": 0.8679,
+        "f1": 0.7213,
+        "roc_auc": 0.8452
       }
     }
   },
   "served_model": {
     "artifact": "calibrated pipeline (champion fitted on B_fit + sigmoid calibrator on B_cal)",
+    "target": "grew",
     "metrics_B_test": {
-      "accuracy": 0.6818,
-      "precision": 0.4776,
-      "recall": 0.7257,
-      "f1": 0.5761,
-      "roc_auc": 0.7694
+      "accuracy": 0.7655,
+      "precision": 0.6472,
+      "recall": 0.7805,
+      "f1": 0.7076,
+      "roc_auc": 0.8452
     },
-    "brier_B_test": 0.1881,
-    "selection_metrics_note": "champion selection used the full-B_tr fit (roc_auc 0.7655); that fit is NOT the served artifact"
+    "metrics_B_test_at_decision_threshold": {
+      "accuracy": 0.7561,
+      "precision": 0.617,
+      "recall": 0.8679,
+      "f1": 0.7213,
+      "roc_auc": 0.8452
+    },
+    "by_source_B_test": {
+      "dslib": {
+        "n_test": 605,
+        "target_rate": 0.179,
+        "roc_auc": 0.638,
+        "brier": 0.1451
+      },
+      "own": {
+        "n_test": 1851,
+        "target_rate": 0.424,
+        "roc_auc": 0.8407,
+        "brier": 0.1659
+      }
+    },
+    "within_project_B_test": {
+      "all": {
+        "n_projects": 7,
+        "median_auc": 0.6277,
+        "median_ci95": [
+          0.539,
+          0.8005
+        ],
+        "share_point_estimate_above_0.5": 0.857,
+        "share_ci95_entirely_above_0.5": 0.429
+      },
+      "dslib": {
+        "n_projects": 3,
+        "median_auc": 0.5841,
+        "median_ci95": [
+          0.378,
+          0.6701
+        ],
+        "share_point_estimate_above_0.5": 0.667,
+        "share_ci95_entirely_above_0.5": 0.0
+      },
+      "own": {
+        "n_projects": 4,
+        "median_auc": 0.7141,
+        "median_ci95": [
+          0.539,
+          0.8159
+        ],
+        "share_point_estimate_above_0.5": 1.0,
+        "share_ci95_entirely_above_0.5": 0.75
+      },
+      "coverage": {
+        "projects_in_test": 29,
+        "eligible": 7,
+        "excluded": {
+          "fewer than 30 test activities": 18,
+          "fewer than 5 activities in one outcome class": 4
+        },
+        "note": "test projects of scenario B; the summary describes eligible projects only"
+      },
+      "per_project": {
+        "dslib::C2013-06": {
+          "auc": 0.5841,
+          "ci95": [
+            0.451,
+            0.727
+          ]
+        },
+        "dslib::C2015-06": {
+          "auc": 0.6701,
+          "ci95": [
+            0.382,
+            0.886
+          ]
+        },
+        "dslib::C2015-29": {
+          "auc": 0.378,
+          "ci95": [
+            0.233,
+            0.543
+          ]
+        },
+        "own::129 trial": {
+          "auc": 0.6277,
+          "ci95": [
+            0.555,
+            0.699
+          ]
+        },
+        "own::CCA R03 dt 24Oct11SC": {
+          "auc": 0.539,
+          "ci95": [
+            0.474,
+            0.596
+          ]
+        },
+        "own::PORTO MATROUH": {
+          "auc": 0.8005,
+          "ci95": [
+            0.677,
+            0.912
+          ]
+        },
+        "own::rehab-2": {
+          "auc": 0.8159,
+          "ci95": [
+            0.78,
+            0.847
+          ]
+        }
+      }
+    },
+    "brier_B_test": 0.1608,
+    "selection_metrics_note": "champion selection used the full-B_tr fit (roc_auc 0.8736); that fit is NOT the served artifact"
   }
 }

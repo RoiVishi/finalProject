@@ -1,0 +1,291 @@
+{
+  "config": {
+    "seed": 42,
+    "generated_by": "data-pipeline/src/train_compare.py",
+    "feature_schema_version": "1.0",
+    "scenario_A": {
+      "split": "GroupShuffleSplit by project, test_size=0.25",
+      "n_train": 8429,
+      "n_test": 2180
+    },
+    "scenario_B": {
+      "split": "per-project temporal quantile cut q=0.7 on rel_position",
+      "min_labeled": 30,
+      "min_per_side": 10,
+      "n_train": 7396,
+      "n_test": 3108,
+      "n_projects": 11,
+      "projects": [
+        "129 trial",
+        "130 TRIAL",
+        "CCA R03 dt 24Oct11SC",
+        "Convention _ Exhibition Center Project Roads _ Utilities",
+        "Detailed Program",
+        "EBCF-4 070127 Forecast Original",
+        "PORTO MATROUH",
+        "cairo alex-road",
+        "hela-2l",
+        "jumaira",
+        "rehab-2"
+      ]
+    },
+    "features_num": [
+      "planned_duration_days",
+      "total_float_hr",
+      "free_float_hr",
+      "rel_position",
+      "proj_n_tasks",
+      "proj_span_days",
+      "n_pred",
+      "n_succ",
+      "upstream_cnt",
+      "downstream_cnt"
+    ],
+    "features_cat": [
+      "task_type"
+    ],
+    "tuning": "GridSearchCV, GroupKFold(3) by project INSIDE each scenario's own train set (RR-19, 7.9.26; before: tuned on A train and reused in B \u2014 80% of B test rows were in A train)",
+    "calibration": "sigmoid (Platt) via CalibratedClassifierCV(FrozenEstimator): per-project temporal sub-split of B train at q=0.75 \u2014 champion fitted on earlier part, calibrator on the latest slice; evaluated on scenario B only (A test overlaps B train \u2014 see note); never fitted on test"
+  },
+  "classification": {
+    "A_cross_project": {
+      "dummy_majority": {
+        "accuracy": 0.8128,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.5
+      },
+      "logistic_regression": {
+        "accuracy": 0.8128,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.8936
+      },
+      "random_forest": {
+        "accuracy": 0.8078,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.1873
+      },
+      "xgboost": {
+        "accuracy": 0.7743,
+        "precision": 0.0116,
+        "recall": 0.0025,
+        "f1": 0.004,
+        "roc_auc": 0.5653
+      },
+      "mlp": {
+        "accuracy": 0.7936,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.6699
+      }
+    },
+    "B_temporal": {
+      "dummy_majority": {
+        "accuracy": 0.7021,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.5
+      },
+      "logistic_regression": {
+        "accuracy": 0.5672,
+        "precision": 0.3985,
+        "recall": 0.8888,
+        "f1": 0.5503,
+        "roc_auc": 0.6004
+      },
+      "random_forest": {
+        "accuracy": 0.7021,
+        "precision": 0.5,
+        "recall": 0.6123,
+        "f1": 0.5505,
+        "roc_auc": 0.7655
+      },
+      "xgboost": {
+        "accuracy": 0.7017,
+        "precision": 0.4996,
+        "recall": 0.6782,
+        "f1": 0.5754,
+        "roc_auc": 0.7621
+      },
+      "mlp": {
+        "accuracy": 0.6602,
+        "precision": 0.4149,
+        "recall": 0.3423,
+        "f1": 0.3751,
+        "roc_auc": 0.6849
+      }
+    },
+    "A_repeated": {
+      "logistic_regression": {
+        "n_splits": 20,
+        "median_auc": 0.6254,
+        "q25": 0.4869,
+        "q75": 0.6948,
+        "min": 0.1913,
+        "max": 0.8703,
+        "share_above_chance": 0.7
+      },
+      "random_forest": {
+        "n_splits": 20,
+        "median_auc": 0.6418,
+        "q25": 0.542,
+        "q75": 0.7023,
+        "min": 0.2747,
+        "max": 0.8556,
+        "share_above_chance": 0.85
+      },
+      "xgboost": {
+        "n_splits": 20,
+        "median_auc": 0.5679,
+        "q25": 0.5254,
+        "q75": 0.6827,
+        "min": 0.3529,
+        "max": 0.7874,
+        "share_above_chance": 0.8
+      },
+      "mlp": {
+        "n_splits": 20,
+        "median_auc": 0.5703,
+        "q25": 0.4645,
+        "q75": 0.6477,
+        "min": 0.3585,
+        "max": 0.876,
+        "share_above_chance": 0.55
+      }
+    },
+    "B_inner_selection": {
+      "logistic_regression": 0.6897,
+      "random_forest": 0.8305,
+      "xgboost": 0.8154,
+      "mlp": 0.786
+    }
+  },
+  "regression": {
+    "A_cross_project": {
+      "dummy_median": {
+        "mae_days": 9.61,
+        "rmse_days": 30.59
+      },
+      "random_forest_reg": {
+        "mae_days": 88.13,
+        "rmse_days": 109.34
+      },
+      "xgboost_reg": {
+        "mae_days": 64.79,
+        "rmse_days": 76.05
+      }
+    },
+    "B_temporal": {
+      "dummy_median": {
+        "mae_days": 28.81,
+        "rmse_days": 55.29
+      },
+      "random_forest_reg": {
+        "mae_days": 28.92,
+        "rmse_days": 53.32
+      },
+      "xgboost_reg": {
+        "mae_days": 31.58,
+        "rmse_days": 54.71
+      }
+    }
+  },
+  "best_params": {
+    "logistic_regression": {
+      "model__C": 10.0
+    },
+    "random_forest": {
+      "model__max_features": "sqrt",
+      "model__min_samples_leaf": 2,
+      "model__n_estimators": 300
+    },
+    "xgboost": {
+      "model__learning_rate": 0.05,
+      "model__max_depth": 6,
+      "model__n_estimators": 300,
+      "model__subsample": 0.8
+    },
+    "mlp": {
+      "model__alpha": 0.001,
+      "model__hidden_layer_sizes": "(64, 32)"
+    }
+  },
+  "best_params_A": {
+    "logistic_regression": {
+      "model__C": 10.0
+    },
+    "random_forest": {
+      "model__max_features": "sqrt",
+      "model__min_samples_leaf": 20,
+      "model__n_estimators": 300
+    },
+    "xgboost": {
+      "model__learning_rate": 0.05,
+      "model__max_depth": 3,
+      "model__n_estimators": 300,
+      "model__subsample": 0.8
+    },
+    "mlp": {
+      "model__alpha": 0.0001,
+      "model__hidden_layer_sizes": "(64,)"
+    }
+  },
+  "champion": {
+    "classifier": "random_forest",
+    "regressor": "random_forest_reg",
+    "selected_by": "roc_auc on the inner temporal slice of B TRAIN (q0.75) \u2014 nested selection, B_test untouched (RR-19b); reg: B mae",
+    "inner_selection_auc": {
+      "logistic_regression": 0.6897,
+      "random_forest": 0.8305,
+      "xgboost": 0.8154,
+      "mlp": 0.786
+    },
+    "runner_up_classifier": "xgboost",
+    "delta_auc_vs_runner_up": 0.0034,
+    "b_test_ranking_for_transparency": [
+      "random_forest",
+      "xgboost",
+      "mlp",
+      "logistic_regression"
+    ],
+    "same_champion_as_b_test_ranking": true,
+    "note": "see outputs/bootstrap_ci.json for the CI of the champion-vs-runner-up AUC delta (task- and project-level)"
+  },
+  "calibration": {
+    "method": "sigmoid (Platt)",
+    "protocol": "per-project temporal sub-split of B train at q=0.75: champion fitted on earlier part, calibrator on latest slice (distribution closest to deployment); selected on train-side data only",
+    "evaluated_on": "B_temporal only (A test overlaps B train \u2014 evaluating there would be leakage)",
+    "n_fit": 5810,
+    "n_cal": 1586,
+    "B_temporal": {
+      "brier_uncalibrated_same_base": 0.2165,
+      "brier_calibrated": 0.1881,
+      "classification_calibrated": {
+        "accuracy": 0.6818,
+        "precision": 0.4776,
+        "recall": 0.7257,
+        "f1": 0.5761,
+        "roc_auc": 0.7694
+      }
+    }
+  },
+  "served_model": {
+    "artifact": "calibrated pipeline (champion fitted on B_fit + sigmoid calibrator on B_cal)",
+    "metrics_B_test": {
+      "accuracy": 0.6818,
+      "precision": 0.4776,
+      "recall": 0.7257,
+      "f1": 0.5761,
+      "roc_auc": 0.7694
+    },
+    "brier_B_test": 0.1881,
+    "selection_metrics_note": "champion selection used the full-B_tr fit (roc_auc 0.7655); that fit is NOT the served artifact"
+  }
+}

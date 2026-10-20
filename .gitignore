@@ -14,6 +14,8 @@ data-pipeline/outputs/labeled_tasks.csv
 # v5 (RR-19, 7.9.26): Random Forest champion, ~10MB compressed — committed as a documented size exception
 # (CI must test the real served model, REQUIRE_MODEL=1); Git LFS becomes the path if a version grows beyond ~20MB
 !ai-service/model/registry/v5/classifier.joblib
+# v6 (RR-21c, 20.10.26): XGBoost on corpus v3, ~0.3MB
+!ai-service/model/registry/v6/classifier.joblib
 # working-dir helpers (VM cannot unlink on this mount)
 _to_delete/
 ci.yml.sprint1
@@ -25,3 +27,8 @@ data-pipeline/outputs/dslib_asof_instances.csv
 
 # personal Claude Code permissions — never shared
 .claude/settings.local.json
+
+# corpus v3 (registry v6) — regenerate: python src/build_corpus_v3.py (after etl.py + rr17_dslib_etl.py)
+data-pipeline/outputs/corpus_v3_buildings.csv
+# JPF activity table (60MB) — regenerate: python src/rr15_jpf.py <JPF zip> <registry v4> outputs
+data-pipeline/outputs/jpf_labeled_tasks.csv

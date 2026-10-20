@@ -8,6 +8,10 @@ Output: outputs/labeled_tasks.csv  - one row per task with plan-time features + 
 Key design decisions (documented for the project book):
 1. Label   : delay_days = act_end_date - target_end_date (calendar days).
              is_late = delay_days > 0. Only tasks having BOTH dates are labeled.
+             grew    = actual duration > planned duration, on calendar DATES
+             (act_end - act_start) > (target_end - target_start); needs all four dates.
+             Served target since registry v6 (RR-21): unlike is_late it does not depend on
+             when the plan was last updated, so it means the same thing in every corpus.
 2. Leakage : features use ONLY plan-time information (target dates, floats,
              dependency network). Actual dates are never used as features.
 3. Dedup   : some folders are versions/baselines of the same project. We
@@ -119,6 +123,12 @@ def process_project(proj_dir: Path) -> pd.DataFrame | None:
             if pd.notna(t["act_end_date"]) and pd.notna(t["target_end_date"])
             else np.nan
         )
+        dates = [t[c] for c in ("act_start_date", "act_end_date", "target_start_date", "target_end_date")]
+        if all(pd.notna(d) for d in dates):
+            a0, a1, p0, p1 = (d.normalize() for d in dates)
+            grew = float((a1 - a0).days > (p1 - p0).days)
+        else:
+            grew = np.nan
         rows.append(
             dict(
                 project=proj_dir.name,
@@ -136,6 +146,7 @@ def process_project(proj_dir: Path) -> pd.DataFrame | None:
                 **gs,
                 delay_days=delay,
                 is_late=(delay > 0) if not pd.isna(delay) else np.nan,
+                grew=grew,
             )
         )
     return pd.DataFrame(rows)

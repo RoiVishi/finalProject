@@ -20,7 +20,7 @@ from train_compare import EXCLUDE_PROJECTS, load_labeled  # noqa: E402
 
 
 def main() -> int:
-    r = json.loads((OUT / "model_comparison.json").read_text())
+    r = json.loads((OUT / "model_comparison_v5_is_late.json").read_text())
     lc = json.loads((OUT / "learning_curve.json").read_text())
     ab = json.loads((OUT / "ablation_float.json").read_text())
     ba = json.loads((OUT / "bias_and_alerts.json").read_text())
@@ -189,6 +189,33 @@ def main() -> int:
                  "asof_drift_rule": r["part_D_asof_combination"]["results"]["is_late"]["drift_rule_alone"],
                  "asof_combination": r["part_D_asof_combination"]["results"]["is_late"]["combination_model+drift_logistic"]})(json.loads(p18.read_text())) if p18.exists() else None}
         ))(OUT / "rr17_dslib_authG.json", OUT / "rr18_customer_sim_authG.json"),
+        # ---- registry v6 (20.10.26): the SERVED model — buildings only, target grew (RR-21c) ----
+        "served_v6": (lambda m, c, rr: {
+            "target": m["target"], "target_definition": m["target_definition"],
+            "corpus": c["sources"], "corpus_total": c["total"],
+            "own_buildings": sorted(c["own_buildings"]), "own_excluded_not_buildings": sorted(c["own_excluded_not_buildings"]),
+            "champion": m["champion_classifier"], "best_params": m["best_params"],
+            "served_B": {**m["served_metrics_B_temporal"], "brier": m["served_brier_B_temporal"]},
+            "served_B_by_source": m["served_by_source_B_temporal"],
+            "scenario_A_repeated_nested": {k: m["metrics_A_repeated"][k] for k in
+                                           ("tuning", "n_splits", "median_auc", "q25", "q75", "min", "max",
+                                            "share_above_chance")},
+            "scenario_A_within_project": m["metrics_A_repeated"]["within_project"],
+            "scenario_A_project_level_spearman": m["metrics_A_repeated"]["project_level_spearman"],
+            "served_B_within_project": {k: v for k, v in m["served_within_project_B_temporal"].items() if k != "per_project"},
+            "claims": m["claims"],
+            "risk_bands": {k: m["risk_bands"][k] for k in ("t1", "t2", "decision_threshold", "test_band_shares",
+                                                         "test_target_rate_by_band", "test_calibration_by_band",
+                                                         "display_rule")},
+            "rr21_three_corpora_E1": rr["RR21_E1"]["auc"],
+            "rr21_three_corpora_E2_median": {k: v["median"] for k, v in rr["RR21_E2"]["results"].items()},
+            "rr21c_buildings_E1": rr["RR21c_E1"]["auc"],
+            "rr21c_buildings_E2_median": {k: v["median"] for k, v in rr["RR21c_E2"]["results"].items()},
+            "rr21c_buildings_E2_projects": rr["RR21c_E2"]["n_projects"],
+            "signature_grew": rr["signature_grew"],
+        })(json.loads(sorted((OUT.parent.parent / "ai-service/model/registry").glob("v6"))[0].joinpath("meta.json").read_text()),
+           json.loads((OUT / "corpus_v3_summary.json").read_text()),
+           json.loads((OUT / "rr21_shared_label.json").read_text())),
         "history": {"auc_2_projects": 0.828, "auc_13_projects": 0.768,
                     "auc_dedup_hardened": b[champ].get("roc_auc"),
                     "note": "each drop = a deliberate hardening; always the lower honest number was adopted"},
