@@ -11,7 +11,7 @@ import './theme.css';
  * below keeps rendering — nothing in the 2D Twin depends on it.
  */
 const ARView = React.lazy(() => import('./ar/ARView.jsx'));
-import { useArSupport } from './ar/arSupport.js';
+import { arEntryFor, useArSupport } from './ar/arSupport.js';
 
 const riskColors = { low: 'var(--success)', medium: 'var(--warning)', high: 'var(--danger)', done: 'var(--muted)' };
 const riskLabel = (r) => (r === 'high' ? 'גבוה' : r === 'medium' ? 'בינוני' : r === 'done' ? '—' : 'נמוך');
@@ -23,7 +23,7 @@ export default function App() {
   const [realistic, setRealistic] = useState(false);
   const [inRoom, setInRoom] = useState(false);
   const [inAr, setInAr] = useState(false);
-  const arSupport = useArSupport();
+  const arEntry = arEntryFor(useArSupport());
   const [fade, setFade] = useState(false);
   const zones = useMemo(() => zonesFor(project), [project]);
 
@@ -81,7 +81,7 @@ export default function App() {
 
         {!inRoom && !inAr && (
           <div className="glass-chips">
-            {arSupport.status === 'supported' && (
+            {arEntry.kind === 'button' && (
               <button
                 className="glass-chip"
                 onClick={() => setInAr(true)}
@@ -89,6 +89,11 @@ export default function App() {
               >
                 👓 צפייה ב-AR
               </button>
+            )}
+            {arEntry.kind === 'note' && (
+              <span className="glass-chip" role="note" title={arEntry.detail} style={{ cursor: 'default', opacity: 0.75 }}>
+                👓 {arEntry.label}
+              </span>
             )}
             {PROJECTS.some((p) => p.model) && (
               <button
