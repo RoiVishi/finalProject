@@ -31,13 +31,34 @@ docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --b
 
 ## עדכון לגרסה חדשה מ-main
 
+**אוטומטי.** כל מיזוג ל-main שעובר CI מעדכן את השרת לבד: ‏`.github/workflows/deploy.yml` מתחבר לשרת ומריץ את `deploy/server-update.sh`. רואים כל עדכון ב-GitHub בלשונית Actions, תחת Deploy.
+
+- **עדכון ידני מ-GitHub:** ‏Actions ← Deploy ← Run workflow.
+- **השהיה (למשל לפני הוועדה):** ‏Actions ← Deploy ← "..." ← Disable workflow. מחזירים עם Enable workflow.
+- **ידני מהשרת**, אם GitHub לא זמין:
+
 ```bash
-cd ~/finalProject
-git pull
-docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --build
+~/finalProject/deploy/server-update.sh
 ```
 
-טיפ: כדי לא להקליד את שני הקבצים בכל פעם — `echo 'COMPOSE_FILE=docker-compose.yml:deploy/docker-compose.prod.yml' >> .env`, ואז מספיק `docker compose up -d --build`.
+הסקריפט מושך את main (רק fast-forward: אם שינו קבצים בשרת ידנית, הוא עוצר), בונה מחדש, מחכה שה-backend יענה, ומוחק images ישנים.
+
+טיפ: כדי לא להקליד את שני קבצי ה-compose בכל פעם — `echo 'COMPOSE_FILE=docker-compose.yml:deploy/docker-compose.prod.yml' >> .env`, ואז מספיק `docker compose up -d --build`.
+
+## פריסה אוטומטית — הגדרה (פעם אחת)
+
+1. **מפתח פריסה** (בעל ה-repo, במחשב שלו): `ssh-keygen -t ed25519 -f ~/foresite-deploy -N "" -C "github-deploy"`. החלק הפרטי נשמר רק ב-GitHub.
+2. **סודות ב-GitHub** (‏Settings ← Secrets and variables ← Actions):
+   - `DEPLOY_HOST` — כתובת השרת.
+   - `DEPLOY_SSH_KEY` — כל התוכן של `~/foresite-deploy` (הפרטי).
+   - `DEPLOY_KNOWN_HOSTS` — הפלט של `ssh-keyscan -t ed25519 <כתובת השרת>`.
+3. **בשרת**, מוסיפים ל-`~/.ssh/authorized_keys` שורה אחת עם המפתח הציבורי, מוגבלת לסקריפט בלבד:
+
+```
+restrict,command="/home/ubuntu/finalProject/deploy/server-update.sh" ssh-ed25519 AAAA... github-deploy
+```
+
+`restrict` חוסם טרמינל, העברת פורטים וכל השאר; `command=` מריץ את הסקריפט בלי קשר למה שהתבקש. גם מי שישיג את המפתח יוכל רק לעדכן את השרת ל-main.
 
 ## בדיקות ותקלות
 
