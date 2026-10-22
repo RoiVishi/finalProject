@@ -11,8 +11,9 @@ import React, { useEffect, useState } from 'react';
  * (phone) screens the whole building is fitted to the top of the screen
  * instead, and the card sits below it (auth.css).
  * ambient: the same picture as a faint, still watermark behind the signed-in
- * screens (AppShell) - no scan line, no pulsing, no AR labels, which inside
- * the app could be mistaken for real project data.
+ * screens (AppShell) - no scan line, no pulsing, and none of the risk
+ * markings (amber floor, AR labels), which inside the app could be mistaken
+ * for real project data.
  *
  * Plant photos: Pixabay (free under the Pixabay Content License), cut out and
  * graded to dusk; see public/auth/README.md.
@@ -91,8 +92,12 @@ export default function AuthBackdrop({ ambient = false }) {
       <polygon points="600,180 740,226 740,734 600,760" fill="#081430" fillOpacity="0.9" />
       <g clipPath="url(#fs-side)"><rect x="600" y="150" width="140" height="640" fill="url(#fs-win-side)" /></g>
       <path d={FLOOR_LINES} fill="none" stroke="#60a5fa" strokeOpacity="0.35" />
-      <rect x="300" y="542.5" width="300" height="72.5" fill="#f59e0b" fillOpacity="0.16" stroke="#fbbf24" strokeOpacity="0.9" strokeWidth="1.5" />
-      <polygon points="600,542.5 740,543.5 740,607 600,615" fill="#f59e0b" fillOpacity="0.1" stroke="#fbbf24" strokeOpacity="0.7" />
+      {!ambient && (
+        <>
+          <rect x="300" y="542.5" width="300" height="72.5" fill="#f59e0b" fillOpacity="0.16" stroke="#fbbf24" strokeOpacity="0.9" strokeWidth="1.5" />
+          <polygon points="600,542.5 740,543.5 740,607 600,615" fill="#f59e0b" fillOpacity="0.1" stroke="#fbbf24" strokeOpacity="0.7" />
+        </>
+      )}
       <rect x="270" y="758" width="500" height="14" fill="#1b2640" />
 
       {/* courtyard: real young trees and shrubs */}
@@ -131,8 +136,8 @@ export default function AuthBackdrop({ ambient = false }) {
         <circle cx="740" cy="734" r="3.5" /><circle cx="300" cy="760" r="3.5" /><circle cx="600" cy="760" r="3.5" />
         <circle cx="470" cy="104" r="3" />
       </g>
-      <path d="M300 578L250 520H232" fill="none" stroke="#fbbf24" strokeWidth="1.5" />
-      <circle cx="300" cy="578" r="4.5" fill="#fbbf24" />
+      {!ambient && <path d="M300 578L250 520H232" fill="none" stroke="#fbbf24" strokeWidth="1.5" />}
+      {!ambient && <circle cx="300" cy="578" r="4.5" fill="#fbbf24" />}
       <path d="M220 160V112H268M742 112H790V160M220 752V800H268M742 800H790V752"
             fill="none" stroke="#22d3ee" strokeWidth="2.5" strokeLinecap="round" />
       {!ambient && (

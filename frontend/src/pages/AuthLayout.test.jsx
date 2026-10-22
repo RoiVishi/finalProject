@@ -60,7 +60,7 @@ describe('AuthLayout backdrop', () => {
     expect(container.querySelector('svg.auth-backdrop').getAttribute('viewBox')).toBe('0 0 1440 900');
   });
 
-  it('ambient (signed-in screens): the same picture, still and without the AR labels', () => {
+  it('ambient (signed-in screens): the same picture, still, without risk markings or labels', () => {
     setViewport(false);
     const auth = render(<AuthBackdrop />).container.querySelector('svg');
     const authImages = auth.querySelectorAll('image').length;
@@ -72,5 +72,6 @@ describe('AuthLayout backdrop', () => {
     expect(svg.querySelectorAll('image').length).toBe(authImages);    // same courtyard
     expect(svg.querySelector('.fs-scan, .fs-pulse')).toBeNull();       // nothing moves
     expect(svg.querySelectorAll('text').length).toBe(0);               // no 'floor 3 · medium risk'
+    expect(svg.querySelector('[stroke="#fbbf24"]')).toBeNull();         // no amber risk floor
   });
 });
