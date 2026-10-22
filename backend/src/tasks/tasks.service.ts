@@ -1,6 +1,6 @@
 import {
-  BadRequestException, ConflictException, ForbiddenException,
-  Injectable, NotFoundException, ServiceUnavailableException,
+  BadRequestException, ConflictException, ForbiddenException, Injectable, Logger,
+  NotFoundException, OnModuleDestroy, OnModuleInit, ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
@@ -9,7 +9,8 @@ import {
   ProjectGraphPayload,
   ProjectPrediction,
 } from '../predictions/predictions.service';
-import { scopeTaskForViewer, TaskViewer } from './prediction-scope';
+import { canSeePrediction, scopeTaskForViewer, TaskViewer } from './prediction-scope';
+import { PredictionFreshness, predictionFreshness } from './prediction-freshness';
 import { predictionScope } from '../auth/permissions';
 import { ActivityLogService } from '../common/activity-log.service';
 import { NotificationsService } from '../common/notifications.service';
@@ -29,8 +30,42 @@ export interface TaskActor {
   role: ProjectRole;
 }
 
+/**
+ * KAN-26 timing. Edits arrive in bursts (a planner drags five dates in a row),
+ * so a change schedules ONE project recompute a few seconds later instead of
+ * one per edit. The periodic pass catches what no edit announces - the
+ * calendar itself moving the activities' position in the project timeline.
+ * PREDICTION_REFRESH_DELAY_MS=-1 or PREDICTION_REFRESH_INTERVAL_HOURS=0
+ * switches the respective trigger off.
+ */
+const envNumber = (name: string, fallback: number) => {
+  const v = Number(process.env[name]);
+  return process.env[name] !== undefined && Number.isFinite(v) ? v : fallback;
+};
+
+/** One row of GET /projects/:projectId/predictions (KAN-26). */
+export interface ActivityPrediction {
+  taskId: string;
+  name: string;
+  zone: string | null;
+  status: TaskStatus;
+  lateProbability: number | null;
+  riskLevel: 'low' | 'medium' | 'high' | null;
+  reliability: string | null;
+  predictionBasis: string | null;
+  modelVersion: string | null;
+  predictedAt: Date | null;
+  freshness: PredictionFreshness;
+}
+
 @Injectable()
-export class TasksService {
+export class TasksService implements OnModuleInit, OnModuleDestroy {
+  private readonly log = new Logger(TasksService.name);
+  private readonly refreshDelayMs = envNumber('PREDICTION_REFRESH_DELAY_MS', 3000);
+  private readonly refreshIntervalHours = envNumber('PREDICTION_REFRESH_INTERVAL_HOURS', 24);
+  private readonly pendingRefresh = new Map<string, NodeJS.Timeout>();
+  private periodic?: NodeJS.Timeout;
+
   constructor(
     @InjectRepository(Task) private repo: Repository<Task>,
     @InjectRepository(Project) private projects: Repository<Project>,
@@ -72,6 +107,8 @@ export class TasksService {
       entityId: task.id, action: 'task.created', after: { name: task.name, zone: task.zone },
     });
     if (assignee) this.announceAssignment(task, project.id, assignee);
+    // A new activity changes its neighbours' project features and needs a number itself.
+    this.scheduleRefresh(project.id);
 
     return task;
   }
@@ -110,8 +147,12 @@ export class TasksService {
     const planAfter = { plannedStart: task.plannedStart, plannedEnd: task.plannedEnd };
     const planMoved = planBefore.plannedStart !== planAfter.plannedStart
       || planBefore.plannedEnd !== planAfter.plannedEnd;
+    // KAN-26: the dates are model inputs; the cached number now describes a
+    // plan that no longer exists.
+    if (planMoved) task.predictionInputsChangedAt = new Date();
 
     const saved = await this.repo.save(task);
+    if (planMoved) this.scheduleRefresh(project.id);
 
     /**
      * The audited case of TASK-2: "plan-date edits after execution start are
@@ -162,6 +203,9 @@ export class TasksService {
     if (next === TaskStatus.COMPLETED && !task.actualEnd) task.actualEnd = today;
 
     const saved = await this.repo.save(task);
+    // Completion moves the project's completed share - the AI service's
+    // cold-start gate - so every number in the project may change with it.
+    if (next === TaskStatus.COMPLETED) this.scheduleRefresh(task.project.id);
     this.activity.record({
       projectId: task.project.id, actorId: actor.userId, entity: 'task', entityId: task.id,
       action: 'task.status_changed',
@@ -196,6 +240,7 @@ export class TasksService {
     }
 
     await this.repo.remove(task);
+    this.scheduleRefresh(task.project.id);
     this.activity.record({
       projectId: task.project.id, actorId: actor.userId, entity: 'task',
       entityId: taskId, action: 'task.deleted', before: { name: task.name },
@@ -250,7 +295,7 @@ export class TasksService {
       task.status = TaskStatus.PLANNED;
     }
 
-    const saved = await this.repo.save(task);
+    const saved = await this.markInputsChanged(task, predecessor.id);
     this.activity.record({
       projectId: task.project.id, actorId: actor.userId, entity: 'task', entityId: task.id,
       action: 'task.dependency_added', after: { predecessorId, predecessor: predecessor.name },
@@ -265,7 +310,7 @@ export class TasksService {
     if (!removed) throw new NotFoundException('התלות לא נמצאה');
 
     task.predecessors = before.filter((p) => p.id !== predecessorId);
-    const saved = await this.repo.save(task);
+    const saved = await this.markInputsChanged(task, predecessorId);
     this.activity.record({
       projectId: task.project.id, actorId: actor.userId, entity: 'task', entityId: task.id,
       action: 'task.dependency_removed', before: { predecessorId, predecessor: removed.name },
@@ -299,7 +344,7 @@ export class TasksService {
    */
   async findOne(taskId: string, viewer: TaskViewer) {
     const task = await this.requireTask(taskId);
-    return { ...scopeTaskForViewer(task, viewer), ...this.blockersOf(task) };
+    return { ...scopeTaskForViewer(withFreshness(task), viewer), ...this.blockersOf(task) };
   }
 
   /**
@@ -312,7 +357,9 @@ export class TasksService {
       where: { project: { id: projectId } },
       relations: { predecessors: { assignee: true }, assignee: true },
     });
-    return tasks.map((task) => ({ ...scopeTaskForViewer(task, viewer), ...this.blockersOf(task) }));
+    return tasks.map((task) => ({
+      ...scopeTaskForViewer(withFreshness(task), viewer), ...this.blockersOf(task),
+    }));
   }
 
   /**
@@ -323,6 +370,112 @@ export class TasksService {
   async computeBlocked(taskId: string): Promise<BlockingState> {
     const task = await this.requireTask(taskId);
     return this.blockersOf(task);
+  }
+
+  /**
+   * KAN-26 - GET /projects/:projectId/predictions: the cached risk of every
+   * activity the viewer may see, each with its freshness. Never calls the AI
+   * service; this is what the board and the Twin colour from.
+   * AUTH-2: a subcontractor gets only the activities assigned to them.
+   */
+  async projectPredictions(projectId: string, viewer: TaskViewer) {
+    const tasks = await this.repo.find({
+      where: { project: { id: projectId } },
+      relations: { assignee: true },
+      order: { plannedStart: 'ASC', name: 'ASC' },
+    });
+    const scope = predictionScope(viewer.role) === 'all' ? 'project' : 'own';
+    return {
+      projectId,
+      scope,
+      predictions: tasks
+        .filter((t) => canSeePrediction(t, viewer))
+        .map(toActivityPrediction),
+    };
+  }
+
+  /**
+   * KAN-26 - POST /projects/:projectId/predictions/refresh: recompute the whole
+   * project now ("on demand"), then answer like the GET. With the AI service
+   * down the answer is 503 carrying the last numbers held, flagged stale
+   * (PRED-5 / NFR-REL-1), the same contract as POST /tasks/:id/predict.
+   */
+  async refreshProjectPredictionsFor(projectId: string, viewer: TaskViewer) {
+    const { updated, aiAvailable } = await this.refreshProjectPredictions(projectId);
+    const view = await this.projectPredictions(projectId, viewer);
+    if (!aiAvailable) {
+      throw new ServiceUnavailableException({
+        statusCode: 503,
+        message: 'שירות החיזוי אינו זמין כרגע; מוצגות התחזיות האחרונות שחושבו',
+        stale: true,
+        lastKnown: view,
+      });
+    }
+    return { ...view, updated };
+  }
+
+  onModuleInit() {
+    if (this.refreshIntervalHours > 0) {
+      this.periodic = setInterval(
+        () => void this.refreshAllProjects(),
+        this.refreshIntervalHours * 3_600_000,
+      );
+      this.periodic.unref?.();
+    }
+  }
+
+  onModuleDestroy() {
+    if (this.periodic) clearInterval(this.periodic);
+    for (const timer of this.pendingRefresh.values()) clearTimeout(timer);
+    this.pendingRefresh.clear();
+  }
+
+  /** The scheduled pass: every live project, one at a time. */
+  async refreshAllProjects() {
+    const projects = await this.projects.find({
+      where: { deletedAt: IsNull() }, select: { id: true },
+    });
+    for (const { id } of projects) {
+      try {
+        const { aiAvailable } = await this.refreshProjectPredictions(id);
+        if (!aiAvailable) return; // the service is down; the next pass retries
+      } catch (e) {
+        this.log.warn(`scheduled prediction refresh failed for ${id}: ${(e as Error).message}`);
+      }
+    }
+  }
+
+  /**
+   * KAN-26 "refreshed on dependency change": coalesce edits into one recompute
+   * per project, PREDICTION_REFRESH_DELAY_MS after the last one. Fire and
+   * forget - the edit has already succeeded, and a failed refresh leaves the
+   * rows stale, which is exactly what they then claim to be.
+   */
+  scheduleRefresh(projectId: string) {
+    if (this.refreshDelayMs < 0) return;
+    const previous = this.pendingRefresh.get(projectId);
+    if (previous) clearTimeout(previous);
+    const timer = setTimeout(() => {
+      this.pendingRefresh.delete(projectId);
+      this.refreshProjectPredictions(projectId).catch((e) =>
+        this.log.warn(`prediction refresh failed for ${projectId}: ${(e as Error).message}`));
+    }, this.refreshDelayMs);
+    timer.unref?.();
+    this.pendingRefresh.set(projectId, timer);
+  }
+
+  /**
+   * A dependency feeds the model on both of its ends: the successor gains or
+   * loses a predecessor, the predecessor a successor. Both rows are marked;
+   * the predecessor through a one-column update so its own relations are untouched.
+   */
+  private async markInputsChanged(task: Task, otherId: string) {
+    const now = new Date();
+    task.predictionInputsChangedAt = now;
+    const saved = await this.repo.save(task);
+    await this.repo.update(otherId, { predictionInputsChangedAt: now });
+    this.scheduleRefresh(task.project.id);
+    return saved;
   }
 
   // ---- internal helpers --------------------------------------------------
@@ -502,4 +655,25 @@ export class TasksService {
     const mine = results.find((r) => r.task_id === taskId) ?? null;
     return { task: task.name, prediction: mine?.prediction ?? null, reliability: mine?.reliability ?? null };
   }
+}
+
+/** Response copy with the computed freshness (scoped like the number itself). */
+function withFreshness<T extends Task>(task: T): T & { predictionFreshness: PredictionFreshness } {
+  return { ...task, predictionFreshness: predictionFreshness(task) };
+}
+
+function toActivityPrediction(t: Task): ActivityPrediction {
+  return {
+    taskId: t.id,
+    name: t.name,
+    zone: t.zone ?? null,
+    status: t.status,
+    lateProbability: t.lateProbability ?? null,
+    riskLevel: t.riskLevel ?? null,
+    reliability: t.reliability ?? null,
+    predictionBasis: t.predictionBasis ?? null,
+    modelVersion: t.modelVersion ?? null,
+    predictedAt: t.predictedAt ?? null,
+    freshness: predictionFreshness(t),
+  };
 }

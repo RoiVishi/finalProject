@@ -6,6 +6,7 @@ import { PredictionsModule } from '../predictions/predictions.module';
 import { Project } from '../projects/project.entity';
 import { ProjectsModule } from '../projects/projects.module';
 import { Task } from './task.entity';
+import { ProjectPredictionsController } from './project-predictions.controller';
 import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 
@@ -24,7 +25,7 @@ import { TasksService } from './tasks.service';
     ProjectsModule,
     EventsModule,
   ],
-  controllers: [TasksController],
+  controllers: [TasksController, ProjectPredictionsController],
   providers: [TasksService],
 })
 export class TasksModule {}

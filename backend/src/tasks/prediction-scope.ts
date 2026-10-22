@@ -18,6 +18,7 @@ export const PREDICTION_FIELDS = [
   'predictedAt',
   'lastPredictionAttemptAt',
   'lastPredictionOutcome',
+  'predictionFreshness',
 ] as const;
 
 export interface TaskViewer {

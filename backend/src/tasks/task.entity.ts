@@ -134,4 +134,12 @@ export class Task {
    */
   @Column({ nullable: true })
   lastPredictionOutcome: 'stored' | 'abstained';
+
+  /**
+   * TASK-5 / KAN-26: when an input of this activity's prediction last changed -
+   * its planned dates, or a dependency on either side of it. A cached number
+   * with predictedAt before this moment is stale (prediction-freshness.ts).
+   */
+  @Column({ type: 'timestamptz', nullable: true })
+  predictionInputsChangedAt: Date;
 }
