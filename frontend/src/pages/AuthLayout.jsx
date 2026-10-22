@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { he } from '../i18n/he.js';
+import AuthBackdrop from './AuthBackdrop.jsx';
 import './auth.css';
 
-/** Shared frame for the four auth screens: brand header + one card. */
+/** Shared frame for the auth screens: the AR backdrop, brand header + one card. */
 export function AuthLayout({ title, children, footer }) {
   return (
     <div className="auth-page" dir="rtl">
+      <AuthBackdrop />
       <main className="auth-card" aria-labelledby="auth-title">
         <div className="auth-brand">
           <div className="logo-mark" aria-hidden="true">🏗️</div>
