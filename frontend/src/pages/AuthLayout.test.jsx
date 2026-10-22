@@ -7,6 +7,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthLayout } from './AuthLayout.jsx';
+import AuthBackdrop from './AuthBackdrop.jsx';
 
 function setViewport(narrow) {
   window.matchMedia = vi.fn().mockImplementation((query) => ({
@@ -57,5 +58,19 @@ describe('AuthLayout backdrop', () => {
     delete window.matchMedia;
     const { container } = render(<AuthLayout title="t"><span /></AuthLayout>);
     expect(container.querySelector('svg.auth-backdrop').getAttribute('viewBox')).toBe('0 0 1440 900');
+  });
+
+  it('ambient (signed-in screens): the same picture, still and without the AR labels', () => {
+    setViewport(false);
+    const auth = render(<AuthBackdrop />).container.querySelector('svg');
+    const authImages = auth.querySelectorAll('image').length;
+    cleanup();
+    const { container } = render(<AuthBackdrop ambient />);
+    const svg = container.querySelector('svg');
+    expect(svg.getAttribute('class')).toBe('app-backdrop');
+    expect(svg.getAttribute('aria-hidden')).toBe('true');
+    expect(svg.querySelectorAll('image').length).toBe(authImages);    // same courtyard
+    expect(svg.querySelector('.fs-scan, .fs-pulse')).toBeNull();       // nothing moves
+    expect(svg.querySelectorAll('text').length).toBe(0);               // no 'floor 3 · medium risk'
   });
 });
