@@ -23,7 +23,10 @@ const row = (id: string, name: string, over: Record<string, unknown> = {}) => ({
 
 describe('TASK-3 — dependencies between activities', () => {
   let service: TasksService;
-  let repo: { find: jest.Mock; findOne: jest.Mock; save: jest.Mock; create: jest.Mock; remove: jest.Mock };
+  let repo: {
+    find: jest.Mock; findOne: jest.Mock; save: jest.Mock; update: jest.Mock;
+    create: jest.Mock; remove: jest.Mock;
+  };
   let activity: { record: jest.Mock };
   let rows: Record<string, ReturnType<typeof row>>;
 
@@ -38,6 +41,7 @@ describe('TASK-3 — dependencies between activities', () => {
       find: jest.fn(async () => Object.values(rows)),
       findOne: jest.fn(async ({ where }) => rows[where.id] ?? null),
       save: jest.fn(async (d) => d),
+      update: jest.fn(),
       create: jest.fn((d) => d),
       remove: jest.fn(),
     };

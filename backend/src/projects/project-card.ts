@@ -28,6 +28,7 @@ export interface CardTask {
   lateProbability?: number | null;
   predictedAt?: Date | null;
   lastPredictionOutcome?: 'stored' | 'abstained' | null;
+  predictionInputsChangedAt?: Date | null;
   assignee?: { id: string } | null;
   predecessors?: PredecessorLike[];
 }
