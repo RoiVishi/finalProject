@@ -66,6 +66,14 @@ describe('AUTH-4 — invitations addressed to me (KAN-52)', () => {
       }]);
     });
 
+    it('leaves out an invitation to a project that was deleted meanwhile', async () => {
+      repo.find.mockResolvedValue([
+        invite({ id: 'gone', project: { id: 'p-old', name: 'שיפוץ', deletedAt: new Date() } }),
+        invite(),
+      ]);
+      expect((await service.mine(ME.id)).map((i) => i.id)).toEqual(['i1']);
+    });
+
     it('leaves out an invitation that expired while still "sent"', async () => {
       repo.find.mockResolvedValue([invite({ expiresAt: new Date(Date.now() - DAY) })]);
       expect(await service.mine(ME.id)).toEqual([]);
@@ -97,6 +105,7 @@ describe('AUTH-4 — invitations addressed to me (KAN-52)', () => {
       ['expired', { expiresAt: new Date(Date.now() - DAY) }],
       ['revoked', { status: InvitationStatus.REVOKED }],
       ['already accepted', { status: InvitationStatus.ACCEPTED }],
+      ['deleted-project', { project: { id: 'p1', name: 'x', deletedAt: new Date() } }],
     ])('404s an %s invitation', async (_label, over) => {
       repo.findOne.mockResolvedValue(invite(over));
       await expect(service.acceptById('i1', ME.id)).rejects.toBeInstanceOf(NotFoundException);
