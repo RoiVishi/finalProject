@@ -54,6 +54,34 @@ export interface ProjectPrediction {
   note: string | null;
 }
 
+/** One signed SHAP contribution, already in domain language (PRED-3). */
+export interface Contribution {
+  feature: string;
+  label_en: string;
+  label_he: string;
+  value: number | string | null;
+  contribution: number;                // calibrated-probability units (KAN-130)
+}
+
+export interface Explanation {
+  prediction: Prediction;
+  top_contributions: Contribution[];
+  base_probability: number | null;
+  contribution_space: string;
+  note: string;
+}
+
+/** One row of POST /explain/project (KAN-40): null explanation exactly when predict abstains. */
+export interface ProjectExplanation {
+  task_id: string;
+  reliability: 'within_project_history' | 'low_transfer_prior';
+  basis?: string;
+  explanation: Explanation | null;
+  risk_level: string | null;
+  abstain_reason: string | null;
+  note: string | null;
+}
+
 /** Thin client for the Python AI service (FastAPI). */
 @Injectable()
 export class PredictionsService {
@@ -90,6 +118,32 @@ export class PredictionsService {
         this.log.warn(`AI service unavailable: ${(e as Error).message}`);
       }
       return null; // NFR-REL-1: the platform stays usable without predictions
+    }
+  }
+
+  /**
+   * PRED-3 through the platform (KAN-40): explanations for `taskIds`, computed
+   * from the same raw graph as predictProject - the whole project, because an
+   * activity's features depend on the others. Null when the service is
+   * unavailable, like predictProject.
+   */
+  async explainProject(
+    payload: ProjectGraphPayload, taskIds: string[], topK = 5,
+  ): Promise<ProjectExplanation[] | null> {
+    try {
+      const { data } = await axios.post<ProjectExplanation[]>(
+        `${this.baseUrl}/explain/project`, { ...payload, task_ids: taskIds },
+        { timeout: 20000, params: { top_k: topK }, headers: { 'X-Internal-Token': this.token } });
+      return data;
+    } catch (e) {
+      const status = axios.isAxiosError(e) ? e.response?.status : undefined;
+      if (status === 422 || status === 401) {
+        this.log.error(`AI service refused /explain/project (${status}): ${
+          JSON.stringify(axios.isAxiosError(e) ? e.response?.data : null)}`);
+      } else {
+        this.log.warn(`AI service unavailable: ${(e as Error).message}`);
+      }
+      return null;
     }
   }
 }

@@ -43,6 +43,35 @@ const envNumber = (name: string, fallback: number) => {
   return process.env[name] !== undefined && Number.isFinite(v) ? v : fallback;
 };
 
+/** How many signed contributions an explanation carries (PRED-3 "top-k"). */
+const EXPLANATION_TOP_K = 5;
+
+/** GET /tasks/:id/explanation (PRED-3 / KAN-40). */
+export interface ActivityExplanation {
+  taskId: string;
+  name: string;
+  /** 'abstained': the AI service withheld the prediction, so there is nothing to explain. */
+  status: 'explained' | 'abstained';
+  reliability: string | null;
+  abstainReason: string | null;
+  note: string | null;
+  prediction: {
+    lateProbability: number;
+    riskLevel: 'low' | 'medium' | 'high';
+    modelVersion: string;
+  } | null;
+  /** Calibrated-probability units: base + all contributions = lateProbability (KAN-130). */
+  baseProbability: number | null;
+  contributions: {
+    feature: string;
+    label: string;          // Hebrew domain label - what the UI shows
+    labelEn: string;
+    value: number | string | null;
+    contribution: number;
+    direction: 'raises' | 'lowers';
+  }[];
+}
+
 /** One row of GET /projects/:projectId/predictions (KAN-26). */
 export interface ActivityPrediction {
   taskId: string;
@@ -561,25 +590,8 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
    * low_transfer_prior (or withheld, per service policy).
    */
   async refreshProjectPredictions(projectId: string) {
-    const tasks = await this.repo.find({
-      where: { project: { id: projectId } },
-      relations: { predecessors: true },
-    });
+    const { tasks, payload } = await this.projectGraph(projectId);
     if (tasks.length === 0) return { updated: 0, results: [] as ProjectPrediction[], aiAvailable: true };
-
-    const completed = tasks.filter((t) => t.status === TaskStatus.COMPLETED).length;
-    const payload: ProjectGraphPayload = {
-      project: { completed_share: completed / tasks.length },
-      tasks: tasks.map((t) => ({
-        id: t.id,
-        planned_start: t.plannedStart ?? null,
-        planned_finish: t.plannedEnd ?? null,
-        type: 'task',
-      })),
-      dependencies: tasks.flatMap((t) =>
-        (t.predecessors ?? []).map((p) => ({ predecessor_id: p.id, successor_id: t.id })),
-      ),
-    };
 
     const results = await this.predictions.predictProject(payload);
     // NFR-REL-1: the platform keeps working; the caller decides how to tell the user.
@@ -612,6 +624,77 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
       await this.repo.save(task);
     }
     return { updated, results, aiAvailable: true };
+  }
+
+  /**
+   * The PRED-9 payload for a whole project: raw tasks, dependencies and dates,
+   * never a feature. Shared by predictions and explanations so both see the
+   * same graph and therefore the same number.
+   */
+  private async projectGraph(projectId: string) {
+    const tasks = await this.repo.find({
+      where: { project: { id: projectId } },
+      relations: { predecessors: true },
+    });
+    const completed = tasks.filter((t) => t.status === TaskStatus.COMPLETED).length;
+    const payload: ProjectGraphPayload = {
+      project: { completed_share: tasks.length ? completed / tasks.length : 0 },
+      tasks: tasks.map((t) => ({
+        id: t.id,
+        planned_start: t.plannedStart ?? null,
+        planned_finish: t.plannedEnd ?? null,
+        type: 'task',
+      })),
+      dependencies: tasks.flatMap((t) =>
+        (t.predecessors ?? []).map((p) => ({ predecessor_id: p.id, successor_id: t.id })),
+      ),
+    };
+    return { tasks, payload };
+  }
+
+  /**
+   * PRED-3 / KAN-40 - GET /tasks/:id/explanation: why this activity carries
+   * its risk, in domain language. Computed on demand from the whole project
+   * graph (the AI service needs the neighbours too); nothing is cached.
+   * AUTH-2: a subcontractor gets explanations for their own activities only,
+   * the same rule as their predictions.
+   */
+  async explain(taskId: string, viewer: TaskViewer): Promise<ActivityExplanation> {
+    const task = await this.requireTask(taskId);
+    if (!canSeePrediction(task, viewer)) {
+      throw new ForbiddenException('קבלן משנה רשאי לראות הסברים לתחזיות של המשימות שלו בלבד');
+    }
+    const { payload } = await this.projectGraph(task.project.id);
+    const results = await this.predictions.explainProject(payload, [taskId], EXPLANATION_TOP_K);
+    if (!results) {
+      throw new ServiceUnavailableException('שירות החיזוי אינו זמין כרגע ולכן לא ניתן להציג הסבר');
+    }
+    const r = results.find((x) => x.task_id === taskId);
+    const e = r?.explanation ?? null;
+    return {
+      taskId,
+      name: task.name,
+      status: e ? 'explained' : 'abstained',
+      reliability: r?.reliability ?? null,
+      abstainReason: r?.abstain_reason ?? null,
+      note: r?.note ?? null,
+      prediction: e
+        ? {
+          lateProbability: e.prediction.late_probability,
+          riskLevel: e.prediction.risk_level,
+          modelVersion: e.prediction.model_version,
+        }
+        : null,
+      baseProbability: e?.base_probability ?? null,
+      contributions: (e?.top_contributions ?? []).map((c) => ({
+        feature: c.feature,
+        label: c.label_he,
+        labelEn: c.label_en,
+        value: c.value,
+        contribution: c.contribution,
+        direction: c.contribution >= 0 ? 'raises' : 'lowers',
+      })),
+    };
   }
 
   /**

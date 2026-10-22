@@ -5,6 +5,7 @@ PRED-1  /predict, /predict/batch — probability, label, risk level, estimated d
 PRED-2  /health                  — model availability + version
 PRED-3  /explain, /explain/batch — SHAP top-k signed contributions in domain language,
                                    in calibrated-probability units (KAN-130)
+        /explain/project         — the same from raw platform entities, for the backend (KAN-40)
 PRED-4  model registry           — loads newest ai-service/model/registry/<vN>/
 PRED-5  graceful degradation     — 503 with actionable message when no model exists
 NFR-SEC-5 service token          — every endpoint except /health requires X-Internal-Token
@@ -720,3 +721,74 @@ def explain_batch(tasks: list[TaskFeatures],
             "per activity; use /predict/batch for whole-project probabilities."))
     reg = get_registry()
     return _explain_rows(reg, pd.DataFrame([t.model_dump() for t in tasks]), top_k)
+
+
+# ---- PRED-3 through the platform (KAN-40, sprint 8 T25) ---------------------------
+class ProjectExplainPayload(ProjectGraphPayload):
+    """The /predict/project payload plus the activities to explain.
+
+    The whole graph is needed even for one activity: upstream/downstream reach and
+    the activity's position in the project timeline come from the other activities.
+    """
+    task_ids: list[str] = Field(min_length=1)
+
+
+class ProjectExplanation(BaseModel):
+    task_id: str
+    reliability: str
+    basis: str = "cross_project_model"
+    explanation: Explanation | None = None       # null exactly when /predict/project abstains
+    risk_level: str | None = None
+    abstain_reason: str | None = None
+    note: str | None = None
+
+
+@app.post("/explain/project", response_model=list[ProjectExplanation])
+def explain_project(payload: ProjectExplainPayload,
+                    top_k: int = Query(5, ge=1, le=len(DOMAIN_LABELS))):
+    """PRED-3 from RAW platform entities (the PRED-9 path), for the backend.
+
+    /explain takes ready feature vectors, which the platform never computes (PRED-9).
+    This endpoint derives them with the same adapter as /predict/project and applies
+    the same reliability gate and abstention rules, so an activity has an explanation
+    exactly when it has a prediction, and both carry the same number.
+    Order follows task_ids; an unknown id is a 422; more than MAX_EXPLAIN_BATCH -> 413.
+    """
+    wanted = list(dict.fromkeys(payload.task_ids))
+    if len(wanted) > MAX_EXPLAIN_BATCH:
+        raise HTTPException(413, detail=(
+            f"{len(wanted)} activities requested; /explain/project accepts at most "
+            f"{MAX_EXPLAIN_BATCH} (MAX_EXPLAIN_BATCH)."))
+    index = {t.id: i for i, t in enumerate(payload.tasks)}
+    unknown = [t for t in wanted if t not in index]
+    if unknown:
+        raise HTTPException(422, detail=f"task_ids not in tasks: {unknown}")
+
+    share = payload.project.completed_share
+    reliable = share is not None and share >= COLD_START_MIN_HISTORY
+    reliability = RELIABILITY_HISTORY if reliable else RELIABILITY_LOW
+    if not reliable and COLD_START_POLICY == "abstain":
+        return [ProjectExplanation(task_id=t, reliability=reliability, risk_level="unknown",
+                                   abstain_reason=ABSTAIN_LOW_HISTORY,
+                                   note=ABSTAIN_NOTES[ABSTAIN_LOW_HISTORY]) for t in wanted]
+
+    reg = get_registry()
+    all_feats = compute_features(payload)                  # the full graph, every activity
+    feats = {t: TaskFeatures(**all_feats[index[t]]) for t in wanted}
+    reasons = {t: abstain_reason(f.model_dump()) for t, f in feats.items()}
+    scored = [t for t in wanted if reasons[t] is None]
+    expl = (dict(zip(scored, _explain_rows(
+        reg, pd.DataFrame([feats[t].model_dump() for t in scored]), top_k)))
+        if scored else {})
+    basis_note = BASIS_NOTE.format(version=reg.version, share=(share or 0.0))
+    note = basis_note if reliable else LOW_RELIABILITY_NOTE + " " + basis_note
+    out = []
+    for t in wanted:
+        if reasons[t] is not None:
+            out.append(ProjectExplanation(task_id=t, reliability=reliability, risk_level="unknown",
+                                          abstain_reason=reasons[t], note=ABSTAIN_NOTES[reasons[t]]))
+        else:
+            e = expl[t]
+            out.append(ProjectExplanation(task_id=t, reliability=reliability, explanation=e,
+                                          risk_level=e.prediction.risk_level, note=note))
+    return out
