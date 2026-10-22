@@ -7,12 +7,16 @@
  *                                               blockers when "ready" is refused (TASK-4)
  *   POST   /tasks/:id/dependencies { predecessorId }    TASK-3 (MANAGE_TASKS); cycles refused
  *   DELETE /tasks/:id/dependencies/:predecessorId       TASK-3 (MANAGE_TASKS)
+ *   GET    /tasks/:id/explanation               PRED-3 (KAN-40): why the CURRENT plan of this activity is at risk;
+ *                                               status 'explained' | 'abstained'; 403 for a subcontractor on
+ *                                               someone else's activity; 503 while the AI service is down
  */
 export function tasksApi(client) {
   const id = (x) => encodeURIComponent(x);
   return {
     list: (projectId) => client.get(`/tasks?projectId=${id(projectId)}`),
     get: (taskId) => client.get(`/tasks/${id(taskId)}`),
+    explanation: (taskId) => client.get(`/tasks/${id(taskId)}/explanation`),
     changeStatus: (taskId, status) => client.post(`/tasks/${id(taskId)}/status`, { status }),
     addDependency: (taskId, predecessorId) =>
       client.post(`/tasks/${id(taskId)}/dependencies`, { predecessorId }),

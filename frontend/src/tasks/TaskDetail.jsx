@@ -3,10 +3,11 @@ import { RISK_TITLE_HE } from '../ar/riskBands.js';
 import { he } from '../i18n/he.js';
 import { Alert } from '../pages/AuthLayout.jsx';
 import { formatDate } from '../pages/AppShell.jsx';
+import ExplanationPanel from './ExplanationPanel.jsx';
 import { RiskChip, StatusChip } from './TaskList.jsx';
 import {
   STATUS_LABELS_HE, TRADE_LABELS_HE, blockerText, canManageTasks, neighbours, nextStatuses,
-  predecessorCandidates, riskOf, zoneLabeler,
+  lastBandOf, predecessorCandidates, riskOf, zoneLabeler,
 } from './taskView.js';
 
 const t = he.tasks;
@@ -16,6 +17,8 @@ const t = he.tasks;
  * the dependency graph (TASK-3) and the lifecycle moves (TASK-2). Everything is
  * read from the list rows; a change calls the API and asks the page to reload,
  * so the blocking verdicts of the neighbours refresh too.
+ *
+ * The "why" section (PRED-3, NFR-USE-1) explains the activity's risk in words.
  *
  * Controls follow the AUTH-2 matrix (MANAGE_TASKS) only to avoid offering what
  * the server will refuse — the server is the one that enforces it.
@@ -52,7 +55,7 @@ export default function TaskDetail({ task, tasks, zones, viewer, api, onChanged,
       </div>
       <div className="td-chips">
         <StatusChip task={task} />
-        <span className="td-risk"><span className="td-risk-title">{RISK_TITLE_HE}</span><RiskChip risk={riskOf(task, viewer)} /></span>
+        <span className="td-risk"><span className="td-risk-title">{RISK_TITLE_HE}</span><RiskChip risk={riskOf(task, viewer)} lastBand={lastBandOf(task)} /></span>
       </div>
 
       <dl className="project-facts td-facts">
@@ -71,6 +74,8 @@ export default function TaskDetail({ task, tasks, zones, viewer, api, onChanged,
           ? <div className="td-blocked" role="status">{blockerText(task, tasks, zoneLabel)}</div>
           : <div className="td-free">{t.canStart}</div>
       )}
+
+      <ExplanationPanel task={task} viewer={viewer} api={api} />
 
       <Alert messages={error} />
 

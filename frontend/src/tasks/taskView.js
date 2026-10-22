@@ -49,6 +49,20 @@ export const nextStatuses = (status) => ALLOWED_TRANSITIONS[status] ?? [];
 const MANAGE_TASK_ROLES = ['owner', 'project_manager', 'engineer'];
 export const canManageTasks = (role) => MANAGE_TASK_ROLES.includes(role);
 
+const BANDS = ['low', 'medium', 'high'];
+
+/**
+ * TASK-5 freshness of the cached prediction, as the backend computes it
+ * (prediction-freshness.ts, sent on every row as `predictionFreshness`):
+ * 'current' | 'stale' | 'abstained' | 'none'. Rows from a backend that predates
+ * the field fall back to the same rule without the stale case.
+ */
+export function freshnessOf(task) {
+  if (['current', 'stale', 'abstained', 'none'].includes(task.predictionFreshness)) return task.predictionFreshness;
+  if (task.lastPredictionOutcome === 'abstained') return 'abstained';
+  return task.predictedAt ? 'current' : 'none';
+}
+
 /**
  * What the risk column shows for one row, for this viewer:
  *  - 'done'    the activity is completed — no risk to show
@@ -56,20 +70,28 @@ export const canManageTasks = (role) => MANAGE_TASK_ROLES.includes(role);
  *              withholds that prediction (AUTH-2, KAN-128), so we say so instead of "no data"
  *  - 'unknown' the AI service abstained on the last attempt (PRED-10) — "not enough data"
  *  - 'none'    no prediction has been stored yet
- *  - 'low' | 'medium' | 'high'  the cached band
+ *  - 'stale'   KAN-26: dates or dependencies changed after the prediction; the
+ *              last band is shown only as "last known, being recalculated"
+ *  - 'low' | 'medium' | 'high'  the current cached band
  */
 export function riskOf(task, viewer) {
   if (task.status === 'completed') return 'done';
   if (viewer?.role === 'subcontractor' && task.assignee?.id !== viewer.userId) return 'hidden';
-  if (task.lastPredictionOutcome === 'abstained') return 'unknown';
-  if (!task.predictedAt || !['low', 'medium', 'high'].includes(task.riskLevel)) return 'none';
+  const fresh = freshnessOf(task);
+  if (fresh === 'abstained') return 'unknown';
+  if (fresh === 'none' || !BANDS.includes(task.riskLevel)) return 'none';
+  if (fresh === 'stale') return 'stale';
   return task.riskLevel;
 }
+
+/** The band a stale row last had — shown muted next to "not current". */
+export const lastBandOf = (task) => (BANDS.includes(task.riskLevel) ? task.riskLevel : null);
 
 /** Labels for the risk states that are not bands (the bands use RISK_LABELS_HE). */
 export const RISK_STATE_HE = {
   none: 'אין עדיין חיזוי',
   hidden: '—',
+  stale: 'לא עדכני',
 };
 
 /** "floor-3/zone-2" → 3 (TASK-1 zone ids). */
@@ -118,7 +140,8 @@ function byDate(a, b) {
     || String(a.name ?? '').localeCompare(String(b.name ?? ''), 'he');
 }
 
-const RISK_RANK = { high: 0, medium: 1, low: 2, unknown: 3, none: 4, hidden: 5, done: 6 };
+// Current bands first; a stale number comes after them because it no longer describes the plan.
+const RISK_RANK = { high: 0, medium: 1, low: 2, stale: 3, unknown: 4, none: 5, hidden: 6, done: 7 };
 
 export const SORTS = {
   /** Planned start, then planned finish, then name. */

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { tasksApi } from '../api/tasks.js';
 import { projectsApi } from '../api/projects.js';
 import {
-  assigneeOptions, blockerText, canManageTasks, defaultView, EMPTY_FILTERS, floorOf, floorOptions,
+  assigneeOptions, blockerText, canManageTasks, freshnessOf, lastBandOf, defaultView, EMPTY_FILTERS, floorOf, floorOptions,
   isDefaultView, matchesFilters, myRoleIn, neighbours, nextStatuses, predecessorCandidates,
   riskOf, summarize, viewTasks, zoneLabeler,
 } from './taskView.js';
@@ -196,4 +196,25 @@ test('blocker sentence uses zone names, keeps the backend wording, and falls bac
   // a predecessor that is not in the loaded rows keeps the backend label
   assert.equal(blockerText({ blockers: [{ kind: 'predecessor', id: 'zz', label: 'X' }] }, rows, label), 'חסום על ידי: X');
   assert.equal(blockerText({ blockers: [], summary: 'raw' }, rows, label), 'raw');
+});
+
+test('KAN-26 freshness: the server field wins; stale is its own state, after the current bands', () => {
+  const a = { ...rows[0], predictionFreshness: 'stale' };
+  assert.equal(freshnessOf(a), 'stale');
+  assert.equal(riskOf(a, pm), 'stale');
+  assert.equal(lastBandOf(a), 'medium');
+  assert.equal(riskOf({ ...rows[0], predictionFreshness: 'current' }, pm), 'medium');
+  assert.equal(riskOf({ ...rows[0], predictionFreshness: 'abstained' }, pm), 'unknown');
+  assert.equal(riskOf({ ...rows[0], predictionFreshness: 'none' }, pm), 'none');
+  // an older backend without the field: same rule, no stale case
+  assert.equal(freshnessOf({ predictedAt: at }), 'current');
+  assert.equal(freshnessOf({ lastPredictionOutcome: 'abstained', predictedAt: at }), 'abstained');
+  assert.equal(freshnessOf({}), 'none');
+  // scoped away for a subcontractor: still hidden, never "stale"
+  assert.equal(riskOf({ ...rows[2], predictionFreshness: 'stale' }, sub), 'hidden');
+  // a stale "medium" is not a current medium
+  const xs = [a, rows[2]];
+  assert.deepEqual(ids(viewTasks(xs, { risk: 'medium' }, 'date', pm)), []);
+  assert.deepEqual(ids(viewTasks(xs, { risk: 'stale' }, 'date', pm)), ['a']);
+  assert.deepEqual(ids(viewTasks([a, rows[1], rows[2]], {}, 'risk', pm)), ['b', 'c', 'a']);
 });

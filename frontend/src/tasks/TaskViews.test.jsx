@@ -42,7 +42,18 @@ const members = (myRole) => [
   { role: 'owner', status: 'active', user: { id: 'u-t', fullName: 'תמר' } },
 ];
 
-function setup(myRole, { onPost } = {}) {
+// PRED-3 explanation body, as GET /tasks/:id/explanation returns it (backend ActivityExplanation).
+const explained = (riskLevel = 'medium', over = {}) => ({
+  taskId: 'x', name: 'x', status: 'explained', reliability: 'within_project_history', abstainReason: null, note: null,
+  prediction: { lateProbability: 0.4215, riskLevel, modelVersion: 'v6' }, baseProbability: 0.3871,
+  contributions: [
+    { feature: 'planned_duration_days', label: 'משך מתוכנן (ימים)', labelEn: 'Planned duration (days)', value: 12, contribution: 0.1834, direction: 'raises' },
+    { feature: 'downstream_cnt', label: 'משימות במורד השרשרת', labelEn: 'Downstream', value: 3, contribution: -0.0412, direction: 'lowers' },
+  ],
+  ...over,
+});
+
+function setup(myRole, { onPost, explain = () => explained() } = {}) {
   const calls = [];
   let rows = ROWS;
   const client = {
@@ -52,6 +63,8 @@ function setup(myRole, { onPost } = {}) {
       if (p === '/projects/p1/zones') return ZONES;
       if (p === '/projects/p1/members') return members(myRole);
       if (p === '/tasks?projectId=p1') return rows;
+      const m = /^\/tasks\/([^/]+)\/explanation$/.exec(p);
+      if (m) return explain(m[1]);
       throw new Error(`unexpected GET ${p}`);
     }),
     post: vi.fn(async (p, b) => { calls.push(['POST', p, b]); if (onPost) return onPost(p, b, (r) => { rows = r; }); return {}; }),
@@ -186,5 +199,102 @@ describe('detail panel (TASK-2/3/4)', () => {
       expect(within(panel).queryByLabelText('הוספת פעילות קודמת')).toBeNull();
       cleanup();
     }
+  });
+});
+
+describe('stale predictions (KAN-26)', () => {
+  it('a stale row shows its last band as "not current", sorts after current bands, and filters on its own', async () => {
+    const stale = ROWS.map((r) => (r.id === 'a' ? { ...r, predictionFreshness: 'stale' } : { ...r, predictionFreshness: r.predictedAt ? 'current' : 'none' }));
+    const calls = [];
+    const client = {
+      get: vi.fn(async (p) => {
+        calls.push(p);
+        if (p === '/projects/p1') return { id: 'p1', name: 'מגדל הדר', layout: { floors: 2, zonesPerFloor: 2 } };
+        if (p === '/projects/p1/zones') return ZONES;
+        if (p === '/projects/p1/members') return members('owner');
+        if (p === '/tasks?projectId=p1') return stale;
+        return explained('high');
+      }),
+      post: vi.fn(), del: vi.fn(), patch: vi.fn(),
+    };
+    auth.current = { client, user: { userId: ME, email: 'me@x.io' }, logout: () => {} };
+    render(<ProjectPage id="p1" />);
+    await screen.findByRole('heading', { name: 'פעילויות' });
+    const rowA = screen.getByText('פעילות a').closest('button');
+    expect(within(rowA).getByText('בינוני · לא עדכני')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('מיון'), { target: { value: 'risk' } });
+    expect(rowNames()).toEqual(['פעילות b', 'פעילות c', 'פעילות a', 'פעילות d']);
+    fireEvent.change(screen.getByLabelText('סיכון'), { target: { value: 'medium' } });
+    expect(screen.getByText('אין פעילויות שמתאימות לסינון.')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('סיכון'), { target: { value: 'stale' } });
+    expect(rowNames()).toEqual(['פעילות a']);
+    // the panel explains the CURRENT plan and says so when it differs from the row
+    fireEvent.click(screen.getByText('פעילות a').closest('button'));
+    const panel = screen.getByRole('complementary');
+    expect(await within(panel).findByText('למה הסיכון גבוה')).toBeTruthy();
+    expect(within(panel).getByText(/חושבה עכשיו לפי התוכנית הנוכחית/)).toBeTruthy();
+  });
+});
+
+describe('explanation panel (PRED-3, NFR-USE-1)', () => {
+  it('shows the reasons in words with arrows, never the scores', async () => {
+    const { calls } = setup('engineer');
+    fireEvent.click(await screen.findByText('פעילות a'));
+    const panel = screen.getByRole('complementary');
+    expect(await within(panel).findByText('למה הסיכון בינוני')).toBeTruthy();
+    const reasons = [...panel.querySelectorAll('.why-reason')];
+    expect(reasons.map((r) => r.querySelector('.why-label').textContent)).toEqual(['משך מתוכנן', 'משימות במורד השרשרת']);
+    expect(reasons.map((r) => r.querySelector('.why-arrow').textContent)).toEqual(['↑', '↓']);
+    expect(reasons[0].querySelector('.why-value').textContent).toBe('12 ימים');
+    expect(panel.textContent).not.toMatch(/0\.18|0\.04|0\.42|%/);
+    expect(calls).toContainEqual(['GET', '/tasks/a/explanation']);
+  });
+
+  it('abstained: says there is not enough data, and why', async () => {
+    setup('engineer', { explain: () => ({ ...explained(), status: 'abstained', prediction: null, contributions: [], abstainReason: 'missing_planned_dates' }) });
+    fireEvent.click(await screen.findByText('פעילות d'));
+    const panel = screen.getByRole('complementary');
+    expect((await within(panel).findByText('אין מספיק נתונים לחיזוי.')).parentElement.textContent)
+      .toContain('לפעילות אין תאריכי התחלה וסיום מתוכננים.');
+  });
+
+  it('AI service down: shows the server message and retries on demand', async () => {
+    let fail = true;
+    const { calls } = setup('engineer', {
+      explain: () => {
+        if (fail) { const e = new Error('x'); e.status = 503; e.messages = ['שירות החיזוי אינו זמין כרגע ולכן לא ניתן להציג הסבר']; throw e; }
+        return explained();
+      },
+    });
+    fireEvent.click(await screen.findByText('פעילות a'));
+    const panel = screen.getByRole('complementary');
+    expect((await within(panel).findByRole('alert')).textContent).toContain('שירות החיזוי אינו זמין');
+    fail = false;
+    fireEvent.click(within(panel).getByText('ניסיון נוסף'));
+    expect(await within(panel).findByText('למה הסיכון בינוני')).toBeTruthy();
+    expect(calls.filter((c) => c[1] === '/tasks/a/explanation')).toHaveLength(2);
+  });
+
+  it('a subcontractor is not sent to the server for someone else\'s activity; completed activities have no panel', async () => {
+    const { calls } = setup('subcontractor');
+    await screen.findByRole('heading', { name: 'המשימות שלי' });
+    fireEvent.change(screen.getByLabelText('אחראי/ת'), { target: { value: '' } });
+    fireEvent.click(screen.getByText('פעילות c'));
+    expect(within(screen.getByRole('complementary')).getByText('חיזוי והסבר מוצגים רק למשימות שלך.')).toBeTruthy();
+    expect(calls.some((c) => c[1] === '/tasks/c/explanation')).toBe(false);
+  });
+
+  it('notes the transfer-prior caveat and a project-level top reason', async () => {
+    setup('owner', {
+      explain: () => explained('low', {
+        reliability: 'low_transfer_prior',
+        contributions: [{ feature: 'proj_span_days', label: 'משך הפרויקט (ימים)', value: 81, contribution: -0.18, direction: 'lowers' }],
+      }),
+    });
+    fireEvent.click(await screen.findByText('פעילות c'));
+    const panel = screen.getByRole('complementary');
+    expect(await within(panel).findByText('למה הסיכון נמוך')).toBeTruthy();
+    expect(within(panel).getByText(/נשען בעיקר על פרויקטים אחרים/)).toBeTruthy();
+    expect(within(panel).getByText(/נוגעת לפרויקט כולו/)).toBeTruthy();
   });
 });

@@ -4,16 +4,25 @@ import { he } from '../i18n/he.js';
 import { formatDate } from '../pages/AppShell.jsx';
 import {
   BLOCKED_LABEL_HE, RISK_STATE_HE, SORT_LABELS_HE, STATUS_LABELS_HE, TRADE_LABELS_HE,
-  assigneeOptions, blockerText, floorOptions, isDefaultView, riskOf, summarize, viewTasks, zoneLabeler,
+  assigneeOptions, blockerText, floorOptions, isDefaultView, lastBandOf, riskOf, summarize, viewTasks, zoneLabeler,
 } from './taskView.js';
 import './tasks.css';
 
 const t = he.tasks;
 
 /** Band chip — the band name only, never a number (NFR-USE-1, v6 display rule). */
-export function RiskChip({ risk }) {
+export function RiskChip({ risk, lastBand }) {
   if (risk === 'hidden') {
     return <span className="risk-chip hidden" title={t.hiddenRisk}>{RISK_STATE_HE.hidden}</span>;
+  }
+  if (risk === 'stale') {
+    // KAN-26: the plan changed after this number was computed — last known only, never shown as current.
+    return (
+      <span className="risk-chip stale" style={{ '--risk': RISK_COLORS[lastBand] ?? RISK_COLORS.unknown }} title={t.staleRisk}>
+        <span className="risk-dot" aria-hidden="true" />
+        {lastBand ? `${RISK_LABELS_HE[lastBand]} · ${RISK_STATE_HE.stale}` : RISK_STATE_HE.stale}
+      </span>
+    );
   }
   const label = RISK_LABELS_HE[risk] ?? RISK_STATE_HE[risk] ?? RISK_STATE_HE.none;
   const color = RISK_COLORS[risk] ?? RISK_COLORS.unknown;
@@ -93,6 +102,7 @@ export default function TaskList({
           <Select id="f-risk" label={t.risk} value={filters.risk} onChange={set('risk')}>
             <option value="">{t.any}</option>
             {['high', 'medium', 'low', 'unknown'].map((k) => <option key={k} value={k}>{RISK_LABELS_HE[k]}</option>)}
+            <option value="stale">{RISK_STATE_HE.stale}</option>
             <option value="none">{RISK_STATE_HE.none}</option>
           </Select>
           <Select id="f-sort" label={t.sort} value={sort} onChange={onSort}>
@@ -134,7 +144,7 @@ export default function TaskList({
                   </span>
                   <span className="tl-side">
                     <StatusChip task={task} />
-                    <RiskChip risk={risk} />
+                    <RiskChip risk={risk} lastBand={lastBandOf(task)} />
                   </span>
                 </button>
               </li>
