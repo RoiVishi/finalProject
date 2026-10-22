@@ -11,9 +11,12 @@
  *   DEMO_PASSWORD='...' node deploy/seed-demo.mjs https://foresite-sce.duckdns.org/api
  *   DEMO_PASSWORD='...' node deploy/seed-demo.mjs http://localhost:3000
  *   add --predict to also ask the AI service for a prediction on open activities
+ *   add --replace to delete the existing demo projects first and seed them anew
+ *     (only projects with these exact names, owned by the demo users)
  *
  * Safe to run twice: existing users log in instead of registering, and a
- * project whose name already exists for its owner is skipped.
+ * project whose name already exists for its owner is skipped (or, with
+ * --replace, deleted and recreated).
  *
  * Known limit: the API stamps actualStart / actualEnd with today's date when
  * a status changes, so completed activities all finish "today". Planned dates
@@ -23,6 +26,7 @@
 const args = process.argv.slice(2);
 const BASE = (args.find((a) => !a.startsWith('--')) ?? 'http://localhost:3000').replace(/\/$/, '');
 const PREDICT = args.includes('--predict');
+const REPLACE = args.includes('--replace');
 const PASSWORD = process.env.DEMO_PASSWORD;
 
 if (!PASSWORD || !/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(PASSWORD)) {
@@ -95,19 +99,29 @@ const day = (offset) => new Date(today.getTime() + offset * DAY).toISOString().s
  * Per floor: structure → (plumbing ∥ electrical) → drywall → HVAC → finishing,
  * and each floor's structure waits for the floor below. `target` is where the
  * activity should end up; the script walks it there through the real lifecycle.
+ *
+ * Durations are those of a real four-storey building - about eleven months
+ * (328 days): a floor's frame ~7 weeks, each trade 3-5 weeks, the next floor
+ * starting 8 weeks after the one below. An earlier version squeezed the
+ * building into 81 days, shorter than any project the model was trained on
+ * (98 to 1,336 days); project span is the model's strongest input, so every
+ * activity came out "low" and the model was guessing outside its range.
+ * Nothing here is tuned to produce a particular risk level.
  */
 function buildingPlan() {
-  const start = -45; // the site opened 45 days ago
+  const start = -180; // the site opened about six months ago
+  const floorOffset = 56; // the next floor's frame starts 8 weeks after the one below
   const plan = [];
+  // Where each activity stands today, consistent with its planned dates.
   const target = {
-    1: { structure: 'completed', plumbing: 'completed', electrical: 'completed', drywall: 'completed', hvac: 'completed', finishing: 'in_progress' },
-    2: { structure: 'completed', plumbing: 'completed', electrical: 'in_progress' },
-    3: { structure: 'in_progress' },
-    4: {},
+    1: { structure: 'completed', plumbing: 'completed', electrical: 'completed', drywall: 'completed', hvac: 'completed', finishing: 'completed' },
+    2: { structure: 'completed', plumbing: 'completed', electrical: 'completed', drywall: 'completed', hvac: 'in_progress' },
+    3: { structure: 'completed', plumbing: 'in_progress', electrical: 'in_progress' },
+    4: { structure: 'in_progress' },
   };
 
   for (let f = 1; f <= 4; f += 1) {
-    const s = start + (f - 1) * 14;
+    const s = start + (f - 1) * floorOffset;
     const t = target[f];
     const add = (key, name, trade, zone, from, days, deps, who) => {
       plan.push({
@@ -116,12 +130,12 @@ function buildingPlan() {
         deps: deps.map((d) => `${d}`), assignee: who, target: t[key] ?? 'planned',
       });
     };
-    add('structure', 'יציקת שלד ותקרה', 'structure', 1, s, 12, f > 1 ? [`structure${f - 1}`] : [], 'engineer');
-    add('plumbing', 'צנרת מים וביוב', 'plumbing', 1, s + 12, 8, [`structure${f}`], 'plumbing');
-    add('electrical', 'תשתית חשמל ותקשורת', 'electrical', 2, s + 12, 8, [`structure${f}`], 'electric');
-    add('drywall', 'קירות גבס', 'drywall', 2, s + 20, 7, [`plumbing${f}`, `electrical${f}`], null);
-    add('hvac', 'התקנת מיזוג', 'hvac', 1, s + 27, 5, [`drywall${f}`], null);
-    add('finishing', 'ריצוף וצבע', 'finishing', 2, s + 32, 8, [`hvac${f}`], null);
+    add('structure', 'יציקת שלד ותקרה', 'structure', 1, s, 48, f > 1 ? [`structure${f - 1}`] : [], 'engineer');
+    add('plumbing', 'צנרת מים וביוב', 'plumbing', 1, s + 48, 32, [`structure${f}`], 'plumbing');
+    add('electrical', 'תשתית חשמל ותקשורת', 'electrical', 2, s + 48, 32, [`structure${f}`], 'electric');
+    add('drywall', 'קירות גבס', 'drywall', 2, s + 80, 28, [`plumbing${f}`, `electrical${f}`], null);
+    add('hvac', 'התקנת מיזוג', 'hvac', 1, s + 108, 20, [`drywall${f}`], null);
+    add('finishing', 'ריצוף וצבע', 'finishing', 2, s + 128, 32, [`hvac${f}`], null);
   }
   return plan;
 }
@@ -140,9 +154,13 @@ const PATH = { planned: [], ready: ['ready'], in_progress: ['ready', 'in_progres
 
 async function seedProject({ ownerToken, details, layout, team, acceptors, plan, assigneeIds }) {
   const existing = (await api('GET', '/projects', ownerToken)).find((p) => p.name === details.name);
-  if (existing) {
-    console.log(`  = project "${details.name}" already exists — skipped`);
+  if (existing && !REPLACE) {
+    console.log(`  = project "${details.name}" already exists — skipped (--replace recreates it)`);
     return null;
+  }
+  if (existing) {
+    await api('DELETE', `/projects/${existing.id}`, ownerToken);
+    console.log(`  - project "${details.name}" deleted (--replace)`);
   }
 
   const project = await api('POST', '/projects', ownerToken, { details, layout, team });
@@ -197,7 +215,7 @@ async function main() {
       name: 'מגדל אורנים — הדגמה',
       address: 'רחוב האורנים 12, עיר לדוגמה',
       description: 'פרויקט הדגמה: בניין מגורים בן 4 קומות באמצע הביצוע.',
-      plannedStart: day(-45), plannedEnd: day(45),
+      plannedStart: day(-180), plannedEnd: day(147),
     },
     layout: { floors: 4, zonesPerFloor: 2, zoneNames: ['אגף צפוני', 'אגף דרומי'] },
     team: [
