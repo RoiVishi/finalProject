@@ -184,6 +184,14 @@ describe('AUTH-4 — project invitations', () => {
       expect(members.attach).not.toHaveBeenCalled();
     });
 
+    it('refuses a link to a deleted project and creates no membership', async () => {
+      repo.findOne.mockResolvedValue(liveInvite({ project: { id: PROJECT, deletedAt: new Date() } }));
+
+      await expect(service.accept('raw', 'u-new')).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.assertUsable('raw')).rejects.toBeInstanceOf(BadRequestException);
+      expect(members.attach).not.toHaveBeenCalled();
+    });
+
     it('gives an unknown token the same message as an expired one', async () => {
       repo.findOne.mockResolvedValue(null);
       const unknown = await service.accept('nope', 'u-new').catch((e) => e);

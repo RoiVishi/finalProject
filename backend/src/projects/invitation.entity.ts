@@ -70,8 +70,15 @@ export class Invitation {
   respondedAt: Date | null;
 }
 
-/** The status a user should see: stored, unless the clock has overtaken it. */
-export const effectiveStatus = (inv: Invitation): InvitationStatus =>
-  inv.status === InvitationStatus.SENT && inv.expiresAt.getTime() < Date.now()
-    ? InvitationStatus.EXPIRED
-    : inv.status;
+/**
+ * The status a user should see: stored, unless something has overtaken it.
+ * An open invitation to a deleted project is revoked - it must not show on
+ * anyone's home screen or let anyone join a project that no longer exists.
+ * (Deletion is soft, so nothing else removes the invitation.) Otherwise the
+ * clock decides expiry.
+ */
+export const effectiveStatus = (inv: Invitation): InvitationStatus => {
+  if (inv.status !== InvitationStatus.SENT) return inv.status;
+  if (inv.project?.deletedAt) return InvitationStatus.REVOKED;
+  return inv.expiresAt.getTime() < Date.now() ? InvitationStatus.EXPIRED : inv.status;
+};
