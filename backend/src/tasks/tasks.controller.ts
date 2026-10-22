@@ -129,6 +129,20 @@ export class TasksController {
     return this.tasks.computeBlocked(id);
   }
 
+  /**
+   * PRED-3 / KAN-40: why this activity carries its risk, in domain language.
+   * Subcontractors get their own activities only (AUTH-2) - in the service.
+   */
+  @Get(':id/explanation')
+  @RequirePermission(ProjectAction.VIEW_PREDICTIONS, 'task')
+  explanation(
+    @Param('id', UuidPipe) id: string,
+    @CurrentMembership() membership: ProjectMember,
+    @CurrentUser() me: AuthenticatedUser,
+  ) {
+    return this.tasks.explain(id, { userId: me.userId, role: membership.role });
+  }
+
   /** Subcontractors are scoped to their own tasks — enforced in the service. */
   @Post(':id/predict')
   @RequirePermission(ProjectAction.VIEW_PREDICTIONS, 'task')

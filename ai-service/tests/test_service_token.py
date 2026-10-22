@@ -14,7 +14,8 @@ def client_with(token):
     return TestClient(main.app, headers={"X-Internal-Token": token})
 
 
-@pytest.mark.parametrize("path", ["/predict", "/predict/batch", "/predict/project", "/explain"])
+@pytest.mark.parametrize("path", ["/predict", "/predict/batch", "/predict/project", "/explain",
+                                  "/explain/project"])
 def test_post_without_token_is_401(path):
     r = client_with("").post(path, json=SAMPLE)
     assert r.status_code == 401
