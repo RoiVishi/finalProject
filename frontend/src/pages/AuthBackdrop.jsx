@@ -10,6 +10,11 @@ import React, { useEffect, useState } from 'react';
  * The scene is drawn on a 1440x900 stage that covers the viewport. On narrow
  * (phone) screens the whole building is fitted to the top of the screen
  * instead, and the card sits below it (auth.css).
+ * ambient: the same picture as a faint, still watermark behind the signed-in
+ * screens (AppShell) - no scan line, no pulsing, and none of the risk
+ * markings (amber floor, AR labels), which inside the app could be mistaken
+ * for real project data.
+ *
  * Plant photos: Pixabay (free under the Pixabay Content License), cut out and
  * graded to dusk; see public/auth/README.md.
  */
@@ -34,10 +39,10 @@ const FLOOR_LINES = 'M300 252.5H600M300 325H600M300 397.5H600M300 470H600M300 54
 const SLATS = Array.from({ length: 11 }, (_, i) => `M${572 + i * 12} 745V797`).join('')
   + Array.from({ length: 16 }, (_, i) => `M${716 + i * 12} 770V800`).join('');
 
-export default function AuthBackdrop() {
+export default function AuthBackdrop({ ambient = false }) {
   const narrow = useNarrow();
   return (
-    <svg className="auth-backdrop" aria-hidden="true" focusable="false"
+    <svg className={ambient ? 'app-backdrop' : 'auth-backdrop'} aria-hidden="true" focusable="false"
          viewBox={narrow ? NARROW : WIDE} preserveAspectRatio={narrow ? 'xMidYMin meet' : 'xMidYMid slice'}>
       <defs>
         <linearGradient id="fs-bg" x1="0" y1="0" x2="0" y2="1">
@@ -87,8 +92,12 @@ export default function AuthBackdrop() {
       <polygon points="600,180 740,226 740,734 600,760" fill="#081430" fillOpacity="0.9" />
       <g clipPath="url(#fs-side)"><rect x="600" y="150" width="140" height="640" fill="url(#fs-win-side)" /></g>
       <path d={FLOOR_LINES} fill="none" stroke="#60a5fa" strokeOpacity="0.35" />
-      <rect x="300" y="542.5" width="300" height="72.5" fill="#f59e0b" fillOpacity="0.16" stroke="#fbbf24" strokeOpacity="0.9" strokeWidth="1.5" />
-      <polygon points="600,542.5 740,543.5 740,607 600,615" fill="#f59e0b" fillOpacity="0.1" stroke="#fbbf24" strokeOpacity="0.7" />
+      {!ambient && (
+        <>
+          <rect x="300" y="542.5" width="300" height="72.5" fill="#f59e0b" fillOpacity="0.16" stroke="#fbbf24" strokeOpacity="0.9" strokeWidth="1.5" />
+          <polygon points="600,542.5 740,543.5 740,607 600,615" fill="#f59e0b" fillOpacity="0.1" stroke="#fbbf24" strokeOpacity="0.7" />
+        </>
+      )}
       <rect x="270" y="758" width="500" height="14" fill="#1b2640" />
 
       {/* courtyard: real young trees and shrubs */}
@@ -115,28 +124,31 @@ export default function AuthBackdrop() {
       <path d={SLATS} stroke="#33271c" strokeOpacity="0.7" strokeWidth="1.2" />
 
       {/* the AR layer */}
-      <ellipse className="fs-pulse" cx="520" cy="782" rx="330" ry="44" fill="none" stroke="#22d3ee" strokeOpacity="0.6" strokeDasharray="6 8" strokeWidth="1.5" />
+      <ellipse className={ambient ? undefined : 'fs-pulse'} cx="520" cy="782" rx="330" ry="44" fill="none" stroke="#22d3ee" strokeOpacity="0.6" strokeDasharray="6 8" strokeWidth="1.5" />
       <ellipse cx="520" cy="782" rx="250" ry="30" fill="#2563eb" fillOpacity="0.08" stroke="#60a5fa" strokeOpacity="0.35" />
       <path d="M300 760V180H600V760ZM600 180L740 226V734L600 760M420 180V146H520V180M470 146V104"
             fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinejoin="round" filter="url(#fs-glow)" />
       <line x1="600" y1="180" x2="600" y2="760" stroke="#bfdbfe" strokeWidth="2" />
       <path d="M262 180V760" stroke="#93c5fd" strokeOpacity="0.6" strokeDasharray="4 5" />
       <path d="M254 180H270M254 760H270" stroke="#93c5fd" strokeOpacity="0.6" />
-      <g className="fs-pulse" fill="#bfdbfe">
+      <g className={ambient ? undefined : 'fs-pulse'} fill="#bfdbfe">
         <circle cx="300" cy="180" r="3.5" /><circle cx="600" cy="180" r="3.5" /><circle cx="740" cy="226" r="3.5" />
         <circle cx="740" cy="734" r="3.5" /><circle cx="300" cy="760" r="3.5" /><circle cx="600" cy="760" r="3.5" />
         <circle cx="470" cy="104" r="3" />
       </g>
-      <path d="M300 578L250 520H232" fill="none" stroke="#fbbf24" strokeWidth="1.5" />
-      <circle cx="300" cy="578" r="4.5" fill="#fbbf24" />
+      {!ambient && <path d="M300 578L250 520H232" fill="none" stroke="#fbbf24" strokeWidth="1.5" />}
+      {!ambient && <circle cx="300" cy="578" r="4.5" fill="#fbbf24" />}
       <path d="M220 160V112H268M742 112H790V160M220 752V800H268M742 800H790V752"
             fill="none" stroke="#22d3ee" strokeWidth="2.5" strokeLinecap="round" />
+      {!ambient && (
       <g className="fs-scan">
         <rect x="220" y="-60" width="570" height="60" fill="url(#fs-scan-fill)" />
         <line x1="220" y1="0" x2="790" y2="0" stroke="#22d3ee" strokeWidth="2" filter="url(#fs-glow)" />
       </g>
+      )}
 
-      {/* AR labels */}
+      {/* AR labels (auth screens only) */}
+      {!ambient && (
       <g fontFamily="Heebo, Assistant, system-ui, sans-serif" fontSize="13" textAnchor="middle">
         <rect x="220" y="66" width="224" height="30" rx="15" fill="#081430" fillOpacity="0.85" stroke="#22d3ee" strokeOpacity="0.45" />
         <circle cx="428" cy="81" r="4" fill="#22d3ee" />
@@ -145,6 +157,7 @@ export default function AuthBackdrop() {
         <circle cx="214" cy="518" r="4" fill="#fbbf24" />
         <text x="120" y="523" fill="#fde68a" direction="rtl">קומה 3 · סיכון בינוני</text>
       </g>
+      )}
     </svg>
   );
 }

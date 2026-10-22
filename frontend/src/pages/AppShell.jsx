@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { he } from '../i18n/he.js';
 import { Link, navigate } from '../router.jsx';
+import AuthBackdrop from './AuthBackdrop.jsx';
 import './app.css';
 
 /** Frame for the signed-in screens (home, wizard, project). The Twin keeps its own layout. */
@@ -9,6 +10,7 @@ export function AppShell({ children, actions }) {
   const { user, logout } = useAuth();
   return (
     <div className="shell" dir="rtl">
+      <AuthBackdrop ambient />
       <header className="shell-header">
         <Link to="/" className="shell-brand">
           <div className="logo-mark" aria-hidden="true">🏗️</div>
