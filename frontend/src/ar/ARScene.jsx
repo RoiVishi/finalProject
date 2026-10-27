@@ -22,6 +22,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three';
 import ARModel, { zoneBoxes } from './ARModel.jsx';
 import { Legend3D, StatusLine3D, ZonePanel3D } from './ARPanel.jsx';
+import { AR_SCALE_MAX, AR_SCALE_MIN, STATUS_AFTER_PLACE, fitScale, nextScaleMul, statusAfterPick, thumbstickY } from './arSizing.js';
 
 /* ------------------------------------------------------------------ */
 /* Reticle: where the model will land                                  */
@@ -75,8 +76,16 @@ function PointerRay({ rayRef, visible }) {
 /* Session runtime                                                     */
 /* ------------------------------------------------------------------ */
 
-function XRRuntime({ session, spec, scale, selected, onSelect, onPlaced, onStatus, status }) {
+function XRRuntime({ session, spec, scale: fixedScale, selected, onSelect, onPlaced, onStatus, status }) {
   const { gl, camera } = useThree();
+  // Size: the building is fitted to a fixed real-world height (arSizing.js),
+  // and the thumbstick grows or shrinks it once it is placed. A `scale` prop,
+  // if given, still wins (tests, or a fixed demo size).
+  const baseScale = useMemo(() => fixedScale ?? fitScale(spec), [fixedScale, spec]);
+  const [scaleMul, setScaleMul] = useState(1);
+  const scaleMulRef = useRef(1); // follows the stick every frame
+  const shownMulRef = useRef(1); // last value handed to React
+  const scale = baseScale * scaleMul;
   const hitSourceRef = useRef(null);
   const modelRef = useRef();
   const rayRef = useRef(null);
@@ -130,7 +139,7 @@ function XRRuntime({ session, spec, scale, selected, onSelect, onPlaced, onStatu
   /* --- pick along the pointer ray, falling back to head gaze (AR-5) --- */
   const pickZone = useCallback(() => {
     const group = modelRef.current;
-    if (!group) return false;
+    if (!group) return null;
 
     let origin;
     let dir;
@@ -154,10 +163,10 @@ function XRRuntime({ session, spec, scale, selected, onSelect, onPlaced, onStatu
       while (obj && !obj.userData?.zoneId) obj = obj.parent;
       if (obj?.userData?.zone) {
         onSelect(obj.userData.zone);
-        return true;
+        return obj.userData.zone;
       }
     }
-    return false;
+    return null;
   }, [gl, camera, onSelect]);
 
   /* --- trigger: place first, then select (AR-2 then AR-5) --- */
@@ -168,23 +177,37 @@ function XRRuntime({ session, spec, scale, selected, onSelect, onPlaced, onStatu
         if (reticleRef.current) {
           setAnchorMatrix(reticleRef.current.clone());
           onPlaced(true);
-          onStatus('כוונו את הקרן אל אזור ולחצו כדי לפתוח אותו');
+          onStatus(STATUS_AFTER_PLACE);
         } else {
           onStatus('לא נמצא משטח. הביטו לאט על הרצפה או על השולחן');
         }
         return;
       }
-      if (!pickZone()) onStatus('לא נבחר אזור — כוונו את הקרן אל אחת הקומות');
+      onStatus(statusAfterPick(pickZone()));
     };
     session.addEventListener('select', onSelectEvent);
     return () => session.removeEventListener('select', onSelectEvent);
   }, [session, pickZone, onPlaced, onStatus]);
 
   /* --- per-frame: hit test while unplaced, pointer pose always --- */
-  useFrame((_state, _delta, frame) => {
+  useFrame((_state, delta, frame) => {
     if (!frame) return;
     const refSpace = gl.xr.getReferenceSpace?.();
     if (!refSpace) return;
+
+    // thumbstick resize, only once the building is placed. React state is
+    // touched only on a visible change (>1%), not on every frame.
+    if (anchorRef.current) {
+      const next = nextScaleMul(scaleMulRef.current, thumbstickY(session.inputSources), delta);
+      if (next !== scaleMulRef.current) {
+        scaleMulRef.current = next;
+        const atLimit = next === AR_SCALE_MIN || next === AR_SCALE_MAX;
+        if (atLimit || Math.abs(next / shownMulRef.current - 1) > 0.01) {
+          shownMulRef.current = next;
+          setScaleMul(next);
+        }
+      }
+    }
 
     // pointer pose (controller preferred, then anything else the device offers)
     let best = null;
