@@ -82,7 +82,7 @@ const buttonStyle = {
   fontFamily: 'inherit',
 };
 
-export default function ARView({ spec, selected, onSelect, onExit, scale = 0.02 }) {
+export default function ARView({ spec, selected, onSelect, onExit, scale }) {
   const support = useArSupport();
   const [session, setSession] = useState(null);
   const [status, setStatus] = useState('');
