@@ -21,6 +21,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import ARModel, { zoneBoxes } from './ARModel.jsx';
+import { isFloorLike, uprightAnchor } from './arPlacement.js';
 import { Legend3D, StatusLine3D, ZonePanel3D } from './ARPanel.jsx';
 import { AR_SCALE_MAX, AR_SCALE_MIN, STATUS_AFTER_PLACE, fitScale, nextScaleMul, statusAfterPick, thumbstickY } from './arSizing.js';
 
@@ -236,8 +237,15 @@ function XRRuntime({ session, spec, scale: fixedScale, selected, onSelect, onPla
     if (!results?.length) return;
     const pose = results[0].getPose(refSpace);
     if (!pose) return;
-    const m = new THREE.Matrix4().fromArray(pose.transform.matrix);
-    setReticleMatrix((prev) => (prev ? prev.clone().copy(m) : m));
+    const hit = new THREE.Matrix4().fromArray(pose.transform.matrix);
+    // Walls and ceilings cannot take the building (arPlacement.js).
+    if (!isFloorLike(hit)) {
+      setReticleMatrix(null);
+      return;
+    }
+    const eye = new THREE.Vector3();
+    (gl.xr.isPresenting && gl.xr.getCamera ? gl.xr.getCamera() : camera).getWorldPosition(eye);
+    setReticleMatrix(uprightAnchor(hit, eye));
   });
 
   /* --- where the in-scene panels hang, in world space --- */
