@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   AR_SCALE_MAX, AR_SCALE_MIN, AR_TARGET_HEIGHT_M, STATUS_MISSED,
-  fitScale, nextScaleMul, statusAfterPick, thumbstickY,
+  PANEL_MAX_SCALE, PANEL_REF_DIST_M, fitScale, nextScaleMul, panelScale, statusAfterPick, thumbstickY,
 } from './arSizing.js';
 import { PROJECTS } from '../projects.js';
 
@@ -45,6 +45,14 @@ test('thumbstickY: reads axes[3] of the first deflected controller', () => {
   assert.equal(thumbstickY([left]), 0);
   assert.equal(thumbstickY([{}, { gamepad: { axes: [0, 0] } }]), 0);
   assert.equal(thumbstickY(undefined), 0);
+});
+
+test('panelScale: normal size up close, grows with distance, capped', () => {
+  assert.equal(panelScale(0.5), 1);
+  assert.equal(panelScale(PANEL_REF_DIST_M), 1);
+  close(panelScale(2.4), 3);
+  assert.equal(panelScale(100), PANEL_MAX_SCALE);
+  assert.equal(panelScale(NaN), 1);
 });
 
 test('statusAfterPick: a successful pick replaces the "missed" line', () => {
