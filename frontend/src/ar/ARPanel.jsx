@@ -19,6 +19,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import React, { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { LEGEND, RISK_COLORS, RISK_LABELS_HE, RISK_TITLE_HE } from './riskBands.js';
+import { panelScale } from './arSizing.js';
 
 const PX = 2.5; // canvas pixels per layout unit — texture crispness
 
@@ -57,15 +58,21 @@ function card(ctx, w, h) {
   ctx.stroke();
 }
 
-/** Billboard toward the viewer; panels that face away are unreadable. */
+/**
+ * Billboard toward the viewer, and keep the apparent size: a panel further
+ * than arm's length grows with distance (arSizing.panelScale).
+ */
 function useBillboard(ref) {
   const { camera } = useThree();
   useFrame(() => {
     const g = ref.current;
     if (!g) return;
-    const p = new THREE.Vector3();
-    camera.getWorldPosition(p);
-    g.lookAt(p);
+    const eye = new THREE.Vector3();
+    const here = new THREE.Vector3();
+    camera.getWorldPosition(eye);
+    g.getWorldPosition(here);
+    g.scale.setScalar(panelScale(eye.distanceTo(here)));
+    g.lookAt(eye);
   });
 }
 
@@ -76,7 +83,7 @@ function useBillboard(ref) {
 const ZONE_W = 260;
 const ZONE_H = 190;
 
-export function ZonePanel3D({ zone, position }) {
+export function ZonePanel3D({ zone, position, side = 1 }) {
   const ref = useRef();
   const surface = useMemo(() => makeSurface(ZONE_W, ZONE_H), []);
   useBillboard(ref);
@@ -138,10 +145,12 @@ export function ZonePanel3D({ zone, position }) {
   }, [zone, surface]);
 
   if (!zone || !position) return null;
-  const scale = 0.34 / ZONE_W; // 34 cm wide in the real world
+  const scale = 0.34 / ZONE_W; // 34 cm wide at arm's length
+  // Hung by its inner edge, so growing with distance pushes it outward,
+  // never into the building. `side` is -1 left of the building, +1 right.
   return (
     <group ref={ref} position={position}>
-      <mesh scale={[ZONE_W * scale, ZONE_H * scale, 1]}>
+      <mesh position={[(side * ZONE_W * scale) / 2, 0, 0]} scale={[ZONE_W * scale, ZONE_H * scale, 1]}>
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial map={surface.texture} transparent depthWrite={false} toneMapped={false} />
       </mesh>
@@ -187,9 +196,10 @@ export function Legend3D({ position }) {
 
   if (!position) return null;
   const scale = 0.26 / LEG_W;
+  // Hung by its bottom edge above the roof, so it grows upward, never into the building.
   return (
     <group ref={ref} position={position}>
-      <mesh scale={[LEG_W * scale, LEG_H * scale, 1]}>
+      <mesh position={[0, (LEG_H * scale) / 2, 0]} scale={[LEG_W * scale, LEG_H * scale, 1]}>
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial map={surface.texture} transparent depthWrite={false} toneMapped={false} />
       </mesh>

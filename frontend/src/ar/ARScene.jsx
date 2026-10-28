@@ -265,7 +265,7 @@ function XRRuntime({ session, spec, scale: fixedScale, selected, onSelect, onPla
     const side = selected.zoneIndex === 0 ? -1 : 1;
     return anchorFrame
       .toWorld(box.position)
-      .addScaledVector(anchorFrame.xAxis, side * (spec.baseWidth * scale * 0.7 + 0.22));
+      .addScaledVector(anchorFrame.xAxis, side * (spec.baseWidth * scale * 0.25 + 0.06));
   }, [anchorFrame, selected, spec, scale]);
 
   const legendPos = useMemo(() => {
@@ -293,7 +293,7 @@ function XRRuntime({ session, spec, scale: fixedScale, selected, onSelect, onPla
       </group>
 
       <Legend3D position={legendPos} />
-      <ZonePanel3D zone={selected} position={panelPos} />
+      <ZonePanel3D zone={selected} position={panelPos} side={selected?.zoneIndex === 0 ? -1 : 1} />
       <StatusLine3D text={status} />
     </>
   );

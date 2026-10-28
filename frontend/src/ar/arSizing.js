@@ -47,6 +47,20 @@ export function thumbstickY(inputSources) {
   return 0;
 }
 
+/**
+ * Panels (zone card, legend) are designed to be read at arm's length. Once
+ * the building grew to 1 m the user stands further back, and at a fixed size
+ * the panels became too small to read (emulator, 28.10.26). They now keep
+ * their apparent size: beyond PANEL_REF_DIST_M they grow with distance.
+ */
+export const PANEL_REF_DIST_M = 0.8;
+export const PANEL_MAX_SCALE = 5;
+
+export function panelScale(distanceM) {
+  if (!Number.isFinite(distanceM) || distanceM <= PANEL_REF_DIST_M) return 1;
+  return Math.min(PANEL_MAX_SCALE, distanceM / PANEL_REF_DIST_M);
+}
+
 export const STATUS_AFTER_PLACE = 'כוונו את הקרן אל קומה ולחצו · ג׳ויסטיק: הגדלה / הקטנה';
 export const STATUS_MISSED = 'לא נבחר אזור — כוונו את הקרן אל אחת הקומות';
 
