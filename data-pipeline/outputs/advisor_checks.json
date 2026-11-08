@@ -1,6 +1,7 @@
 {
  "config": {
   "corpus": "outputs/corpus_v3_buildings.csv",
+  "families": "identical project signatures (families())",
   "n_activities": 9250,
   "n_projects": 66,
   "n_families": 59,

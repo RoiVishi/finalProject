@@ -1,0 +1,1259 @@
+{
+ "item6": {
+  "6a_bhd_labelled_by_task_type": {
+   "TT_FinMile": {
+    "n": 44,
+    "grew_rate": 0.0
+   },
+   "TT_LOE": {
+    "n": 12,
+    "grew_rate": 0.833
+   },
+   "TT_Mile": {
+    "n": 96,
+    "grew_rate": 0.0
+   },
+   "TT_Task": {
+    "n": 6237,
+    "grew_rate": 0.493
+   }
+  },
+  "6a_bhd_work_rows_with_zero_planned_hours": 10,
+  "6a_dslib_labelled_rows": 2861,
+  "6a_dslib_zero_planned_working_days": 20,
+  "6a_dslib_zero_calendar_but_positive_working_days": 499,
+  "6b_bhd_overrun_days_among_grew": {
+   "n": 3085,
+   "share_1_day": 0.11,
+   "share_le_2_days": 0.198,
+   "share_relative_le_10pct": 0.039,
+   "median_days": 13.0
+  },
+  "6b_dslib_overrun_working_days_among_grew": {
+   "n": 497,
+   "share_1_day": 0.256,
+   "share_le_2_days": 0.453,
+   "share_relative_le_10pct": 0.078,
+   "median_days": 3.0
+  },
+  "6c_bhd_completed_activities": {
+   "n": 6389,
+   "planned_start_equals_actual_start": 0.579,
+   "planned_start_after_actual_start": 0.319,
+   "planned_start_after_actual_start_by_over_7_days": 0.271,
+   "planned_end_equals_actual_end": 0.308,
+   "by_project": {
+    "own::129 trial": {
+     "n": 769,
+     "grew_rate": 0.598,
+     "planned_start_equals_actual": 0.075,
+     "planned_finish_equals_actual": 0.034,
+     "both_equal": 0.013,
+     "labels_invalid": false
+    },
+    "own::130 TRIAL": {
+     "n": 85,
+     "grew_rate": 0.847,
+     "planned_start_equals_actual": 0.082,
+     "planned_finish_equals_actual": 0.094,
+     "both_equal": 0.082,
+     "labels_invalid": false
+    },
+    "own::CCA R03 dt 24Oct11SC": {
+     "n": 1591,
+     "grew_rate": 0.775,
+     "planned_start_equals_actual": 0.113,
+     "planned_finish_equals_actual": 0.04,
+     "both_equal": 0.036,
+     "labels_invalid": false
+    },
+    "own::PORTO MATROUH": {
+     "n": 422,
+     "grew_rate": 0.088,
+     "planned_start_equals_actual": 0.026,
+     "planned_finish_equals_actual": 0.026,
+     "both_equal": 0.026,
+     "labels_invalid": false
+    },
+    "own::Update 01-09-2010": {
+     "n": 16,
+     "grew_rate": 0.125,
+     "planned_start_equals_actual": 0.562,
+     "planned_finish_equals_actual": 0.375,
+     "both_equal": 0.375,
+     "labels_invalid": false
+    },
+    "own::cairo alex-road": {
+     "n": 46,
+     "grew_rate": 0.065,
+     "planned_start_equals_actual": 0.957,
+     "planned_finish_equals_actual": 0.913,
+     "both_equal": 0.913,
+     "labels_invalid": true
+    },
+    "own::jumaira": {
+     "n": 1350,
+     "grew_rate": 0.0,
+     "planned_start_equals_actual": 1.0,
+     "planned_finish_equals_actual": 1.0,
+     "both_equal": 1.0,
+     "labels_invalid": true
+    },
+    "own::rehab-2": {
+     "n": 2037,
+     "grew_rate": 0.617,
+     "planned_start_equals_actual": 1.0,
+     "planned_finish_equals_actual": 0.225,
+     "both_equal": 0.225,
+     "labels_invalid": false
+    },
+    "own::update of jungle 20-07-2010": {
+     "n": 73,
+     "grew_rate": 0.301,
+     "planned_start_equals_actual": 0.055,
+     "planned_finish_equals_actual": 0.068,
+     "both_equal": 0.014,
+     "labels_invalid": false
+    }
+   }
+  }
+ },
+ "item3": {
+  "bhd_work_activities_per_project": {
+   "own::129 trial": {
+    "data_date": "2010-10-31",
+    "activities": 2016,
+    "labelled": 766,
+    "running": 110,
+    "running_known_overrun": 104,
+    "not_started": 1140,
+    "share_of_project_time_elapsed_at_export": 0.82
+   },
+   "own::130 TRIAL": {
+    "data_date": "2010-11-10",
+    "activities": 382,
+    "labelled": 82,
+    "running": 37,
+    "running_known_overrun": 37,
+    "not_started": 263,
+    "share_of_project_time_elapsed_at_export": 0.88
+   },
+   "own::CCA R03 dt 24Oct11SC": {
+    "data_date": "2011-09-30",
+    "activities": 15248,
+    "labelled": 1533,
+    "running": 2495,
+    "running_known_overrun": 1439,
+    "not_started": 11220,
+    "share_of_project_time_elapsed_at_export": 0.46
+   },
+   "own::PORTO MATROUH": {
+    "data_date": "2012-05-16",
+    "activities": 1057,
+    "labelled": 392,
+    "running": 30,
+    "running_known_overrun": 22,
+    "not_started": 635,
+    "share_of_project_time_elapsed_at_export": 0.27
+   },
+   "own::Update 01-09-2010": {
+    "data_date": "2010-09-01",
+    "activities": 58,
+    "labelled": 11,
+    "running": 2,
+    "running_known_overrun": 0,
+    "not_started": 45,
+    "share_of_project_time_elapsed_at_export": 0.21
+   },
+   "own::cairo alex-road": {
+    "data_date": "2007-07-01",
+    "activities": 46,
+    "labelled": 38,
+    "running": 1,
+    "running_known_overrun": 0,
+    "not_started": 7,
+    "share_of_project_time_elapsed_at_export": 0.75
+   },
+   "own::jumaira": {
+    "data_date": "2008-10-02",
+    "activities": 3745,
+    "labelled": 1345,
+    "running": 188,
+    "running_known_overrun": 0,
+    "not_started": 2212,
+    "share_of_project_time_elapsed_at_export": 0.62
+   },
+   "own::rehab-2": {
+    "data_date": "2008-05-27",
+    "activities": 6973,
+    "labelled": 2035,
+    "running": 176,
+    "running_known_overrun": 122,
+    "not_started": 4762,
+    "share_of_project_time_elapsed_at_export": 0.45
+   },
+   "own::update of jungle 20-07-2010": {
+    "data_date": "2010-07-20",
+    "activities": 843,
+    "labelled": 25,
+    "running": 7,
+    "running_known_overrun": 7,
+    "not_started": 811,
+    "share_of_project_time_elapsed_at_export": 0.18
+   }
+  },
+  "bhd_by_planned_position_decile": {
+   "0-10%": {
+    "activities": 706,
+    "labelled_share": 0.999,
+    "grew_rate_labelled_only": 0.081,
+    "running_known_overrun": 1,
+    "grew_rate_lower_bound_all": 0.082,
+    "grew_rate_upper_bound_all": 0.082
+   },
+   "10-20%": {
+    "activities": 822,
+    "labelled_share": 0.925,
+    "grew_rate_labelled_only": 0.637,
+    "running_known_overrun": 6,
+    "grew_rate_lower_bound_all": 0.596,
+    "grew_rate_upper_bound_all": 0.664
+   },
+   "20-30%": {
+    "activities": 1811,
+    "labelled_share": 0.836,
+    "grew_rate_labelled_only": 0.696,
+    "running_known_overrun": 108,
+    "grew_rate_lower_bound_all": 0.641,
+    "grew_rate_upper_bound_all": 0.745
+   },
+   "30-40%": {
+    "activities": 3043,
+    "labelled_share": 0.478,
+    "grew_rate_labelled_only": 0.617,
+    "running_known_overrun": 901,
+    "grew_rate_lower_bound_all": 0.591,
+    "grew_rate_upper_bound_all": 0.817
+   },
+   "40-50%": {
+    "activities": 4360,
+    "labelled_share": 0.141,
+    "grew_rate_labelled_only": 0.368,
+    "running_known_overrun": 508,
+    "grew_rate_lower_bound_all": 0.168,
+    "grew_rate_upper_bound_all": 0.911
+   },
+   "50-60%": {
+    "activities": 6226,
+    "labelled_share": 0.113,
+    "grew_rate_labelled_only": 0.097,
+    "running_known_overrun": 41,
+    "grew_rate_lower_bound_all": 0.018,
+    "grew_rate_upper_bound_all": 0.898
+   },
+   "60-70%": {
+    "activities": 6795,
+    "labelled_share": 0.035,
+    "grew_rate_labelled_only": 0.608,
+    "running_known_overrun": 51,
+    "grew_rate_lower_bound_all": 0.029,
+    "grew_rate_upper_bound_all": 0.986
+   },
+   "70-80%": {
+    "activities": 3787,
+    "labelled_share": 0.049,
+    "grew_rate_labelled_only": 0.615,
+    "running_known_overrun": 36,
+    "grew_rate_lower_bound_all": 0.04,
+    "grew_rate_upper_bound_all": 0.981
+   },
+   "80-90%": {
+    "activities": 2171,
+    "labelled_share": 0.02,
+    "grew_rate_labelled_only": 0.432,
+    "running_known_overrun": 79,
+    "grew_rate_lower_bound_all": 0.045,
+    "grew_rate_upper_bound_all": 0.988
+   },
+   "90-100%": {
+    "activities": 647,
+    "labelled_share": 0.008,
+    "grew_rate_labelled_only": 0.2,
+    "running_known_overrun": 0,
+    "grew_rate_lower_bound_all": 0.002,
+    "grew_rate_upper_bound_all": 0.994
+   }
+  },
+  "bhd_totals": {
+   "activities": 30368,
+   "labelled": 6227,
+   "running": 3046,
+   "running_known_overrun": 1731,
+   "not_started": 21095
+  },
+  "dslib_labelled_share": 0.993,
+  "dslib_note": "DSLIB projects are completed archives with a frozen baseline and tracking periods; an unlabelled DSLIB activity lacks dates, not an outcome still to come"
+ },
+ "item4": {
+  "method": "set of normalised task names per project; containment = shared / smaller set; pairs with containment >= 0.5 and both sets >= 5 names",
+  "pairs": [
+   {
+    "a": "dslib::C2016-14",
+    "b": "dslib::C2016-15",
+    "containment": 1.0,
+    "jaccard": 0.277,
+    "shared_names": 13,
+    "sizes": [
+     47,
+     13
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-17",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-18",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     21
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-19",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     21
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-20",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     21
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-21",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-22",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-23",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-24",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-25",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-16",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-17",
+    "b": "dslib::C2016-18",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     21
+    ]
+   },
+   {
+    "a": "dslib::C2016-17",
+    "b": "dslib::C2016-19",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     21
+    ]
+   },
+   {
+    "a": "dslib::C2016-17",
+    "b": "dslib::C2016-20",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     21
+    ]
+   },
+   {
+    "a": "dslib::C2016-17",
+    "b": "dslib::C2016-21",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-17",
+    "b": "dslib::C2016-22",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-17",
+    "b": "dslib::C2016-23",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-17",
+    "b": "dslib::C2016-24",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-17",
+    "b": "dslib::C2016-25",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-17",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-18",
+    "b": "dslib::C2016-19",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 21,
+    "sizes": [
+     21,
+     21
+    ]
+   },
+   {
+    "a": "dslib::C2016-18",
+    "b": "dslib::C2016-20",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 21,
+    "sizes": [
+     21,
+     21
+    ]
+   },
+   {
+    "a": "dslib::C2016-18",
+    "b": "dslib::C2016-21",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-18",
+    "b": "dslib::C2016-22",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-18",
+    "b": "dslib::C2016-23",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-18",
+    "b": "dslib::C2016-24",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-18",
+    "b": "dslib::C2016-25",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-18",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-19",
+    "b": "dslib::C2016-20",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 21,
+    "sizes": [
+     21,
+     21
+    ]
+   },
+   {
+    "a": "dslib::C2016-19",
+    "b": "dslib::C2016-21",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-19",
+    "b": "dslib::C2016-22",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-19",
+    "b": "dslib::C2016-23",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-19",
+    "b": "dslib::C2016-24",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-19",
+    "b": "dslib::C2016-25",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-19",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-20",
+    "b": "dslib::C2016-21",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-20",
+    "b": "dslib::C2016-22",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-20",
+    "b": "dslib::C2016-23",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-20",
+    "b": "dslib::C2016-24",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-20",
+    "b": "dslib::C2016-25",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-20",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 0.952,
+    "shared_names": 20,
+    "sizes": [
+     21,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-21",
+    "b": "dslib::C2016-22",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-21",
+    "b": "dslib::C2016-23",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-21",
+    "b": "dslib::C2016-24",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-21",
+    "b": "dslib::C2016-25",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-21",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-22",
+    "b": "dslib::C2016-23",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-22",
+    "b": "dslib::C2016-24",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-22",
+    "b": "dslib::C2016-25",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-22",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-23",
+    "b": "dslib::C2016-24",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-23",
+    "b": "dslib::C2016-25",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-23",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-24",
+    "b": "dslib::C2016-25",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-24",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-25",
+    "b": "dslib::C2016-26",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 20,
+    "sizes": [
+     20,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-31",
+    "b": "dslib::C2016-32",
+    "containment": 1.0,
+    "jaccard": 0.846,
+    "shared_names": 11,
+    "sizes": [
+     13,
+     11
+    ]
+   },
+   {
+    "a": "own::129 trial",
+    "b": "own::130 TRIAL",
+    "containment": 1.0,
+    "jaccard": 1.0,
+    "shared_names": 5,
+    "sizes": [
+     5,
+     5
+    ]
+   },
+   {
+    "a": "dslib::C2015-04",
+    "b": "dslib::C2015-05",
+    "containment": 0.917,
+    "jaccard": 0.647,
+    "shared_names": 11,
+    "sizes": [
+     16,
+     12
+    ]
+   },
+   {
+    "a": "dslib::C2015-05",
+    "b": "dslib::C2015-06",
+    "containment": 0.917,
+    "jaccard": 0.524,
+    "shared_names": 11,
+    "sizes": [
+     12,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-11",
+    "b": "dslib::C2016-12",
+    "containment": 0.891,
+    "jaccard": 0.766,
+    "shared_names": 49,
+    "sizes": [
+     55,
+     58
+    ]
+   },
+   {
+    "a": "dslib::C2013-12",
+    "b": "dslib::C2015-01",
+    "containment": 0.889,
+    "jaccard": 0.75,
+    "shared_names": 24,
+    "sizes": [
+     29,
+     27
+    ]
+   },
+   {
+    "a": "dslib::C2014-06",
+    "b": "dslib::C2014-07",
+    "containment": 0.88,
+    "jaccard": 0.688,
+    "shared_names": 22,
+    "sizes": [
+     29,
+     25
+    ]
+   },
+   {
+    "a": "dslib::C2016-12",
+    "b": "dslib::C2016-13",
+    "containment": 0.86,
+    "jaccard": 0.662,
+    "shared_names": 43,
+    "sizes": [
+     58,
+     50
+    ]
+   },
+   {
+    "a": "dslib::C2016-11",
+    "b": "dslib::C2016-15",
+    "containment": 0.846,
+    "jaccard": 0.193,
+    "shared_names": 11,
+    "sizes": [
+     55,
+     13
+    ]
+   },
+   {
+    "a": "dslib::C2016-12",
+    "b": "dslib::C2016-15",
+    "containment": 0.846,
+    "jaccard": 0.183,
+    "shared_names": 11,
+    "sizes": [
+     58,
+     13
+    ]
+   },
+   {
+    "a": "dslib::C2014-05",
+    "b": "dslib::C2014-07",
+    "containment": 0.84,
+    "jaccard": 0.724,
+    "shared_names": 21,
+    "sizes": [
+     25,
+     25
+    ]
+   },
+   {
+    "a": "dslib::C2016-33",
+    "b": "dslib::C2016-34",
+    "containment": 0.833,
+    "jaccard": 0.667,
+    "shared_names": 10,
+    "sizes": [
+     13,
+     12
+    ]
+   },
+   {
+    "a": "dslib::C2016-11",
+    "b": "dslib::C2016-13",
+    "containment": 0.82,
+    "jaccard": 0.641,
+    "shared_names": 41,
+    "sizes": [
+     55,
+     50
+    ]
+   },
+   {
+    "a": "dslib::C2013-14",
+    "b": "dslib::C2013-15",
+    "containment": 0.8,
+    "jaccard": 0.267,
+    "shared_names": 4,
+    "sizes": [
+     5,
+     14
+    ]
+   },
+   {
+    "a": "dslib::C2014-05",
+    "b": "dslib::C2014-06",
+    "containment": 0.72,
+    "jaccard": 0.5,
+    "shared_names": 18,
+    "sizes": [
+     25,
+     29
+    ]
+   },
+   {
+    "a": "dslib::C2016-11",
+    "b": "dslib::C2016-14",
+    "containment": 0.702,
+    "jaccard": 0.478,
+    "shared_names": 33,
+    "sizes": [
+     55,
+     47
+    ]
+   },
+   {
+    "a": "dslib::C2016-13",
+    "b": "dslib::C2016-15",
+    "containment": 0.692,
+    "jaccard": 0.167,
+    "shared_names": 9,
+    "sizes": [
+     50,
+     13
+    ]
+   },
+   {
+    "a": "dslib::C2015-04",
+    "b": "dslib::C2015-06",
+    "containment": 0.688,
+    "jaccard": 0.44,
+    "shared_names": 11,
+    "sizes": [
+     16,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2016-12",
+    "b": "dslib::C2016-14",
+    "containment": 0.66,
+    "jaccard": 0.419,
+    "shared_names": 31,
+    "sizes": [
+     58,
+     47
+    ]
+   },
+   {
+    "a": "dslib::C2016-13",
+    "b": "dslib::C2016-14",
+    "containment": 0.638,
+    "jaccard": 0.448,
+    "shared_names": 30,
+    "sizes": [
+     50,
+     47
+    ]
+   },
+   {
+    "a": "dslib::C2013-13",
+    "b": "dslib::C2013-14",
+    "containment": 0.6,
+    "jaccard": 0.3,
+    "shared_names": 3,
+    "sizes": [
+     8,
+     5
+    ]
+   },
+   {
+    "a": "dslib::C2013-14",
+    "b": "dslib::C2013-17",
+    "containment": 0.6,
+    "jaccard": 0.136,
+    "shared_names": 3,
+    "sizes": [
+     5,
+     20
+    ]
+   },
+   {
+    "a": "dslib::C2013-15",
+    "b": "dslib::C2013-17",
+    "containment": 0.5,
+    "jaccard": 0.259,
+    "shared_names": 7,
+    "sizes": [
+     14,
+     20
+    ]
+   }
+  ],
+  "families": {
+   "n_projects": 66,
+   "n_families": 46,
+   "multi_project_families": [
+    [
+     "dslib::C2014-05",
+     "dslib::C2014-06",
+     "dslib::C2014-07"
+    ],
+    [
+     "dslib::C2013-12",
+     "dslib::C2015-01"
+    ],
+    [
+     "dslib::C2015-04",
+     "dslib::C2015-05",
+     "dslib::C2015-06"
+    ],
+    [
+     "dslib::C2016-11",
+     "dslib::C2016-12",
+     "dslib::C2016-13"
+    ],
+    [
+     "dslib::C2016-16",
+     "dslib::C2016-17",
+     "dslib::C2016-18",
+     "dslib::C2016-19",
+     "dslib::C2016-20",
+     "dslib::C2016-21",
+     "dslib::C2016-22",
+     "dslib::C2016-23",
+     "dslib::C2016-24",
+     "dslib::C2016-25",
+     "dslib::C2016-26"
+    ],
+    [
+     "dslib::C2016-31",
+     "dslib::C2016-32"
+    ],
+    [
+     "dslib::C2016-33",
+     "dslib::C2016-34"
+    ],
+    [
+     "own::129 trial",
+     "own::130 TRIAL"
+    ]
+   ]
+  }
+ },
+ "clean_corpus": {
+  "steps": {
+   "start": {
+    "own": 6389,
+    "dslib": 2861
+   },
+   "work activity types only (BHD)": {
+    "own": 6237,
+    "dslib": 2861
+   },
+   "planned working duration > 0": {
+    "own": 6227,
+    "dslib": 2841
+   },
+   "projects with planned dates overwritten by actuals dropped": {
+    "own": 4844,
+    "dslib": 2841,
+    "dropped_projects": [
+     "own::cairo alex-road",
+     "own::jumaira"
+    ]
+   }
+  },
+  "grew_rate": {
+   "before": {
+    "dslib": 0.174,
+    "own": 0.483
+   },
+   "after": {
+    "dslib": 0.175,
+    "own": 0.633
+   },
+   "projects_after": {
+    "dslib": 57,
+    "own": 7
+   }
+  }
+ }
+}
