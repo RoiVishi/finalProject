@@ -3,6 +3,11 @@
 Reads outputs/corpus_v3_buildings.csv (the registry v6 corpus) and writes
 outputs/advisor_checks.json. Nothing here changes the served model.
 
+Options (E2 re-run on the cleaned rows):
+  --corpus outputs/corpus_v3_clean.csv    another corpus file with the same columns
+  --families outputs/project_families.json  family map from e2_data_audit.py instead of signatures
+  --out advisor_checks_clean.json          output file name in outputs/
+
 What is compared
   Feature sets (XGBoost, the v6 hyper-parameters, refit per split):
     full          the 11 v6 features                                   (= v6)
@@ -187,12 +192,27 @@ def run_A(df: pd.DataFrame, variant: str, groups: pd.Series, name: str) -> dict:
 
 
 def main() -> int:
-    df = load_corpus()
-    fam = families(df)
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--corpus", default=None)
+    ap.add_argument("--families", default=None)
+    ap.add_argument("--out", default="advisor_checks.json")
+    args = ap.parse_args()
+    if args.corpus:
+        df = pd.read_csv(args.corpus, low_memory=False)
+        df[TARGET] = df[TARGET].astype(int)
+    else:
+        df = load_corpus()
+    if args.families:
+        fmap = json.loads(Path(args.families).read_text())
+        fam = pd.Series({p: fmap[p] for p in df["project"].unique()})
+    else:
+        fam = families(df)
     proj_groups = pd.Series(df["project"].unique(), index=df["project"].unique())
     merged = fam.groupby(fam).apply(lambda s: sorted(s.index)).loc[lambda x: x.str.len() > 1]
     result = {
-        "config": {"corpus": "outputs/corpus_v3_buildings.csv", "n_activities": len(df),
+        "config": {"corpus": args.corpus or "outputs/corpus_v3_buildings.csv",
+                   "families": args.families or "identical project signatures (families())", "n_activities": len(df),
                    "n_projects": int(df["project"].nunique()), "n_families": int(fam.nunique()),
                    "families_with_more_than_one_project": merged.tolist(),
                    "model": f"XGBoost {V6_PARAMS} (fixed, v6 values)", "a_splits": N_SPLITS,
@@ -219,7 +239,7 @@ def main() -> int:
               "mean_p_as_trained": round(float(m.predict_proba(g[num + cat])[:, 1].mean()), 3),
               "mean_p_as_served": round(float(m.predict_proba(as_served(g)[num + cat])[:, 1].mean()), 3)}
         for src, g in df.groupby("source")}
-    (OUT / "advisor_checks.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n")
+    (OUT / args.out).write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n")
 
     rows = []
     for v, r in result["results"].items():

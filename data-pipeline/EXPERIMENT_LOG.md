@@ -52,3 +52,58 @@ cd data-pipeline
 python3 src/advisor_checks.py                      # reruns everything, prints the table
 python3 -c "import json;j=json.load(open('outputs/advisor_checks.json'));print(j['results']['project_only']['B']['pooled_auc_median'])"   # 0.8163
 ```
+
+---
+
+## E2 — 8.11.2026 — Advisor items 6, 3, 4: data audit, then E1 again on the cleaned rows
+
+**Question.** Which labelled rows are not real work activities, and is the label the same thing in both corpora (item 6)? How much does dropping unfinished activities bias the labels (item 3)? Are there schedule families beyond identical copies (item 4)? Does E1's picture survive on clean rows?
+
+**Run.**
+```
+python3 src/e2_data_audit.py      # → outputs/e2_data_audit.json, project_families.json, corpus_v3_clean.csv
+python3 src/advisor_checks.py --corpus outputs/corpus_v3_clean.csv --families outputs/project_families.json --out advisor_checks_clean.json
+```
+Needs the raw BHD tables in `data_bhd/Buildings Data` (not in git).
+
+**Rules fixed before the re-run.** These rules were written down before looking at any model result on the cleaned rows.
+- Keep work activities only. BHD: task_type TT_Task or TT_Rsrc and planned hours > 0. DSLIB: planned working days > 0.
+- Drop a BHD project whose planned dates were overwritten by the actual dates: planned start and finish equal the actual ones on ≥ 90% of its completed activities.
+- Families: connected components of project pairs whose normalised task-name sets have Jaccard ≥ 0.5, merged with the identical-signature families.
+
+**Findings.**
+
+*Item 6 — rows.* BHD had 96 milestones, 44 finish milestones (all grew = 0) and 12 LOE rows (83% grew), plus 10 work rows with 0 planned hours. In DSLIB, only 20 rows have 0 planned working days. The 499 DSLIB rows with 0 calendar days are 1-working-day activities, not milestones.
+
+*Item 6 — the label is not the original plan in two BHD projects.* In `jumaira` (1,350 completed activities, 21% of all BHD labels), planned start and finish equal the actual dates for 100% of completed activities. The planned duration is therefore the actual duration, and grew = 0 by construction. `cairo alex-road`: 91% (46 activities). Both are dropped. `rehab-2` has planned start = actual start for 100% of activities but planned finish = actual on only 23%, so the start was moved and the duration kept. It stays, flagged: its `is_late`/delay labels would be invalid, while `grew` compares durations.
+
+*Item 6 — overrun size.* Of BHD overruns, 11% are exactly 1 day and 20% are ≤ 2 days (median 13 days). Of DSLIB overruns, 26% are ≤ 1 working day and 45% ≤ 2 (median 3). The label is noisier in DSLIB.
+
+*Item 3 — survivorship (BHD).* The exports are early snapshots: the data date falls at 18%–88% of project time (median about 46%). Of 30,368 work activities in the 9 building projects, 6,227 are labelled (21%), 3,046 were running and 21,095 not started. 1,731 of the running activities had already exceeded their planned duration at the data date, so they are known overruns that were dropped. Labelled share by planned-position decile: 100% / 93% / 84% / 48% / 14% / 11% / 4% / 5% / 2% / 1%. From the 40–50% decile on, the grew rate of the whole decile is unknown between about 0.02–0.17 and 0.90–0.99. The "drift" 0.46 → 0.29 cannot be read as a real trend. DSLIB is a set of completed archives (99.3% labelled), so the issue is BHD's.
+
+*Item 4 — families.* Name similarity finds templates that identical signatures missed: 66 projects form 46 families (59 by identical signatures alone); after cleaning, 64 projects form 44. The largest is C2016-16..26 (11 projects, same 20-name template). The others are C2014-05/06/07, C2015-04/05/06, C2016-11/12/13, C2013-12 + C2015-01, C2016-31/32, C2016-33/34 and 129/130. There are no cross-corpus families.
+
+*Item 11 — reproducibility.* The DSLIB ETL rerun from the raw zip (`DSLIB3.4.zip`, md5 2db1614c3229759c62daf57e84912ff3) gives the same 17,866 rows with 0 differing cells, but in a different row order. The ETL now sorts its output, and two reruns are byte-identical.
+
+**E1 again on the cleaned rows (64 projects, 7,685 activities, 44 families).** Within-project AUC on 22 eligible projects:
+
+| Variant | A_family within [95% CI] | A_project within | B within (7 projects) |
+|---|---|---|---|
+| full (v6 features) | 0.550 [0.501, 0.590] | 0.540 | 0.736 |
+| clean (no project, float, task_type) | 0.564 [0.516, 0.594] | 0.565 | 0.723 |
+| rule: planned duration | 0.525 [0.462, 0.570] | 0.525 | 0.518 |
+| rule: successors | 0.533 [0.491, 0.563] | 0.533 | 0.588 |
+
+Paired, A_family: clean − duration +0.049 [−0.036, +0.089] (13/22); full − duration +0.006 [−0.056, +0.070]; clean − full −0.001 [−0.047, +0.036].
+
+**What this shows.**
+1. On the cleaned rows, the clean model is still the only variant whose within-project CI stays above 0.5 in A_family. Its advantage over the planned-duration rule keeps the same size (+0.05), **but is no longer statistically clear.** E1's "significant" result depended partly on rows that should not have been there.
+2. The v6 feature set still does not beat the rule.
+3. The survivorship result means every number that uses the late part of BHD projects (B, the calibration slice, the band thresholds) rests on a small, biased sample.
+
+**Open decisions (to fix in the log before E3).**
+- Label tolerance (item 6): keep `grew` as is, or require more than 1 working day / a relative margin? One pre-declared choice, with the other reported as a sensitivity.
+- Using the 1,731 known running overruns as positive labels (item 3) needs the as-of logic of E4. For A, the question is whether to add them now.
+- Frozen test set: choose families now. Only 22 projects are eligible for within-project AUC, so the frozen set has to be drawn from those.
+
+**Verify yourself.** `python3 -c "import json;print(json.load(open('outputs/e2_data_audit.json'))['item3']['bhd_totals'])"` → 30,368 / 6,227 / 3,046 / 1,731 / 21,095.

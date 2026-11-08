@@ -392,8 +392,10 @@ for f in sorted((ROOT / "Excel").glob("*.xlsx")):
         )
     )
 
-df = pd.DataFrame(rows)
+# Deterministic row order (advisor item 11, E2): the same raw files must give a byte-identical CSV.
+df = pd.DataFrame(rows).sort_values(["project", "task_id"], kind="stable").reset_index(drop=True)
 sn = pd.DataFrame(snaps)
+sn = sn.sort_values(list(sn.columns[:3]), kind="stable").reset_index(drop=True) if len(sn) else sn
 df.to_csv(OUT / "dslib_labeled_tasks.csv", index=False)
 sn.to_csv(OUT / "dslib_snapshots.csv", index=False)
 lab = df[df["is_late"].notna()]

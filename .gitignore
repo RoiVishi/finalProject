@@ -31,5 +31,6 @@ data-pipeline/outputs/dslib_asof_instances.csv
 
 # corpus v3 (registry v6) — regenerate: python src/build_corpus_v3.py (after etl.py + rr17_dslib_etl.py)
 data-pipeline/outputs/corpus_v3_buildings.csv
+data-pipeline/outputs/corpus_v3_clean.csv
 # JPF activity table (60MB) — regenerate: python src/rr15_jpf.py <JPF zip> <registry v4> outputs
 data-pipeline/outputs/jpf_labeled_tasks.csv

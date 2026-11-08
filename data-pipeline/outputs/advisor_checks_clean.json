@@ -1,0 +1,1143 @@
+{
+ "config": {
+  "corpus": "outputs/corpus_v3_clean.csv",
+  "families": "outputs/project_families.json",
+  "n_activities": 7685,
+  "n_projects": 64,
+  "n_families": 44,
+  "families_with_more_than_one_project": [
+   [
+    "dslib::C2014-05",
+    "dslib::C2014-06",
+    "dslib::C2014-07"
+   ],
+   [
+    "dslib::C2013-12",
+    "dslib::C2015-01"
+   ],
+   [
+    "dslib::C2015-04",
+    "dslib::C2015-05",
+    "dslib::C2015-06"
+   ],
+   [
+    "dslib::C2016-11",
+    "dslib::C2016-12",
+    "dslib::C2016-13"
+   ],
+   [
+    "dslib::C2016-16",
+    "dslib::C2016-17",
+    "dslib::C2016-18",
+    "dslib::C2016-19",
+    "dslib::C2016-20",
+    "dslib::C2016-21",
+    "dslib::C2016-22",
+    "dslib::C2016-23",
+    "dslib::C2016-24",
+    "dslib::C2016-25",
+    "dslib::C2016-26"
+   ],
+   [
+    "dslib::C2016-31",
+    "dslib::C2016-32"
+   ],
+   [
+    "dslib::C2016-33",
+    "dslib::C2016-34"
+   ],
+   [
+    "own::129 trial",
+    "own::130 TRIAL"
+   ]
+  ],
+  "model": "XGBoost {'n_estimators': 300, 'max_depth': 6, 'learning_rate': 0.05, 'subsample': 0.8} (fixed, v6 values)",
+  "a_splits": 20,
+  "eligibility": "within-project AUC: >=30 test activities and >=5 in each class"
+ },
+ "results": {
+  "full": {
+   "B": {
+    "pooled_auc_median": 0.8345,
+    "pooled_auc_q25_q75": null,
+    "within_project": {
+     "n_projects": 7,
+     "median_auc": 0.736,
+     "median_ci95": [
+      0.6405,
+      0.8097
+     ],
+     "share_point_estimate_above_0.5": 1.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 3,
+      "median_auc": 0.7109,
+      "median_ci95": [
+       0.5451,
+       0.8187
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     },
+     "own": {
+      "n_projects": 4,
+      "median_auc": 0.7607,
+      "median_ci95": [
+       0.6405,
+       0.8097
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.8,
+    "project_grew_rate_median": 0.328,
+    "top10_lift_median": 1.86
+   },
+   "A_project": {
+    "pooled_auc_median": 0.6708,
+    "pooled_auc_q25_q75": [
+     0.5765,
+     0.6883
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5404,
+     "median_ci95": [
+      0.5165,
+      0.5713
+     ],
+     "share_point_estimate_above_0.5": 0.727
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5382,
+      "median_ci95": [
+       0.4454,
+       0.5713
+      ],
+      "share_point_estimate_above_0.5": 0.647
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5455,
+      "median_ci95": [
+       0.5287,
+       0.6503
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.275,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 1.08
+   },
+   "A_family": {
+    "pooled_auc_median": 0.6342,
+    "pooled_auc_q25_q75": [
+     0.5674,
+     0.7062
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5504,
+     "median_ci95": [
+      0.5011,
+      0.5902
+     ],
+     "share_point_estimate_above_0.5": 0.727
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5286,
+      "median_ci95": [
+       0.4677,
+       0.5667
+      ],
+      "share_point_estimate_above_0.5": 0.647
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5902,
+      "median_ci95": [
+       0.5235,
+       0.6722
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.274,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 1.12
+   }
+  },
+  "no_project": {
+   "B": {
+    "pooled_auc_median": 0.8076,
+    "pooled_auc_q25_q75": null,
+    "within_project": {
+     "n_projects": 7,
+     "median_auc": 0.7223,
+     "median_ci95": [
+      0.5724,
+      0.7925
+     ],
+     "share_point_estimate_above_0.5": 1.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 3,
+      "median_auc": 0.7925,
+      "median_ci95": [
+       0.528,
+       0.8064
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     },
+     "own": {
+      "n_projects": 4,
+      "median_auc": 0.7196,
+      "median_ci95": [
+       0.5724,
+       0.768
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.739,
+    "project_grew_rate_median": 0.328,
+    "top10_lift_median": 1.62
+   },
+   "A_project": {
+    "pooled_auc_median": 0.67,
+    "pooled_auc_q25_q75": [
+     0.5619,
+     0.6977
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5486,
+     "median_ci95": [
+      0.5014,
+      0.5739
+     ],
+     "share_point_estimate_above_0.5": 0.727
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5454,
+      "median_ci95": [
+       0.47,
+       0.5668
+      ],
+      "share_point_estimate_above_0.5": 0.647
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.6401,
+      "median_ci95": [
+       0.5097,
+       0.6892
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.208,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 1.01
+   },
+   "A_family": {
+    "pooled_auc_median": 0.669,
+    "pooled_auc_q25_q75": [
+     0.5518,
+     0.6963
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5286,
+     "median_ci95": [
+      0.5044,
+      0.5822
+     ],
+     "share_point_estimate_above_0.5": 0.727
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5172,
+      "median_ci95": [
+       0.4501,
+       0.5804
+      ],
+      "share_point_estimate_above_0.5": 0.647
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.6229,
+      "median_ci95": [
+       0.5211,
+       0.7392
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.183,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 0.82
+   }
+  },
+  "project_only": {
+   "B": {
+    "pooled_auc_median": 0.7687,
+    "pooled_auc_q25_q75": null,
+    "within_project": {
+     "n_projects": 7,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 3,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 4,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "top10_hit_rate_median": 0.5,
+    "project_grew_rate_median": 0.328,
+    "top10_lift_median": 1.03
+   },
+   "A_project": {
+    "pooled_auc_median": 0.6391,
+    "pooled_auc_q25_q75": [
+     0.5551,
+     0.6735
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "top10_hit_rate_median": 0.25,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 0.97
+   },
+   "A_family": {
+    "pooled_auc_median": 0.6222,
+    "pooled_auc_q25_q75": [
+     0.4609,
+     0.7107
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "top10_hit_rate_median": 0.25,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 0.97
+   }
+  },
+  "serving": {
+   "B": {
+    "pooled_auc_median": 0.8346,
+    "pooled_auc_q25_q75": null,
+    "within_project": {
+     "n_projects": 7,
+     "median_auc": 0.7721,
+     "median_ci95": [
+      0.6405,
+      0.7854
+     ],
+     "share_point_estimate_above_0.5": 1.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 3,
+      "median_auc": 0.7721,
+      "median_ci95": [
+       0.5189,
+       0.776
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     },
+     "own": {
+      "n_projects": 4,
+      "median_auc": 0.7723,
+      "median_ci95": [
+       0.6405,
+       0.8097
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.75,
+    "project_grew_rate_median": 0.328,
+    "top10_lift_median": 1.86
+   },
+   "A_project": {
+    "pooled_auc_median": 0.6636,
+    "pooled_auc_q25_q75": [
+     0.5849,
+     0.6795
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5484,
+     "median_ci95": [
+      0.4835,
+      0.608
+     ],
+     "share_point_estimate_above_0.5": 0.682
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5513,
+      "median_ci95": [
+       0.4581,
+       0.6305
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5455,
+      "median_ci95": [
+       0.5093,
+       0.6503
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.322,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 1.08
+   },
+   "A_family": {
+    "pooled_auc_median": 0.6437,
+    "pooled_auc_q25_q75": [
+     0.5714,
+     0.7094
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5597,
+     "median_ci95": [
+      0.4949,
+      0.6066
+     ],
+     "share_point_estimate_above_0.5": 0.682
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5241,
+      "median_ci95": [
+       0.4457,
+       0.6066
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5902,
+      "median_ci95": [
+       0.5125,
+       0.6722
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.292,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 1.1
+   }
+  },
+  "clean": {
+   "B": {
+    "pooled_auc_median": 0.7694,
+    "pooled_auc_q25_q75": null,
+    "within_project": {
+     "n_projects": 7,
+     "median_auc": 0.7232,
+     "median_ci95": [
+      0.5154,
+      0.728
+     ],
+     "share_point_estimate_above_0.5": 0.857
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 3,
+      "median_auc": 0.6224,
+      "median_ci95": [
+       0.4476,
+       0.7982
+      ],
+      "share_point_estimate_above_0.5": 0.667
+     },
+     "own": {
+      "n_projects": 4,
+      "median_auc": 0.7246,
+      "median_ci95": [
+       0.5154,
+       0.728
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.625,
+    "project_grew_rate_median": 0.328,
+    "top10_lift_median": 1.86
+   },
+   "A_project": {
+    "pooled_auc_median": 0.659,
+    "pooled_auc_q25_q75": [
+     0.5993,
+     0.7054
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5647,
+     "median_ci95": [
+      0.5339,
+      0.6215
+     ],
+     "share_point_estimate_above_0.5": 0.818
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5571,
+      "median_ci95": [
+       0.5233,
+       0.6541
+      ],
+      "share_point_estimate_above_0.5": 0.765
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5722,
+      "median_ci95": [
+       0.5486,
+       0.6826
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.317,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 1.13
+   },
+   "A_family": {
+    "pooled_auc_median": 0.6265,
+    "pooled_auc_q25_q75": [
+     0.5514,
+     0.7087
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5643,
+     "median_ci95": [
+      0.5161,
+      0.5936
+     ],
+     "share_point_estimate_above_0.5": 0.818
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5589,
+      "median_ci95": [
+       0.5053,
+       0.5891
+      ],
+      "share_point_estimate_above_0.5": 0.765
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5936,
+      "median_ci95": [
+       0.5106,
+       0.6656
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "top10_hit_rate_median": 0.279,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 1.05
+   }
+  },
+  "duration": {
+   "B": {
+    "pooled_auc_median": 0.6777,
+    "pooled_auc_q25_q75": null,
+    "within_project": {
+     "n_projects": 7,
+     "median_auc": 0.5177,
+     "median_ci95": [
+      0.413,
+      0.5912
+     ],
+     "share_point_estimate_above_0.5": 0.571
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 3,
+      "median_auc": 0.4579,
+      "median_ci95": [
+       0.413,
+       0.568
+      ],
+      "share_point_estimate_above_0.5": 0.333
+     },
+     "own": {
+      "n_projects": 4,
+      "median_auc": 0.5544,
+      "median_ci95": [
+       0.2455,
+       0.7879
+      ],
+      "share_point_estimate_above_0.5": 0.75
+     }
+    },
+    "top10_hit_rate_median": 0.333,
+    "project_grew_rate_median": 0.328,
+    "top10_lift_median": 1.02
+   },
+   "A_project": {
+    "pooled_auc_median": 0.5931,
+    "pooled_auc_q25_q75": [
+     0.5728,
+     0.6488
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5249,
+     "median_ci95": [
+      0.4623,
+      0.5699
+     ],
+     "share_point_estimate_above_0.5": 0.591
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5277,
+      "median_ci95": [
+       0.4623,
+       0.5699
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5103,
+      "median_ci95": [
+       0.2368,
+       0.6279
+      ],
+      "share_point_estimate_above_0.5": 0.6
+     }
+    },
+    "top10_hit_rate_median": 0.25,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 0.91
+   },
+   "A_family": {
+    "pooled_auc_median": 0.585,
+    "pooled_auc_q25_q75": [
+     0.5631,
+     0.6238
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5249,
+     "median_ci95": [
+      0.4623,
+      0.5699
+     ],
+     "share_point_estimate_above_0.5": 0.591
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5277,
+      "median_ci95": [
+       0.4623,
+       0.5699
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5103,
+      "median_ci95": [
+       0.2368,
+       0.6279
+      ],
+      "share_point_estimate_above_0.5": 0.6
+     }
+    },
+    "top10_hit_rate_median": 0.25,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 0.91
+   }
+  },
+  "successors": {
+   "B": {
+    "pooled_auc_median": 0.6514,
+    "pooled_auc_q25_q75": null,
+    "within_project": {
+     "n_projects": 7,
+     "median_auc": 0.5878,
+     "median_ci95": [
+      0.4709,
+      0.6243
+     ],
+     "share_point_estimate_above_0.5": 0.714
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 3,
+      "median_auc": 0.5878,
+      "median_ci95": [
+       0.539,
+       0.7517
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     },
+     "own": {
+      "n_projects": 4,
+      "median_auc": 0.5434,
+      "median_ci95": [
+       0.3608,
+       0.6243
+      ],
+      "share_point_estimate_above_0.5": 0.5
+     }
+    },
+    "top10_hit_rate_median": 0.609,
+    "project_grew_rate_median": 0.328,
+    "top10_lift_median": 1.24
+   },
+   "A_project": {
+    "pooled_auc_median": 0.5604,
+    "pooled_auc_q25_q75": [
+     0.51,
+     0.5894
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5329,
+     "median_ci95": [
+      0.491,
+      0.5627
+     ],
+     "share_point_estimate_above_0.5": 0.636
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5252,
+      "median_ci95": [
+       0.4856,
+       0.5643
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5413,
+      "median_ci95": [
+       0.3718,
+       0.6986
+      ],
+      "share_point_estimate_above_0.5": 0.8
+     }
+    },
+    "top10_hit_rate_median": 0.348,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 1.09
+   },
+   "A_family": {
+    "pooled_auc_median": 0.5758,
+    "pooled_auc_q25_q75": [
+     0.5476,
+     0.6125
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5329,
+     "median_ci95": [
+      0.491,
+      0.5627
+     ],
+     "share_point_estimate_above_0.5": 0.636
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5252,
+      "median_ci95": [
+       0.4856,
+       0.5643
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5413,
+      "median_ci95": [
+       0.3718,
+       0.6986
+      ],
+      "share_point_estimate_above_0.5": 0.8
+     }
+    },
+    "top10_hit_rate_median": 0.348,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 1.09
+   }
+  },
+  "source": {
+   "B": {
+    "pooled_auc_median": 0.6591,
+    "pooled_auc_q25_q75": null,
+    "within_project": {
+     "n_projects": 7,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 3,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 4,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "top10_hit_rate_median": 0.5,
+    "project_grew_rate_median": 0.328,
+    "top10_lift_median": 1.03
+   },
+   "A_project": {
+    "pooled_auc_median": 0.6568,
+    "pooled_auc_q25_q75": [
+     0.5,
+     0.6648
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "top10_hit_rate_median": 0.25,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 0.97
+   },
+   "A_family": {
+    "pooled_auc_median": 0.6218,
+    "pooled_auc_q25_q75": [
+     0.5547,
+     0.7158
+    ],
+    "within_project": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "top10_hit_rate_median": 0.25,
+    "project_grew_rate_median": 0.249,
+    "top10_lift_median": 0.97
+   }
+  }
+ },
+ "paired_within_project": {
+  "A_family": {
+   "full - duration": {
+    "n_projects": 22,
+    "median_diff": 0.006,
+    "ci95": [
+     -0.0558,
+     0.0702
+    ],
+    "projects_a_better": 11
+   },
+   "clean - duration": {
+    "n_projects": 22,
+    "median_diff": 0.0486,
+    "ci95": [
+     -0.0359,
+     0.0888
+    ],
+    "projects_a_better": 13
+   },
+   "clean - full": {
+    "n_projects": 22,
+    "median_diff": -0.0008,
+    "ci95": [
+     -0.0466,
+     0.0358
+    ],
+    "projects_a_better": 11
+   },
+   "no_project - full": {
+    "n_projects": 22,
+    "median_diff": -0.0095,
+    "ci95": [
+     -0.0593,
+     0.0128
+    ],
+    "projects_a_better": 10
+   },
+   "serving - full": {
+    "n_projects": 22,
+    "median_diff": 0.001,
+    "ci95": [
+     -0.0024,
+     0.018
+    ],
+    "projects_a_better": 11
+   }
+  },
+  "A_project": {
+   "full - duration": {
+    "n_projects": 22,
+    "median_diff": 0.0049,
+    "ci95": [
+     -0.0633,
+     0.0638
+    ],
+    "projects_a_better": 12
+   },
+   "clean - duration": {
+    "n_projects": 22,
+    "median_diff": 0.0555,
+    "ci95": [
+     -0.0247,
+     0.1054
+    ],
+    "projects_a_better": 14
+   },
+   "clean - full": {
+    "n_projects": 22,
+    "median_diff": 0.02,
+    "ci95": [
+     -0.012,
+     0.0603
+    ],
+    "projects_a_better": 13
+   },
+   "no_project - full": {
+    "n_projects": 22,
+    "median_diff": 0.0024,
+    "ci95": [
+     -0.039,
+     0.0101
+    ],
+    "projects_a_better": 11
+   },
+   "serving - full": {
+    "n_projects": 22,
+    "median_diff": 0.0012,
+    "ci95": [
+     -0.0007,
+     0.014
+    ],
+    "projects_a_better": 11
+   }
+  },
+  "B": {
+   "full - duration": {
+    "n_projects": 7,
+    "median_diff": 0.2185,
+    "ci95": [
+     0.0872,
+     0.395
+    ],
+    "projects_a_better": 6
+   },
+   "clean - duration": {
+    "n_projects": 7,
+    "median_diff": 0.132,
+    "ci95": [
+     -0.0104,
+     0.2699
+    ],
+    "projects_a_better": 5
+   },
+   "clean - full": {
+    "n_projects": 7,
+    "median_diff": -0.0864,
+    "ci95": [
+     -0.0976,
+     -0.0205
+    ],
+    "projects_a_better": 0
+   },
+   "no_project - full": {
+    "n_projects": 7,
+    "median_diff": -0.0171,
+    "ci95": [
+     -0.068,
+     -0.0123
+    ],
+    "projects_a_better": 1
+   },
+   "serving - full": {
+    "n_projects": 7,
+    "median_diff": 0.0,
+    "ci95": [
+     -0.0262,
+     0.0233
+    ],
+    "projects_a_better": 2
+   }
+  }
+ },
+ "serving_probability_level": {
+  "dslib": {
+   "observed_grew_rate": 0.175,
+   "mean_p_as_trained": 0.175,
+   "mean_p_as_served": 0.157
+  },
+  "own": {
+   "observed_grew_rate": 0.633,
+   "mean_p_as_trained": 0.632,
+   "mean_p_as_served": 0.649
+  }
+ }
+}
