@@ -1169,7 +1169,7 @@
   ],
   "families": {
    "n_projects": 66,
-   "n_families": 46,
+   "n_families": 44,
    "multi_project_families": [
     [
      "dslib::C2014-05",
@@ -1188,7 +1188,9 @@
     [
      "dslib::C2016-11",
      "dslib::C2016-12",
-     "dslib::C2016-13"
+     "dslib::C2016-13",
+     "dslib::C2016-14",
+     "dslib::C2016-15"
     ],
     [
      "dslib::C2016-16",

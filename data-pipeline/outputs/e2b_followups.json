@@ -1,0 +1,2655 @@
+{
+ "config": {
+  "design": "10 x 5-fold by family, fixed across runs",
+  "seed_base": 42,
+  "families": "outputs/project_families.json",
+  "variants": [
+   "full",
+   "clean",
+   "duration",
+   "successors",
+   "project_only",
+   "source"
+  ],
+  "eligible_per_run": {
+   "R1_original_rows_66_projects": 23,
+   "R2_original_rows_64_projects": 23,
+   "R3_cleaned_rows_64_projects": 22
+  },
+  "common_eligible_projects": [
+   "dslib::C2013-03",
+   "dslib::C2013-06",
+   "dslib::C2013-08",
+   "dslib::C2013-09",
+   "dslib::C2014-01",
+   "dslib::C2014-08",
+   "dslib::C2015-04",
+   "dslib::C2015-05",
+   "dslib::C2015-06",
+   "dslib::C2015-08",
+   "dslib::C2015-29",
+   "dslib::C2015-30",
+   "dslib::C2016-07",
+   "dslib::C2016-11",
+   "dslib::C2016-12",
+   "dslib::C2016-13",
+   "dslib::C2016-14",
+   "own::129 trial",
+   "own::130 TRIAL",
+   "own::CCA R03 dt 24Oct11SC",
+   "own::PORTO MATROUH",
+   "own::rehab-2"
+  ]
+ },
+ "1_decomposition_same_splits": {
+  "R1_original_rows_66_projects": {
+   "full": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5379,
+     "median_ci95": [
+      0.5223,
+      0.5677
+     ],
+     "share_point_estimate_above_0.5": 0.773
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5255,
+      "median_ci95": [
+       0.5169,
+       0.5482
+      ],
+      "share_point_estimate_above_0.5": 0.765
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5677,
+      "median_ci95": [
+       0.4916,
+       0.7609
+      ],
+      "share_point_estimate_above_0.5": 0.8
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.597,
+     "dslib": 0.5502,
+     "own": 0.6044
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 9
+    }
+   },
+   "clean": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5738,
+     "median_ci95": [
+      0.5199,
+      0.5969
+     ],
+     "share_point_estimate_above_0.5": 0.773
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5574,
+      "median_ci95": [
+       0.4943,
+       0.6139
+      ],
+      "share_point_estimate_above_0.5": 0.706
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5866,
+      "median_ci95": [
+       0.5707,
+       0.6514
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5788,
+     "dslib": 0.5423,
+     "own": 0.6008
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 9
+    }
+   },
+   "duration": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5249,
+     "median_ci95": [
+      0.4647,
+      0.5699
+     ],
+     "share_point_estimate_above_0.5": 0.591
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5277,
+      "median_ci95": [
+       0.4623,
+       0.5699
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.515,
+      "median_ci95": [
+       0.4129,
+       0.6443
+      ],
+      "share_point_estimate_above_0.5": 0.6
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5878,
+     "dslib": 0.5744,
+     "own": 0.596
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 9
+    }
+   },
+   "successors": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5358,
+     "median_ci95": [
+      0.491,
+      0.5643
+     ],
+     "share_point_estimate_above_0.5": 0.636
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5372,
+      "median_ci95": [
+       0.4856,
+       0.6071
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5345,
+      "median_ci95": [
+       0.3714,
+       0.6576
+      ],
+      "share_point_estimate_above_0.5": 0.8
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5239,
+     "dslib": 0.5335,
+     "own": 0.4535
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 9
+    }
+   },
+   "project_only": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.6284,
+     "dslib": 0.4835,
+     "own": 0.5007
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 9
+    }
+   },
+   "source": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5255,
+     "dslib": 0.5,
+     "own": 0.5
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 9
+    }
+   },
+   "paired_common": {
+    "clean - duration": {
+     "n_projects": 22,
+     "median_diff": 0.021,
+     "ci95": [
+      -0.0035,
+      0.0799
+     ],
+     "projects_a_better": 15
+    },
+    "clean - successors": {
+     "n_projects": 22,
+     "median_diff": 0.0091,
+     "ci95": [
+      -0.041,
+      0.0571
+     ],
+     "projects_a_better": 13
+    },
+    "clean - project_only": {
+     "n_projects": 22,
+     "median_diff": 0.0738,
+     "ci95": [
+      0.0267,
+      0.1003
+     ],
+     "projects_a_better": 17
+    },
+    "clean - source": {
+     "n_projects": 22,
+     "median_diff": 0.0738,
+     "ci95": [
+      0.0267,
+      0.1003
+     ],
+     "projects_a_better": 17
+    },
+    "full - duration": {
+     "n_projects": 22,
+     "median_diff": 0.019,
+     "ci95": [
+      -0.0439,
+      0.0563
+     ],
+     "projects_a_better": 12
+    },
+    "full - successors": {
+     "n_projects": 22,
+     "median_diff": 0.014,
+     "ci95": [
+      -0.0268,
+      0.0387
+     ],
+     "projects_a_better": 14
+    },
+    "full - project_only": {
+     "n_projects": 22,
+     "median_diff": 0.0379,
+     "ci95": [
+      0.0223,
+      0.0677
+     ],
+     "projects_a_better": 17
+    },
+    "full - source": {
+     "n_projects": 22,
+     "median_diff": 0.0379,
+     "ci95": [
+      0.0223,
+      0.0677
+     ],
+     "projects_a_better": 17
+    },
+    "clean - full": {
+     "n_projects": 22,
+     "median_diff": -0.0049,
+     "ci95": [
+      -0.028,
+      0.0359
+     ],
+     "projects_a_better": 10
+    }
+   },
+   "strongest_baseline_by_median": "successors"
+  },
+  "R2_original_rows_64_projects": {
+   "full": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5458,
+     "median_ci95": [
+      0.5252,
+      0.5907
+     ],
+     "share_point_estimate_above_0.5": 0.818
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5404,
+      "median_ci95": [
+       0.5053,
+       0.6116
+      ],
+      "share_point_estimate_above_0.5": 0.765
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5659,
+      "median_ci95": [
+       0.5437,
+       0.7913
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.6337,
+     "dslib": 0.5581,
+     "own": 0.6147
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "clean": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5673,
+     "median_ci95": [
+      0.537,
+      0.6022
+     ],
+     "share_point_estimate_above_0.5": 0.818
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5483,
+      "median_ci95": [
+       0.5184,
+       0.6022
+      ],
+      "share_point_estimate_above_0.5": 0.765
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5914,
+      "median_ci95": [
+       0.5712,
+       0.6386
+      ],
+      "share_point_estimate_above_0.5": 1.0
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.6077,
+     "dslib": 0.5316,
+     "own": 0.6647
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "duration": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5249,
+     "median_ci95": [
+      0.4647,
+      0.5699
+     ],
+     "share_point_estimate_above_0.5": 0.591
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5277,
+      "median_ci95": [
+       0.4623,
+       0.5699
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.515,
+      "median_ci95": [
+       0.4129,
+       0.6443
+      ],
+      "share_point_estimate_above_0.5": 0.6
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.6012,
+     "dslib": 0.5744,
+     "own": 0.6443
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "successors": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5358,
+     "median_ci95": [
+      0.491,
+      0.5643
+     ],
+     "share_point_estimate_above_0.5": 0.636
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5372,
+      "median_ci95": [
+       0.4856,
+       0.6071
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5345,
+      "median_ci95": [
+       0.3714,
+       0.6576
+      ],
+      "share_point_estimate_above_0.5": 0.8
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5547,
+     "dslib": 0.5335,
+     "own": 0.5292
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "project_only": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.627,
+     "dslib": 0.467,
+     "own": 0.5
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "source": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5759,
+     "dslib": 0.5,
+     "own": 0.5
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "paired_common": {
+    "clean - duration": {
+     "n_projects": 22,
+     "median_diff": 0.0462,
+     "ci95": [
+      -0.0197,
+      0.0889
+     ],
+     "projects_a_better": 12
+    },
+    "clean - successors": {
+     "n_projects": 22,
+     "median_diff": 0.0255,
+     "ci95": [
+      -0.0173,
+      0.0594
+     ],
+     "projects_a_better": 13
+    },
+    "clean - project_only": {
+     "n_projects": 22,
+     "median_diff": 0.0673,
+     "ci95": [
+      0.037,
+      0.1022
+     ],
+     "projects_a_better": 18
+    },
+    "clean - source": {
+     "n_projects": 22,
+     "median_diff": 0.0673,
+     "ci95": [
+      0.037,
+      0.1022
+     ],
+     "projects_a_better": 18
+    },
+    "full - duration": {
+     "n_projects": 22,
+     "median_diff": 0.0231,
+     "ci95": [
+      -0.0529,
+      0.0786
+     ],
+     "projects_a_better": 13
+    },
+    "full - successors": {
+     "n_projects": 22,
+     "median_diff": 0.0126,
+     "ci95": [
+      -0.0134,
+      0.0561
+     ],
+     "projects_a_better": 14
+    },
+    "full - project_only": {
+     "n_projects": 22,
+     "median_diff": 0.0458,
+     "ci95": [
+      0.0252,
+      0.0907
+     ],
+     "projects_a_better": 18
+    },
+    "full - source": {
+     "n_projects": 22,
+     "median_diff": 0.0458,
+     "ci95": [
+      0.0252,
+      0.0907
+     ],
+     "projects_a_better": 18
+    },
+    "clean - full": {
+     "n_projects": 22,
+     "median_diff": 0.0144,
+     "ci95": [
+      -0.0199,
+      0.0323
+     ],
+     "projects_a_better": 13
+    }
+   },
+   "strongest_baseline_by_median": "successors"
+  },
+  "R3_cleaned_rows_64_projects": {
+   "full": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5406,
+     "median_ci95": [
+      0.4909,
+      0.5799
+     ],
+     "share_point_estimate_above_0.5": 0.682
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5388,
+      "median_ci95": [
+       0.4701,
+       0.5818
+      ],
+      "share_point_estimate_above_0.5": 0.647
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5779,
+      "median_ci95": [
+       0.4595,
+       0.6643
+      ],
+      "share_point_estimate_above_0.5": 0.8
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5952,
+     "dslib": 0.5488,
+     "own": 0.5706
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "clean": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5524,
+     "median_ci95": [
+      0.517,
+      0.5913
+     ],
+     "share_point_estimate_above_0.5": 0.773
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5489,
+      "median_ci95": [
+       0.5113,
+       0.6214
+      ],
+      "share_point_estimate_above_0.5": 0.765
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5856,
+      "median_ci95": [
+       0.486,
+       0.6296
+      ],
+      "share_point_estimate_above_0.5": 0.8
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5961,
+     "dslib": 0.5326,
+     "own": 0.6059
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "duration": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5249,
+     "median_ci95": [
+      0.4623,
+      0.5699
+     ],
+     "share_point_estimate_above_0.5": 0.591
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5277,
+      "median_ci95": [
+       0.4623,
+       0.5699
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5103,
+      "median_ci95": [
+       0.2368,
+       0.6279
+      ],
+      "share_point_estimate_above_0.5": 0.6
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5998,
+     "dslib": 0.5677,
+     "own": 0.518
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "successors": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5329,
+     "median_ci95": [
+      0.491,
+      0.5627
+     ],
+     "share_point_estimate_above_0.5": 0.636
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5252,
+      "median_ci95": [
+       0.4856,
+       0.5643
+      ],
+      "share_point_estimate_above_0.5": 0.588
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5413,
+      "median_ci95": [
+       0.3718,
+       0.6986
+      ],
+      "share_point_estimate_above_0.5": 0.8
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5583,
+     "dslib": 0.5317,
+     "own": 0.5286
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "project_only": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.6163,
+     "dslib": 0.4849,
+     "own": 0.5
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "source": {
+    "within_common": {
+     "n_projects": 22,
+     "median_auc": 0.5,
+     "median_ci95": [
+      0.5,
+      0.5
+     ],
+     "share_point_estimate_above_0.5": 0.0
+    },
+    "within_by_source": {
+     "dslib": {
+      "n_projects": 17,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     },
+     "own": {
+      "n_projects": 5,
+      "median_auc": 0.5,
+      "median_ci95": [
+       0.5,
+       0.5
+      ],
+      "share_point_estimate_above_0.5": 0.0
+     }
+    },
+    "pooled_median_by_source": {
+     "all": 0.5774,
+     "dslib": 0.5,
+     "own": 0.5
+    },
+    "pooled_projects_by_source": {
+     "dslib": 57,
+     "own": 7
+    }
+   },
+   "paired_common": {
+    "clean - duration": {
+     "n_projects": 22,
+     "median_diff": 0.0416,
+     "ci95": [
+      -0.0119,
+      0.0837
+     ],
+     "projects_a_better": 14
+    },
+    "clean - successors": {
+     "n_projects": 22,
+     "median_diff": -0.0016,
+     "ci95": [
+      -0.0226,
+      0.0488
+     ],
+     "projects_a_better": 11
+    },
+    "clean - project_only": {
+     "n_projects": 22,
+     "median_diff": 0.0524,
+     "ci95": [
+      0.017,
+      0.0971
+     ],
+     "projects_a_better": 17
+    },
+    "clean - source": {
+     "n_projects": 22,
+     "median_diff": 0.0524,
+     "ci95": [
+      0.017,
+      0.0971
+     ],
+     "projects_a_better": 17
+    },
+    "full - duration": {
+     "n_projects": 22,
+     "median_diff": 0.0145,
+     "ci95": [
+      -0.0518,
+      0.0739
+     ],
+     "projects_a_better": 12
+    },
+    "full - successors": {
+     "n_projects": 22,
+     "median_diff": 0.0015,
+     "ci95": [
+      -0.022,
+      0.0301
+     ],
+     "projects_a_better": 11
+    },
+    "full - project_only": {
+     "n_projects": 22,
+     "median_diff": 0.0406,
+     "ci95": [
+      -0.0091,
+      0.0818
+     ],
+     "projects_a_better": 15
+    },
+    "full - source": {
+     "n_projects": 22,
+     "median_diff": 0.0406,
+     "ci95": [
+      -0.0091,
+      0.0818
+     ],
+     "projects_a_better": 15
+    },
+    "clean - full": {
+     "n_projects": 22,
+     "median_diff": 0.015,
+     "ci95": [
+      -0.0204,
+      0.0544
+     ],
+     "projects_a_better": 13
+    }
+   },
+   "strongest_baseline_by_median": "successors"
+  }
+ },
+ "5_top10_per_project_R3": [
+  {
+   "project": "dslib::C2013-03",
+   "source": "dslib",
+   "test_activities_mean": 55.0,
+   "project_grew_rate": 0.291,
+   "top10_grew_rate_full": 0.117,
+   "lift_full": 0.4,
+   "top10_grew_rate_clean": 0.017,
+   "lift_clean": 0.06,
+   "top10_grew_rate_duration": 0.0,
+   "lift_duration": 0.0,
+   "top10_grew_rate_successors": 0.167,
+   "lift_successors": 0.57,
+   "top10_grew_rate_project_only": 0.0,
+   "lift_project_only": 0.0,
+   "top10_grew_rate_source": 0.0,
+   "lift_source": 0.0
+  },
+  {
+   "project": "dslib::C2013-06",
+   "source": "dslib",
+   "test_activities_mean": 275.0,
+   "project_grew_rate": 0.178,
+   "top10_grew_rate_full": 0.175,
+   "lift_full": 0.98,
+   "top10_grew_rate_clean": 0.204,
+   "lift_clean": 1.14,
+   "top10_grew_rate_duration": 0.143,
+   "lift_duration": 0.8,
+   "top10_grew_rate_successors": 0.107,
+   "lift_successors": 0.6,
+   "top10_grew_rate_project_only": 0.143,
+   "lift_project_only": 0.8,
+   "top10_grew_rate_source": 0.143,
+   "lift_source": 0.8
+  },
+  {
+   "project": "dslib::C2013-08",
+   "source": "dslib",
+   "test_activities_mean": 41.0,
+   "project_grew_rate": 0.244,
+   "top10_grew_rate_full": 0.375,
+   "lift_full": 1.54,
+   "top10_grew_rate_clean": 0.175,
+   "lift_clean": 0.72,
+   "top10_grew_rate_duration": 0.75,
+   "lift_duration": 3.08,
+   "top10_grew_rate_successors": 0.75,
+   "lift_successors": 3.08,
+   "top10_grew_rate_project_only": 0.0,
+   "lift_project_only": 0.0,
+   "top10_grew_rate_source": 0.0,
+   "lift_source": 0.0
+  },
+  {
+   "project": "dslib::C2013-09",
+   "source": "dslib",
+   "test_activities_mean": 71.0,
+   "project_grew_rate": 0.31,
+   "top10_grew_rate_full": 0.257,
+   "lift_full": 0.83,
+   "top10_grew_rate_clean": 0.443,
+   "lift_clean": 1.43,
+   "top10_grew_rate_duration": 0.0,
+   "lift_duration": 0.0,
+   "top10_grew_rate_successors": 0.571,
+   "lift_successors": 1.84,
+   "top10_grew_rate_project_only": 0.143,
+   "lift_project_only": 0.46,
+   "top10_grew_rate_source": 0.143,
+   "lift_source": 0.46
+  },
+  {
+   "project": "dslib::C2014-01",
+   "source": "dslib",
+   "test_activities_mean": 41.0,
+   "project_grew_rate": 0.171,
+   "top10_grew_rate_full": 0.225,
+   "lift_full": 1.32,
+   "top10_grew_rate_clean": 0.275,
+   "lift_clean": 1.61,
+   "top10_grew_rate_duration": 0.25,
+   "lift_duration": 1.46,
+   "top10_grew_rate_successors": 0.5,
+   "lift_successors": 2.93,
+   "top10_grew_rate_project_only": 0.25,
+   "lift_project_only": 1.46,
+   "top10_grew_rate_source": 0.25,
+   "lift_source": 1.46
+  },
+  {
+   "project": "dslib::C2014-08",
+   "source": "dslib",
+   "test_activities_mean": 39.0,
+   "project_grew_rate": 0.538,
+   "top10_grew_rate_full": 0.65,
+   "lift_full": 1.21,
+   "top10_grew_rate_clean": 0.525,
+   "lift_clean": 0.98,
+   "top10_grew_rate_duration": 1.0,
+   "lift_duration": 1.86,
+   "top10_grew_rate_successors": 0.5,
+   "lift_successors": 0.93,
+   "top10_grew_rate_project_only": 0.75,
+   "lift_project_only": 1.39,
+   "top10_grew_rate_source": 0.75,
+   "lift_source": 1.39
+  },
+  {
+   "project": "dslib::C2015-04",
+   "source": "dslib",
+   "test_activities_mean": 56.0,
+   "project_grew_rate": 0.161,
+   "top10_grew_rate_full": 0.183,
+   "lift_full": 1.14,
+   "top10_grew_rate_clean": 0.15,
+   "lift_clean": 0.93,
+   "top10_grew_rate_duration": 0.0,
+   "lift_duration": 0.0,
+   "top10_grew_rate_successors": 0.5,
+   "lift_successors": 3.11,
+   "top10_grew_rate_project_only": 0.0,
+   "lift_project_only": 0.0,
+   "top10_grew_rate_source": 0.0,
+   "lift_source": 0.0
+  },
+  {
+   "project": "dslib::C2015-05",
+   "source": "dslib",
+   "test_activities_mean": 64.0,
+   "project_grew_rate": 0.172,
+   "top10_grew_rate_full": 0.217,
+   "lift_full": 1.26,
+   "top10_grew_rate_clean": 0.083,
+   "lift_clean": 0.48,
+   "top10_grew_rate_duration": 0.0,
+   "lift_duration": 0.0,
+   "top10_grew_rate_successors": 0.333,
+   "lift_successors": 1.94,
+   "top10_grew_rate_project_only": 0.0,
+   "lift_project_only": 0.0,
+   "top10_grew_rate_source": 0.0,
+   "lift_source": 0.0
+  },
+  {
+   "project": "dslib::C2015-06",
+   "source": "dslib",
+   "test_activities_mean": 184.0,
+   "project_grew_rate": 0.114,
+   "top10_grew_rate_full": 0.294,
+   "lift_full": 2.58,
+   "top10_grew_rate_clean": 0.344,
+   "lift_clean": 3.02,
+   "top10_grew_rate_duration": 0.278,
+   "lift_duration": 2.43,
+   "top10_grew_rate_successors": 0.333,
+   "lift_successors": 2.92,
+   "top10_grew_rate_project_only": 0.111,
+   "lift_project_only": 0.97,
+   "top10_grew_rate_source": 0.111,
+   "lift_source": 0.97
+  },
+  {
+   "project": "dslib::C2015-08",
+   "source": "dslib",
+   "test_activities_mean": 186.0,
+   "project_grew_rate": 0.032,
+   "top10_grew_rate_full": 0.005,
+   "lift_full": 0.16,
+   "top10_grew_rate_clean": 0.0,
+   "lift_clean": 0.0,
+   "top10_grew_rate_duration": 0.0,
+   "lift_duration": 0.0,
+   "top10_grew_rate_successors": 0.0,
+   "lift_successors": 0.0,
+   "top10_grew_rate_project_only": 0.0,
+   "lift_project_only": 0.0,
+   "top10_grew_rate_source": 0.0,
+   "lift_source": 0.0
+  },
+  {
+   "project": "dslib::C2015-29",
+   "source": "dslib",
+   "test_activities_mean": 204.0,
+   "project_grew_rate": 0.279,
+   "top10_grew_rate_full": 0.28,
+   "lift_full": 1.0,
+   "top10_grew_rate_clean": 0.29,
+   "lift_clean": 1.04,
+   "top10_grew_rate_duration": 0.3,
+   "lift_duration": 1.07,
+   "top10_grew_rate_successors": 0.3,
+   "lift_successors": 1.07,
+   "top10_grew_rate_project_only": 0.25,
+   "lift_project_only": 0.89,
+   "top10_grew_rate_source": 0.25,
+   "lift_source": 0.89
+  },
+  {
+   "project": "dslib::C2015-30",
+   "source": "dslib",
+   "test_activities_mean": 40.0,
+   "project_grew_rate": 0.225,
+   "top10_grew_rate_full": 0.05,
+   "lift_full": 0.22,
+   "top10_grew_rate_clean": 0.425,
+   "lift_clean": 1.89,
+   "top10_grew_rate_duration": 0.25,
+   "lift_duration": 1.11,
+   "top10_grew_rate_successors": 0.25,
+   "lift_successors": 1.11,
+   "top10_grew_rate_project_only": 0.25,
+   "lift_project_only": 1.11,
+   "top10_grew_rate_source": 0.25,
+   "lift_source": 1.11
+  },
+  {
+   "project": "dslib::C2016-07",
+   "source": "dslib",
+   "test_activities_mean": 110.0,
+   "project_grew_rate": 0.073,
+   "top10_grew_rate_full": 0.045,
+   "lift_full": 0.62,
+   "top10_grew_rate_clean": 0.009,
+   "lift_clean": 0.12,
+   "top10_grew_rate_duration": 0.091,
+   "lift_duration": 1.25,
+   "top10_grew_rate_successors": 0.364,
+   "lift_successors": 5.0,
+   "top10_grew_rate_project_only": 0.273,
+   "lift_project_only": 3.75,
+   "top10_grew_rate_source": 0.273,
+   "lift_source": 3.75
+  },
+  {
+   "project": "dslib::C2016-11",
+   "source": "dslib",
+   "test_activities_mean": 55.0,
+   "project_grew_rate": 0.255,
+   "top10_grew_rate_full": 0.1,
+   "lift_full": 0.39,
+   "top10_grew_rate_clean": 0.067,
+   "lift_clean": 0.26,
+   "top10_grew_rate_duration": 0.5,
+   "lift_duration": 1.96,
+   "top10_grew_rate_successors": 0.167,
+   "lift_successors": 0.65,
+   "top10_grew_rate_project_only": 0.0,
+   "lift_project_only": 0.0,
+   "top10_grew_rate_source": 0.0,
+   "lift_source": 0.0
+  },
+  {
+   "project": "dslib::C2016-12",
+   "source": "dslib",
+   "test_activities_mean": 59.0,
+   "project_grew_rate": 0.169,
+   "top10_grew_rate_full": 0.117,
+   "lift_full": 0.69,
+   "top10_grew_rate_clean": 0.133,
+   "lift_clean": 0.79,
+   "top10_grew_rate_duration": 0.167,
+   "lift_duration": 0.98,
+   "top10_grew_rate_successors": 0.167,
+   "lift_successors": 0.98,
+   "top10_grew_rate_project_only": 0.333,
+   "lift_project_only": 1.97,
+   "top10_grew_rate_source": 0.333,
+   "lift_source": 1.97
+  },
+  {
+   "project": "dslib::C2016-13",
+   "source": "dslib",
+   "test_activities_mean": 51.0,
+   "project_grew_rate": 0.333,
+   "top10_grew_rate_full": 0.5,
+   "lift_full": 1.5,
+   "top10_grew_rate_clean": 0.3,
+   "lift_clean": 0.9,
+   "top10_grew_rate_duration": 0.4,
+   "lift_duration": 1.2,
+   "top10_grew_rate_successors": 0.4,
+   "lift_successors": 1.2,
+   "top10_grew_rate_project_only": 0.6,
+   "lift_project_only": 1.8,
+   "top10_grew_rate_source": 0.6,
+   "lift_source": 1.8
+  },
+  {
+   "project": "dslib::C2016-14",
+   "source": "dslib",
+   "test_activities_mean": 48.0,
+   "project_grew_rate": 0.271,
+   "top10_grew_rate_full": 0.06,
+   "lift_full": 0.22,
+   "top10_grew_rate_clean": 0.5,
+   "lift_clean": 1.85,
+   "top10_grew_rate_duration": 0.0,
+   "lift_duration": 0.0,
+   "top10_grew_rate_successors": 0.0,
+   "lift_successors": 0.0,
+   "top10_grew_rate_project_only": 0.4,
+   "lift_project_only": 1.48,
+   "top10_grew_rate_source": 0.4,
+   "lift_source": 1.48
+  },
+  {
+   "project": "own::129 trial",
+   "source": "own",
+   "test_activities_mean": 766.0,
+   "project_grew_rate": 0.601,
+   "top10_grew_rate_full": 0.735,
+   "lift_full": 1.22,
+   "top10_grew_rate_clean": 0.83,
+   "lift_clean": 1.38,
+   "top10_grew_rate_duration": 0.571,
+   "lift_duration": 0.95,
+   "top10_grew_rate_successors": 0.714,
+   "lift_successors": 1.19,
+   "top10_grew_rate_project_only": 0.584,
+   "lift_project_only": 0.97,
+   "top10_grew_rate_source": 0.584,
+   "lift_source": 0.97
+  },
+  {
+   "project": "own::130 TRIAL",
+   "source": "own",
+   "test_activities_mean": 82.0,
+   "project_grew_rate": 0.878,
+   "top10_grew_rate_full": 0.975,
+   "lift_full": 1.11,
+   "top10_grew_rate_clean": 0.762,
+   "lift_clean": 0.87,
+   "top10_grew_rate_duration": 0.625,
+   "lift_duration": 0.71,
+   "top10_grew_rate_successors": 1.0,
+   "lift_successors": 1.14,
+   "top10_grew_rate_project_only": 0.875,
+   "lift_project_only": 1.0,
+   "top10_grew_rate_source": 0.875,
+   "lift_source": 1.0
+  },
+  {
+   "project": "own::CCA R03 dt 24Oct11SC",
+   "source": "own",
+   "test_activities_mean": 1533.0,
+   "project_grew_rate": 0.797,
+   "top10_grew_rate_full": 0.894,
+   "lift_full": 1.12,
+   "top10_grew_rate_clean": 0.905,
+   "lift_clean": 1.13,
+   "top10_grew_rate_duration": 0.654,
+   "lift_duration": 0.82,
+   "top10_grew_rate_successors": 0.856,
+   "lift_successors": 1.07,
+   "top10_grew_rate_project_only": 0.817,
+   "lift_project_only": 1.02,
+   "top10_grew_rate_source": 0.817,
+   "lift_source": 1.02
+  },
+  {
+   "project": "own::PORTO MATROUH",
+   "source": "own",
+   "test_activities_mean": 392.0,
+   "project_grew_rate": 0.094,
+   "top10_grew_rate_full": 0.049,
+   "lift_full": 0.52,
+   "top10_grew_rate_clean": 0.077,
+   "lift_clean": 0.81,
+   "top10_grew_rate_duration": 0.0,
+   "lift_duration": 0.0,
+   "top10_grew_rate_successors": 0.0,
+   "lift_successors": 0.0,
+   "top10_grew_rate_project_only": 0.0,
+   "lift_project_only": 0.0,
+   "top10_grew_rate_source": 0.0,
+   "lift_source": 0.0
+  },
+  {
+   "project": "own::rehab-2",
+   "source": "own",
+   "test_activities_mean": 2035.0,
+   "project_grew_rate": 0.617,
+   "top10_grew_rate_full": 0.589,
+   "lift_full": 0.95,
+   "top10_grew_rate_clean": 0.596,
+   "lift_clean": 0.97,
+   "top10_grew_rate_duration": 0.534,
+   "lift_duration": 0.87,
+   "top10_grew_rate_successors": 0.618,
+   "lift_successors": 1.0,
+   "top10_grew_rate_project_only": 0.681,
+   "lift_project_only": 1.1,
+   "top10_grew_rate_source": 0.681,
+   "lift_source": 1.1
+  }
+ ],
+ "2_survivorship_bhd_per_project_decile": {
+  "own::129 trial": {
+   "0-10%": {
+    "activities": 2,
+    "labelled": 2,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "10-20%": {
+    "activities": 32,
+    "labelled": 32,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.781,
+    "labelled_share": 1.0
+   },
+   "20-30%": {
+    "activities": 48,
+    "labelled": 48,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.729,
+    "labelled_share": 1.0
+   },
+   "30-40%": {
+    "activities": 140,
+    "labelled": 139,
+    "running": 1,
+    "running_known_overrun": 1,
+    "not_started": 0,
+    "grew_rate_labelled": 0.763,
+    "labelled_share": 0.993
+   },
+   "40-50%": {
+    "activities": 75,
+    "labelled": 74,
+    "running": 1,
+    "running_known_overrun": 1,
+    "not_started": 0,
+    "grew_rate_labelled": 0.635,
+    "labelled_share": 0.987
+   },
+   "50-60%": {
+    "activities": 103,
+    "labelled": 101,
+    "running": 2,
+    "running_known_overrun": 2,
+    "not_started": 0,
+    "grew_rate_labelled": 0.545,
+    "labelled_share": 0.981
+   },
+   "60-70%": {
+    "activities": 211,
+    "labelled": 187,
+    "running": 24,
+    "running_known_overrun": 24,
+    "not_started": 0,
+    "grew_rate_labelled": 0.556,
+    "labelled_share": 0.886
+   },
+   "70-80%": {
+    "activities": 165,
+    "labelled": 145,
+    "running": 20,
+    "running_known_overrun": 20,
+    "not_started": 0,
+    "grew_rate_labelled": 0.531,
+    "labelled_share": 0.879
+   },
+   "80-90%": {
+    "activities": 829,
+    "labelled": 33,
+    "running": 62,
+    "running_known_overrun": 56,
+    "not_started": 734,
+    "grew_rate_labelled": 0.303,
+    "labelled_share": 0.04
+   },
+   "90-100%": {
+    "activities": 411,
+    "labelled": 5,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 406,
+    "grew_rate_labelled": 0.2,
+    "labelled_share": 0.012
+   }
+  },
+  "own::130 TRIAL": {
+   "0-10%": {
+    "activities": 2,
+    "labelled": 2,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "10-20%": {
+    "activities": 2,
+    "labelled": 2,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "50-60%": {
+    "activities": 2,
+    "labelled": 2,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 1.0,
+    "labelled_share": 1.0
+   },
+   "60-70%": {
+    "activities": 29,
+    "labelled": 27,
+    "running": 2,
+    "running_known_overrun": 2,
+    "not_started": 0,
+    "grew_rate_labelled": 1.0,
+    "labelled_share": 0.931
+   },
+   "70-80%": {
+    "activities": 50,
+    "labelled": 38,
+    "running": 12,
+    "running_known_overrun": 12,
+    "not_started": 0,
+    "grew_rate_labelled": 0.895,
+    "labelled_share": 0.76
+   },
+   "80-90%": {
+    "activities": 264,
+    "labelled": 11,
+    "running": 23,
+    "running_known_overrun": 23,
+    "not_started": 230,
+    "grew_rate_labelled": 0.818,
+    "labelled_share": 0.042
+   },
+   "90-100%": {
+    "activities": 33,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 33,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   }
+  },
+  "own::CCA R03 dt 24Oct11SC": {
+   "0-10%": {
+    "activities": 98,
+    "labelled": 98,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.296,
+    "labelled_share": 1.0
+   },
+   "10-20%": {
+    "activities": 211,
+    "labelled": 211,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.777,
+    "labelled_share": 1.0
+   },
+   "20-30%": {
+    "activities": 728,
+    "labelled": 603,
+    "running": 125,
+    "running_known_overrun": 95,
+    "not_started": 0,
+    "grew_rate_labelled": 0.872,
+    "labelled_share": 0.828
+   },
+   "30-40%": {
+    "activities": 1744,
+    "labelled": 488,
+    "running": 1256,
+    "running_known_overrun": 850,
+    "not_started": 0,
+    "grew_rate_labelled": 0.818,
+    "labelled_share": 0.28
+   },
+   "40-50%": {
+    "activities": 2942,
+    "labelled": 101,
+    "running": 965,
+    "running_known_overrun": 427,
+    "not_started": 1876,
+    "grew_rate_labelled": 0.733,
+    "labelled_share": 0.034
+   },
+   "50-60%": {
+    "activities": 4094,
+    "labelled": 13,
+    "running": 112,
+    "running_known_overrun": 38,
+    "not_started": 3969,
+    "grew_rate_labelled": 0.846,
+    "labelled_share": 0.003
+   },
+   "60-70%": {
+    "activities": 4024,
+    "labelled": 15,
+    "running": 31,
+    "running_known_overrun": 25,
+    "not_started": 3978,
+    "grew_rate_labelled": 1.0,
+    "labelled_share": 0.004
+   },
+   "70-80%": {
+    "activities": 1355,
+    "labelled": 4,
+    "running": 6,
+    "running_known_overrun": 4,
+    "not_started": 1345,
+    "grew_rate_labelled": 1.0,
+    "labelled_share": 0.003
+   },
+   "80-90%": {
+    "activities": 52,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 52,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   }
+  },
+  "own::PORTO MATROUH": {
+   "0-10%": {
+    "activities": 42,
+    "labelled": 42,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "10-20%": {
+    "activities": 40,
+    "labelled": 40,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.05,
+    "labelled_share": 1.0
+   },
+   "20-30%": {
+    "activities": 300,
+    "labelled": 209,
+    "running": 8,
+    "running_known_overrun": 6,
+    "not_started": 83,
+    "grew_rate_labelled": 0.105,
+    "labelled_share": 0.697
+   },
+   "30-40%": {
+    "activities": 262,
+    "labelled": 81,
+    "running": 12,
+    "running_known_overrun": 8,
+    "not_started": 169,
+    "grew_rate_labelled": 0.099,
+    "labelled_share": 0.309
+   },
+   "40-50%": {
+    "activities": 144,
+    "labelled": 19,
+    "running": 7,
+    "running_known_overrun": 7,
+    "not_started": 118,
+    "grew_rate_labelled": 0.263,
+    "labelled_share": 0.132
+   },
+   "50-60%": {
+    "activities": 72,
+    "labelled": 1,
+    "running": 3,
+    "running_known_overrun": 1,
+    "not_started": 68,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 0.014
+   },
+   "60-70%": {
+    "activities": 71,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 71,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "70-80%": {
+    "activities": 83,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 83,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "80-90%": {
+    "activities": 20,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 20,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "90-100%": {
+    "activities": 23,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 23,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   }
+  },
+  "own::Update 01-09-2010": {
+   "0-10%": {
+    "activities": 6,
+    "labelled": 6,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.167,
+    "labelled_share": 1.0
+   },
+   "10-20%": {
+    "activities": 5,
+    "labelled": 4,
+    "running": 1,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.25,
+    "labelled_share": 0.8
+   },
+   "20-30%": {
+    "activities": 9,
+    "labelled": 1,
+    "running": 1,
+    "running_known_overrun": 0,
+    "not_started": 7,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 0.111
+   },
+   "30-40%": {
+    "activities": 6,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 6,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "40-50%": {
+    "activities": 6,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 6,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "50-60%": {
+    "activities": 5,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 5,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "60-70%": {
+    "activities": 4,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 4,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "70-80%": {
+    "activities": 5,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 5,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "80-90%": {
+    "activities": 7,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 7,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "90-100%": {
+    "activities": 5,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 5,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   }
+  },
+  "own::cairo alex-road": {
+   "0-10%": {
+    "activities": 8,
+    "labelled": 8,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.375,
+    "labelled_share": 1.0
+   },
+   "10-20%": {
+    "activities": 10,
+    "labelled": 10,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "20-30%": {
+    "activities": 1,
+    "labelled": 1,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "30-40%": {
+    "activities": 7,
+    "labelled": 7,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "40-50%": {
+    "activities": 2,
+    "labelled": 2,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "50-60%": {
+    "activities": 9,
+    "labelled": 9,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "60-70%": {
+    "activities": 1,
+    "labelled": 1,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "70-80%": {
+    "activities": 2,
+    "labelled": 0,
+    "running": 1,
+    "running_known_overrun": 0,
+    "not_started": 1,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "80-90%": {
+    "activities": 5,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 5,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "90-100%": {
+    "activities": 1,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 1,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   }
+  },
+  "own::jumaira": {
+   "0-10%": {
+    "activities": 486,
+    "labelled": 486,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "10-20%": {
+    "activities": 35,
+    "labelled": 35,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "20-30%": {
+    "activities": 18,
+    "labelled": 18,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "30-40%": {
+    "activities": 20,
+    "labelled": 20,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "40-50%": {
+    "activities": 200,
+    "labelled": 200,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 1.0
+   },
+   "50-60%": {
+    "activities": 656,
+    "labelled": 576,
+    "running": 80,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 0.878
+   },
+   "60-70%": {
+    "activities": 1059,
+    "labelled": 10,
+    "running": 108,
+    "running_known_overrun": 0,
+    "not_started": 941,
+    "grew_rate_labelled": 0.0,
+    "labelled_share": 0.009
+   },
+   "70-80%": {
+    "activities": 905,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 905,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "80-90%": {
+    "activities": 336,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 336,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "90-100%": {
+    "activities": 30,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 30,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   }
+  },
+  "own::rehab-2": {
+   "0-10%": {
+    "activities": 49,
+    "labelled": 49,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.347,
+    "labelled_share": 1.0
+   },
+   "10-20%": {
+    "activities": 413,
+    "labelled": 413,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 0,
+    "grew_rate_labelled": 0.688,
+    "labelled_share": 1.0
+   },
+   "20-30%": {
+    "activities": 641,
+    "labelled": 634,
+    "running": 7,
+    "running_known_overrun": 7,
+    "not_started": 0,
+    "grew_rate_labelled": 0.741,
+    "labelled_share": 0.989
+   },
+   "30-40%": {
+    "activities": 763,
+    "labelled": 721,
+    "running": 42,
+    "running_known_overrun": 42,
+    "not_started": 0,
+    "grew_rate_labelled": 0.534,
+    "labelled_share": 0.945
+   },
+   "40-50%": {
+    "activities": 873,
+    "labelled": 218,
+    "running": 127,
+    "running_known_overrun": 73,
+    "not_started": 528,
+    "grew_rate_labelled": 0.459,
+    "labelled_share": 0.25
+   },
+   "50-60%": {
+    "activities": 1131,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 1131,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "60-70%": {
+    "activities": 1243,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 1243,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "70-80%": {
+    "activities": 1103,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 1103,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "80-90%": {
+    "activities": 622,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 622,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "90-100%": {
+    "activities": 135,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 135,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   }
+  },
+  "own::update of jungle 20-07-2010": {
+   "0-10%": {
+    "activities": 13,
+    "labelled": 12,
+    "running": 1,
+    "running_known_overrun": 1,
+    "not_started": 0,
+    "grew_rate_labelled": 0.583,
+    "labelled_share": 0.923
+   },
+   "10-20%": {
+    "activities": 74,
+    "labelled": 13,
+    "running": 6,
+    "running_known_overrun": 6,
+    "not_started": 55,
+    "grew_rate_labelled": 0.615,
+    "labelled_share": 0.176
+   },
+   "20-30%": {
+    "activities": 66,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 66,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "30-40%": {
+    "activities": 101,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 101,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "40-50%": {
+    "activities": 118,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 118,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "50-60%": {
+    "activities": 154,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 154,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "60-70%": {
+    "activities": 153,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 153,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "70-80%": {
+    "activities": 119,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 119,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "80-90%": {
+    "activities": 36,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 36,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   },
+   "90-100%": {
+    "activities": 9,
+    "labelled": 0,
+    "running": 0,
+    "running_known_overrun": 0,
+    "not_started": 9,
+    "grew_rate_labelled": null,
+    "labelled_share": 0.0
+   }
+  }
+ },
+ "3_label_definitions": {
+  "dslib": {
+   "n": 2841,
+   "grew_working_days": 0.175,
+   "grew_calendar_days": 0.235,
+   "agreement_cal_vs_wd": 0.894,
+   "tolerance_label_rate": 0.102,
+   "share_of_grew_kept_by_tolerance": 0.584
+  },
+  "bhd": {
+   "n": 4844,
+   "n_with_calendar": 4844,
+   "grew_calendar_days": 0.633,
+   "grew_working_days_p6_calendar": 0.636,
+   "agreement_cal_vs_wd_p6": 0.989,
+   "tolerance_label_rate_p6": 0.526,
+   "share_of_grew_kept_by_tolerance_p6": 0.83,
+   "superseded_fri_sat_assumption": {
+    "grew_working_days": 0.632,
+    "agreement_cal_vs_wd": 0.957
+   }
+  },
+  "bhd_calendars_used": {
+   "own::129 trial": [
+    {
+     "clndr_id": 1091,
+     "activities": 637,
+     "name": "",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Sat"
+     ],
+     "holidays": 52
+    },
+    {
+     "clndr_id": 794,
+     "activities": 118,
+     "name": "7-Day Workweek",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+     ],
+     "holidays": 41
+    },
+    {
+     "clndr_id": 842,
+     "activities": 9,
+     "name": "R29B - 1",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Sat"
+     ],
+     "holidays": 47
+    },
+    {
+     "clndr_id": 720,
+     "activities": 2,
+     "name": "Standard 5 Day Workweek w/ Basic Holidays",
+     "workdays": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+     ],
+     "holidays": 75
+    }
+   ],
+   "own::130 TRIAL": [
+    {
+     "clndr_id": 991,
+     "activities": 82,
+     "name": "",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Sat"
+     ],
+     "holidays": 52
+    }
+   ],
+   "own::CCA R03 dt 24Oct11SC": [
+    {
+     "clndr_id": 12845,
+     "activities": 1533,
+     "name": "R00-C01, 6 days with holidays",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Sat"
+     ],
+     "holidays": 59
+    }
+   ],
+   "own::PORTO MATROUH": [
+    {
+     "clndr_id": 3746,
+     "activities": 208,
+     "name": "porto -2",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+     ],
+     "holidays": 41
+    },
+    {
+     "clndr_id": 1191,
+     "activities": 184,
+     "name": "PORTO MATROUH Calendar",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Sat"
+     ],
+     "holidays": 41
+    }
+   ],
+   "own::Update 01-09-2010": [
+    {
+     "clndr_id": 841,
+     "activities": 11,
+     "name": "Gama projects calender",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Sat"
+     ],
+     "holidays": 4
+    }
+   ],
+   "own::rehab-2": [
+    {
+     "clndr_id": 842,
+     "activities": 1914,
+     "name": "R111 - 1",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Sat"
+     ],
+     "holidays": 102
+    },
+    {
+     "clndr_id": 893,
+     "activities": 121,
+     "name": "R111 - 2",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+     ],
+     "holidays": 0
+    }
+   ],
+   "own::update of jungle 20-07-2010": [
+    {
+     "clndr_id": 841,
+     "activities": 20,
+     "name": "Gama projects calender",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Sat"
+     ],
+     "holidays": 4
+    },
+    {
+     "clndr_id": 849,
+     "activities": 5,
+     "name": "jungle",
+     "workdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Sat"
+     ],
+     "holidays": 44
+    }
+   ]
+  },
+  "by_project_agreement_cal_vs_wd": {
+   "own::129 trial": 0.971,
+   "own::130 TRIAL": 0.951,
+   "own::CCA R03 dt 24Oct11SC": 0.991,
+   "own::PORTO MATROUH": 0.972,
+   "own::Update 01-09-2010": 1.0,
+   "own::rehab-2": 1.0,
+   "own::update of jungle 20-07-2010": 0.84,
+   "dslib::C2013-03": 0.782,
+   "dslib::C2013-04": 0.94,
+   "dslib::C2013-06": 0.873,
+   "dslib::C2013-07": 0.891,
+   "dslib::C2013-08": 0.927,
+   "dslib::C2013-09": 0.944,
+   "dslib::C2014-01": 0.927,
+   "dslib::C2014-08": 1.0,
+   "dslib::C2015-04": 1.0,
+   "dslib::C2015-05": 1.0,
+   "dslib::C2015-06": 1.0,
+   "dslib::C2015-08": 0.914,
+   "dslib::C2015-29": 0.735,
+   "dslib::C2015-30": 0.925,
+   "dslib::C2015-32": 0.962,
+   "dslib::C2016-06": 0.948,
+   "dslib::C2016-07": 0.209,
+   "dslib::C2016-11": 0.891,
+   "dslib::C2016-12": 0.831,
+   "dslib::C2016-13": 0.961,
+   "dslib::C2016-14": 0.917,
+   "dslib::C2023-01": 1.0,
+   "dslib::C2023-04": 0.967,
+   "dslib::C2023-07": 1.0
+  },
+  "note": "BHD working days use each activity's P6 calendar (week + holidays from CALENDAR.csv); DSLIB working days come from the ETL (holidays ignored there).",
+  "continuous_ratio": {
+   "dslib_working_days": {
+    "n": 2841,
+    "median": 1.0,
+    "q25_q75": [
+     1.0,
+     1.0
+    ],
+    "share_gt_1": 0.175,
+    "share_gt_1_2": 0.126,
+    "share_gt_2": 0.022
+   },
+   "bhd_calendar_days_planned_gt_0": {
+    "n": 4462,
+    "median": 1.6,
+    "q25_q75": [
+     1.0,
+     3.746
+    ],
+    "share_gt_1": 0.677,
+    "share_gt_1_2": 0.613,
+    "share_gt_2": 0.398
+   },
+   "note": "BHD rows with 0 planned calendar days (same-day activities) are left out of the ratio"
+  }
+ },
+ "7_bhd_versions_of_the_same_project": [
+  {
+   "update": "update of jungle 20-07-2010",
+   "update_data_date": "2010-07-20",
+   "earlier": "baseline of jungle",
+   "earlier_data_date": "2010-06-21",
+   "common_tasks": 923,
+   "earlier_all_not_started": true,
+   "completed_in_update": 73,
+   "completed_same_planned_start": 0.466,
+   "completed_same_planned_duration_days": 1.0,
+   "completed_same_planned_hours": 1.0,
+   "all_same_planned_start": 0.114
+  },
+  {
+   "update": "update of jungle 20-07-2010",
+   "update_data_date": "2010-07-20",
+   "earlier": "jungle recovery plan",
+   "earlier_data_date": "2010-06-21",
+   "common_tasks": 900,
+   "earlier_all_not_started": true,
+   "completed_in_update": 73,
+   "completed_same_planned_start": 0.151,
+   "completed_same_planned_duration_days": 0.986,
+   "completed_same_planned_hours": 0.973,
+   "all_same_planned_start": 0.05
+  },
+  {
+   "update": "Update 01-09-2010",
+   "update_data_date": "2010-09-01",
+   "earlier": "medor_003",
+   "earlier_data_date": "2010-06-29",
+   "common_tasks": 69,
+   "earlier_all_not_started": true,
+   "completed_in_update": 16,
+   "completed_same_planned_start": 1.0,
+   "completed_same_planned_duration_days": 1.0,
+   "completed_same_planned_hours": 1.0,
+   "all_same_planned_start": 0.261
+  },
+  {
+   "update": "Update 01-09-2010",
+   "update_data_date": "2010-09-01",
+   "earlier": "schedule of Medor",
+   "earlier_data_date": "2010-06-29",
+   "common_tasks": 69,
+   "earlier_all_not_started": true,
+   "completed_in_update": 16,
+   "completed_same_planned_start": 0.062,
+   "completed_same_planned_duration_days": 0.75,
+   "completed_same_planned_hours": 0.75,
+   "all_same_planned_start": 0.058
+  }
+ ],
+ "9_fast_finish_hypothesis_bhd": {
+  "by_decile_all_projects": {
+   "0-10%": {
+    "completed": 705,
+    "running": 1,
+    "median_planned_hours_completed": 64.0,
+    "median_planned_hours_running": 56.0
+   },
+   "10-20%": {
+    "completed": 760,
+    "running": 7,
+    "median_planned_hours_completed": 56.0,
+    "median_planned_hours_running": 96.0
+   },
+   "20-30%": {
+    "completed": 1514,
+    "running": 141,
+    "median_planned_hours_completed": 64.0,
+    "median_planned_hours_running": 576.0
+   },
+   "30-40%": {
+    "completed": 1456,
+    "running": 1311,
+    "median_planned_hours_completed": 64.0,
+    "median_planned_hours_running": 528.0
+   },
+   "40-50%": {
+    "completed": 614,
+    "running": 1100,
+    "median_planned_hours_completed": 56.0,
+    "median_planned_hours_running": 336.0
+   },
+   "50-60%": {
+    "completed": 702,
+    "running": 197,
+    "median_planned_hours_completed": 72.0,
+    "median_planned_hours_running": 240.0
+   },
+   "60-70%": {
+    "completed": 240,
+    "running": 165,
+    "median_planned_hours_completed": 96.0,
+    "median_planned_hours_running": 80.0
+   },
+   "70-80%": {
+    "completed": 187,
+    "running": 39,
+    "median_planned_hours_completed": 96.0,
+    "median_planned_hours_running": 80.0
+   },
+   "80-90%": {
+    "completed": 44,
+    "running": 85,
+    "median_planned_hours_completed": 56.0,
+    "median_planned_hours_running": 96.0
+   },
+   "90-100%": {
+    "completed": 5,
+    "running": 0,
+    "median_planned_hours_completed": 56.0,
+    "median_planned_hours_running": null
+   }
+  },
+  "per_project_min_10_each": {
+   "own::129 trial": {
+    "completed": 766,
+    "running": 110,
+    "median_planned_hours_completed": 88.0,
+    "median_planned_hours_running": 96.0
+   },
+   "own::130 TRIAL": {
+    "completed": 82,
+    "running": 37,
+    "median_planned_hours_completed": 96.0,
+    "median_planned_hours_running": 96.0
+   },
+   "own::CCA R03 dt 24Oct11SC": {
+    "completed": 1533,
+    "running": 2495,
+    "median_planned_hours_completed": 96.0,
+    "median_planned_hours_running": 440.0
+   },
+   "own::PORTO MATROUH": {
+    "completed": 392,
+    "running": 30,
+    "median_planned_hours_completed": 8.0,
+    "median_planned_hours_running": 24.0
+   },
+   "own::jumaira": {
+    "completed": 1345,
+    "running": 188,
+    "median_planned_hours_completed": 64.0,
+    "median_planned_hours_running": 120.0
+   },
+   "own::rehab-2": {
+    "completed": 2035,
+    "running": 176,
+    "median_planned_hours_completed": 56.0,
+    "median_planned_hours_running": 80.0
+   }
+  },
+  "projects_where_completed_are_shorter": "5/6"
+ }
+}

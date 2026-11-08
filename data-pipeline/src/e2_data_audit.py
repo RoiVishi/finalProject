@@ -25,7 +25,10 @@ Clean rows (rule fixed BEFORE re-running E1, see EXPERIMENT_LOG.md E2)
        planned duration IS the actual duration, so `grew` is 0 by construction (6c)
   DSLIB: planned_duration_wd > 0
 Families (item 4): connected components over project pairs whose normalised task-name sets have
-  Jaccard >= 0.5, merged with the identical-signature families of advisor_checks.families();
+  Jaccard >= 0.5 OR containment >= 0.8 with at least 5 shared names (a small schedule contained in a
+  bigger one is the same family — the advisor's "containment" check; added in E2b), merged with the
+  identical-signature families of advisor_checks.families(). E2 used Jaccard only; that map is kept
+  as outputs/project_families_jaccard_only.json so E2 can be reproduced;
   written to outputs/project_families.json, which advisor_checks.py reads when present.
 """
 from __future__ import annotations
@@ -49,6 +52,7 @@ RAW_BHD = BASE / "data_bhd" / "Buildings Data"
 WORK_TYPES = {"TT_Task", "TT_Rsrc"}
 OVERWRITTEN_SHARE = 0.90   # planned dates == actual dates on this share of completed activities
 FAMILY_JACCARD = 0.5
+FAMILY_CONTAINMENT, FAMILY_MIN_SHARED = 0.8, 5
 DATES = ["target_start_date", "target_end_date", "act_start_date", "act_end_date"]
 
 
@@ -71,6 +75,7 @@ def read_bhd(project: str) -> pd.DataFrame:
         "task_code": t["task_code"].astype(str),
         "task_name": t["task_name"].astype(str),
         "task_type": t["task_type"],
+        "clndr_id": pd.to_numeric(t.get("clndr_id"), errors="coerce"),
         "status": t["status_code"],
         "planned_hr": pd.to_numeric(t["target_drtn_hr_cnt"], errors="coerce"),
         "rel_position": (t["target_start_date"] - p0).dt.days / span,
@@ -218,7 +223,7 @@ def item4(bhd: pd.DataFrame, ds: pd.DataFrame, corpus_projects: set[str]) -> dic
 
 
 def families(pairs: list[dict], corpus: pd.DataFrame) -> dict:
-    """Union-find over name-similar pairs (Jaccard >= FAMILY_JACCARD) and identical signatures."""
+    """Union-find over name-similar pairs and identical signatures (rule in the module docstring)."""
     from advisor_checks import families as signature_families
     sig = signature_families(corpus)
     parent = {p: p for p in corpus["project"].unique()}
@@ -232,7 +237,8 @@ def families(pairs: list[dict], corpus: pd.DataFrame) -> dict:
     def union(a, b):
         parent[find(a)] = find(b)
     for pr in pairs:
-        if pr["jaccard"] >= FAMILY_JACCARD:
+        if pr["jaccard"] >= FAMILY_JACCARD or (pr["containment"] >= FAMILY_CONTAINMENT
+                                               and pr["shared_names"] >= FAMILY_MIN_SHARED):
             union(pr["a"], pr["b"])
     for _, members in sig.groupby(sig).groups.items():
         members = list(members)

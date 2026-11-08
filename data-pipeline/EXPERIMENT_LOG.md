@@ -36,6 +36,8 @@ Paired within-project comparison, A_family (median of per-project differences, b
 
 Probability level when inputs arrive as served: DSLIB mean 0.174 → 0.155, BHD 0.482 → 0.497 (observed 0.174 / 0.483).
 
+> **Partly superseded by E2b.** Points 1–3 below still hold. Point 4 does not: the "+0.05, CI above 0" edge of the clean set over the planned-duration rule came from one random-split design and one family map. On fixed family folds and cleaned rows (E2b), the edge is not significant, and the clean set does not beat the number-of-successors rule. Do not quote point 4.
+
 **What this shows.**
 1. Item 1 confirmed. The two project features alone reach pooled AUC 0.816 in B and 0.740 in A, with zero ranking inside a project. On a new project (A_project), they score higher pooled than the full model (0.740 vs 0.734). Removing them drops B from 0.874 to 0.793 pooled, and from 0.769 to 0.650 within project. So in B the model also uses them to learn project-specific patterns.
 2. Item 4 confirmed for the pooled metric. Grouping families drops the full model's pooled A from 0.734 to 0.640. Within-project AUC does not move (0.560 → 0.566), because the duplicate DSLIB projects are single-class and never enter the within-project metric.
@@ -62,11 +64,11 @@ python3 -c "import json;j=json.load(open('outputs/advisor_checks.json'));print(j
 **Run.**
 ```
 python3 src/e2_data_audit.py      # → outputs/e2_data_audit.json, project_families.json, corpus_v3_clean.csv
-python3 src/advisor_checks.py --corpus outputs/corpus_v3_clean.csv --families outputs/project_families.json --out advisor_checks_clean.json
+python3 src/advisor_checks.py --corpus outputs/corpus_v3_clean.csv --families outputs/project_families_jaccard_only.json --out advisor_checks_clean.json   # E2b rebuilt project_families.json; E2 used this map
 ```
 Needs the raw BHD tables in `data_bhd/Buildings Data` (not in git).
 
-**Rules fixed before the re-run.** These rules were written down before looking at any model result on the cleaned rows.
+**Rules fixed before the re-run.** These rules were written down before looking at any model result on the cleaned rows. *Correction (E2b): the two thresholds (90% for overwritten plans, Jaccard 0.5 for families) were chosen after looking at the data tables (jumaira 100%, cairo 91%; the distribution of pair similarities), though not after any model result.*
 - Keep work activities only. BHD: task_type TT_Task or TT_Rsrc and planned hours > 0. DSLIB: planned working days > 0.
 - Drop a BHD project whose planned dates were overwritten by the actual dates: planned start and finish equal the actual ones on ≥ 90% of its completed activities.
 - Families: connected components of project pairs whose normalised task-name sets have Jaccard ≥ 0.5, merged with the identical-signature families.
@@ -96,6 +98,8 @@ Needs the raw BHD tables in `data_bhd/Buildings Data` (not in git).
 
 Paired, A_family: clean − duration +0.049 [−0.036, +0.089] (13/22); full − duration +0.006 [−0.056, +0.070]; clean − full −0.001 [−0.047, +0.036].
 
+> **Superseded by E2b.** The before/after reading below compares runs that differ in three things at once (rows, projects, family definition) and in their random splits — the mistake the advisor named in item 9. See E2b for the same comparison on fixed folds.
+
 **What this shows.**
 1. On the cleaned rows, the clean model is still the only variant whose within-project CI stays above 0.5 in A_family. Its advantage over the planned-duration rule keeps the same size (+0.05), **but is no longer statistically clear.** E1's "significant" result depended partly on rows that should not have been there.
 2. The v6 feature set still does not beat the rule.
@@ -107,3 +111,85 @@ Paired, A_family: clean − duration +0.049 [−0.036, +0.089] (13/22); full −
 - Frozen test set: choose families now. Only 22 projects are eligible for within-project AUC, so the frozen set has to be drawn from those.
 
 **Verify yourself.** `python3 -c "import json;print(json.load(open('outputs/e2_data_audit.json'))['item3']['bhd_totals'])"` → 30,368 / 6,227 / 3,046 / 1,731 / 21,095.
+
+---
+
+## E2b — 8.11.2026 — Where E1/E2 departed from the advisor's instructions
+
+**Why.** Two re-reads of the feedback against E1/E2 found eight places where we did something other than what was asked:
+1. E2 compared runs on different project sets and families (item 9).
+2. Survivorship was not computed per project × decile (item 3).
+3. The two label definitions were not compared side by side (item 6).
+4. Results were not reported by corpus (item 6).
+5. The top-10% measure was a median, not a table per project (item 1f).
+6. The family rule ignored containment (item 4: "no containment check on DSLIB").
+7. Under the new fixed folds only one of the four requested baselines was run (item 8).
+8. BHD "planned" dates were not compared between versions of the same project (item 2).
+
+**Run.** Rebuild the families with containment, then run the follow-ups:
+```
+python3 src/e2_data_audit.py
+python3 src/e2b_followups.py
+```
+Outputs: `project_families.json` from the first; `e2b_followups.json` and `e2b_label_disagreements_sample.csv` from the second. Needs `data_bhd`; about 2 minutes. E2's family map (Jaccard only) is kept as `outputs/project_families_jaccard_only.json`. To reproduce E2, pass that file to `--families`.
+
+**Family rule, corrected.** Pairs of projects are linked when Jaccard ≥ 0.5 OR containment ≥ 0.8 with ≥ 5 shared names. 66 projects form 44 families (46 with Jaccard only). The change joins C2016-14 and C2016-15 (all 13 names of C2016-15 appear in C2016-14) to the C2016-11/12/13 family. Limitation: names are mostly Spanish/Dutch in DSLIB and English in BHD, so name matching can hardly find a family that spans both corpora. "No cross-corpus families" is therefore a weak negative, not a finding. (Egyptian and Belgian schedules sharing a template is unlikely, but this check does not show it.)
+
+**Design change: fixed folds.** A first version used 20 random GroupShuffleSplits per run. The splits depend on the set of groups, so dropping two projects re-drew every split, and the split-to-split noise was as large as the effects being compared. The comparison now uses one plan of family → fold assignments, 10 × 5-fold, computed once from the 66-project family map and reused in every run. Each project is tested 10 times with the same companions. **All future comparisons (E3, E4) should use fixed folds.**
+
+**(1, 7) One change at a time, same folds, all four baselines.** Within-project AUC on the 22 projects eligible in all runs, with 95% CI over projects:
+
+| Run | full | clean | duration rule | successors rule | project-only / source |
+|---|---|---|---|---|---|
+| R1 original rows, 66 projects | 0.538 | 0.574 [0.520, 0.597] | 0.525 | 0.536 | 0.500 |
+| R2 original rows, 64 projects | 0.546 | 0.567 [0.537, 0.602] | 0.525 | 0.536 | 0.500 |
+| R3 cleaned rows, 64 projects | 0.541 | 0.552 [0.517, 0.591] | 0.525 | 0.533 | 0.500 |
+
+Paired, R3 (median of per-project differences, CI, projects where the model is better):
+- clean − duration: +0.042 [−0.012, +0.084], 14/22
+- clean − successors: −0.002 [−0.023, +0.049], 11/22
+- clean − project-only (= source): +0.052 [+0.017, +0.097], 17/22
+- full − successors: +0.002 [−0.022, +0.030], 11/22
+
+The strongest baseline by median, in all three runs, is **the number of successors**.
+
+What this shows:
+- In every version, the clean model ranks inside a new project better than chance. Its CI stays above 0.5, and it beats the two project-level baselines.
+- **It does not beat the simple rule "rank by number of successors"**, and its edge over "rank by planned duration" is not statistically clear. The same holds for the v6 feature set.
+- E1's "significant +0.048 over the duration rule" belonged to one random-split design and one family map. It should not be quoted.
+- Results move by about ±0.02 with the family definition alone (R1: 0.564 with the Jaccard-only map, 0.574 with containment). Differences of that size are not findings.
+
+**(4) By corpus (R3).**
+- Within-project AUC (DSLIB 17 projects / BHD 5): clean 0.549 / 0.586; duration rule 0.528 / 0.510; successors rule 0.525 / 0.541.
+- Pooled AUC, over every test fold (DSLIB 57 projects / BHD 7): clean 0.533 / 0.606; duration rule 0.568 / 0.518.
+- In DSLIB the duration rule's pooled AUC is higher than the model's.
+
+**(5) Top-10% per project (R3).** The table is in `5_top10_per_project_R3`. Median lift: clean 0.95, full 0.99, duration 0.91, successors 1.09. The spread is very wide (0 to 3 per project). On this measure no variant is reliably better than the project's own grew rate.
+
+**(2) Survivorship per project × decile.** The table is in `2_survivorship_bhd_per_project_decile`. Example, CCA (the largest BHD project): labelled share 100% / 100% / 83% / 28% / 3% / 0.3% / 0.4% / 0.3% / 0% by decile. In every BHD project the late part of the plan is almost unlabelled.
+
+**(3, 8) Label definitions.**
+- DSLIB (2,841 activities): grew is 17.5% in working days and 23.5% in calendar days; the two agree on 89.4%. The tolerance label (> 20% and ≥ 2 working days) gives 10.2% and keeps 58% of the positives.
+- BHD (4,844 activities): grew is 63.3% in calendar days and 63.6% in working days. The two agree on 98.9%. The tolerance label gives 52.6% and keeps 83% of the positives.
+  - Working days are counted on each activity's own Primavera calendar: TASK.clndr_id, with the week and holidays from CALENDAR.csv (`src/p6_calendar.py`, tested in `tests/test_p6_calendar.py`).
+  - **Correction (found in Roi's manual check):** the first version assumed a Friday + Saturday weekend. In rehab-2 an activity ended on a Saturday and the count ignored that day. The calendars show that most BHD activities run on a 6-day week (only Friday off) or a 7-day calendar, with 4–102 holidays. Some calendars also have extra worked Fridays (59 in 129 trial / 130 TRIAL).
+  - Under the wrong assumption, agreement was 95.7%; the old count is kept in `superseded_fri_sat_assumption`. The remaining 55 disagreements (1.1%) come from the weekly day off (Friday), holidays (20 of the 55 have one in the planned or actual span) or extra worked days falling in one span but not the other.
+- Continuous label, actual / planned duration:
+  - DSLIB: median 1.00, IQR 1.00–1.00. In most DSLIB activities the recorded actual duration equals the planned one exactly. Only 17.5% exceed it and 2.2% double it.
+  - BHD (planned > 0 days): median 1.60, IQR 1.00–3.75. 68% exceed the plan and 40% more than double it.
+  - The two corpora describe very different execution, and the gap is far larger than the calendar-vs-working-day difference. Whether it is real or a recording artefact (DSLIB actual durations equal to plan; BHD early snapshots) is not established. This supports the advisor's question in item 6, and the source baseline must stay in every comparison.
+- `e2b_label_disagreements_sample.csv` lists 38 disagreeing activities for reading by hand (23 BHD, with the working days per row, and 15 DSLIB). The BHD cases come from Fridays, holidays or extra worked days falling in one span only. Most DSLIB cases are computed end dates that land after a weekend. Outlier: DSLIB C2016-07 agrees on only 21%. The task names of 129 trial / 130 TRIAL are mostly blank, so their name-based family link rests on few names.
+
+**(9) The advisor's survivorship hypothesis (item 3).** "Only the fast activities of the late part had finished." The test takes the BHD activities that had started by the data date and compares the planned duration of those that finished with those still running.
+- Deciles 20–60% of planned position: median planned hours 56–72 for the completed vs 240–576 for the running.
+- Per project (≥ 10 of each): the completed activities have the shorter median planned duration in 5 of 6 projects, and an equal one in 130 TRIAL.
+- So the labelled late activities are mostly the short ones. This supports the advisor's explanation of the "drift" 0.46 → 0.29.
+- In the 60–80% deciles the difference reverses (96 vs 80 hours), but there are few running activities there.
+
+**(8) BHD versions of the same project (item 2).** Two corpus projects have earlier versions in the raw data, with the same task codes, where every activity is not started:
+- `update of jungle 20-07-2010` vs `baseline of jungle`: for the 73 completed activities, the planned duration in days and in hours is the same in 100% of cases, but the planned start is the same in only 47%.
+- `Update 01-09-2010` vs `medor_003`: 16 completed activities, everything the same in 100%. Against another draft, `schedule of Medor`, durations agree on 75%.
+- Reading: in these two projects the planned **durations** of completed activities are the original ones, while the planned **dates** were moved in the update. So `grew` (a duration comparison) is valid there and `is_late` (finish date vs planned finish) would not be.
+- This is evidence for two projects only. Jumaira (E2) shows the opposite case, where durations too were overwritten.
+
+**Still open (E3).** Hyper-parameters are still the v6 ones, tuned on pooled AUC (item 8 asks for a within-project metric). The numbers in this log are typed; the final document will generate them from the JSON files (item 11). Each extra look at the same 66 projects adds to the item-9 risk, so the frozen test set should be chosen before E3.
