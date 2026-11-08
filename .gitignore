@@ -6,6 +6,7 @@ __pycache__/
 .venv/
 # large data & artifacts (regenerate with the pipeline)
 data-pipeline/data/
+data-pipeline/data_bhd/
 data-pipeline/outputs/labeled_tasks.csv
 *.joblib
 .DS_Store
