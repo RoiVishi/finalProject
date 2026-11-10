@@ -1,7 +1,7 @@
 {
  "config": {
   "corpus": "outputs/corpus_v3_clean.csv",
-  "families": "outputs/project_families.json",
+  "families": "outputs/project_families_jaccard_only.json",
   "n_activities": 7685,
   "n_projects": 64,
   "n_families": 44,
