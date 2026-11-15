@@ -357,3 +357,40 @@ python3 -c "import json;r=json.load(open('outputs/e2c_eligibility.json'));print(
 # 13 {'grew': (17, 5), 'tolerance': (12, 5), 'ratio_A': (23, 5), 'ratio_B': (20, 5)}
 ```
 By hand, in `outputs/dslib_labeled_tasks.csv`: in C2016-16 every `actual_start` equals `baseline_start` and every `actual_duration_wd` equals `planned_duration_wd`; in C2023-04 `actual_duration_wd` is 1.2 × `planned_duration_wd` on 29 of 30 rows.
+
+---
+
+## Verification — 15.11.2026 — Shira reruns E1–E2b and checks by hand
+
+**Question.** Does a second team member, on her own machine and from the raw data, get the numbers of E1, E2 and E2b? Do the main facts hold when read directly from the raw files, without the experiment scripts? Are the data decisions acceptable to her?
+
+**Environment.** Shira's MacBook (Apple silicon), Python 3.12.4 (Roi: 3.13), a fresh `.venv` in `data-pipeline` with `pip install -r requirements.txt pytest`. Code: `main` at f42cc68 (E2b merged). On macOS, xgboost also needs the OpenMP runtime (`brew install libomp`); without it `import xgboost` fails. This is not yet in the README.
+
+**A. Reproduction (Shira ran every command herself).**
+
+| Step | Expected (Roi) | Result |
+|---|---|---|
+| 1. Raw data | BHD commit 862936f (fresh `git clone` from GitHub); DSLIB3.4.zip md5 `2db1614c…` | same |
+| 2. ETL | `labeled_tasks.csv` md5 `2101f307…`; `dslib_labeled_tasks.csv` md5 `ff118182…` | same (bit for bit) |
+| 3. Corpus v3 | 66 projects, 9,250 activities | same |
+| 4. E1 | full B 0.874 / 0.769; project-only B 0.816 / 0.500 | 0.8736 / 0.7688; 0.8163 / 0.5000 |
+| 5. E2 | BHD 30,368 / 6,227 / 3,046 / 1,731 / 21,095; jumaira 100%, cairo alex-road 91%; 64 projects, 7,685 activities, 44 families | same (cairo 0.913) |
+| 6. Calendars | `pytest tests/test_p6_calendar.py`: 2 passed | 2 passed |
+| 7. E2b | R3 within: clean 0.552, successors 0.533, duration 0.525; clean − successors −0.002 [−0.023, +0.049]; clean − duration +0.042 [−0.012, +0.084]; agreement BHD 98.9%, DSLIB 89.4% | same |
+
+After steps 2–7, `git status` showed no change in any committed output (`etl_summary.json`, `dslib_etl_summary.json`, `corpus_v3_summary.json`, `advisor_checks.json`, `e2_data_audit.json`, `project_families.json`, `e2b_followups.json`). So all outputs of E1–E2b reproduce exactly under Python 3.12 as well as 3.13.
+
+**B. Independent checks (from the raw files, without the experiment scripts).**
+- 8. jumaira `TASK.csv`, the 1,350 activities with all four dates: planned start and finish equal the actual ones in 100%. PORTO MATROUH: 11 of 422 (2.6%). Checked by hand in Excel.
+- 9. CCA, share of work activities with all four dates by planned-position decile: 1.0, 1.0, 0.83, 0.28, 0.03, then about 0. Checked by hand in Excel.
+- 10. Planned-duration rule, within-project AUC computed directly on `corpus_v3_clean.csv` (rank formula, no model, no experiment script): 22 eligible projects, median 0.5249.
+- 11. `130 TRIAL/CALENDAR.csv`, calendar 991: 23.7.2010 (serial 40382) is a worked exception 08:00–16:00; 10.9.2010 (40431) is a holiday. Checked by hand.
+- 12. `e2b_label_disagreements_sample.csv`: working days counted by hand on several rows (not rows 7 and 18); the counts match the file.
+
+**C. Decisions (items 13–17).** Read and accepted by Shira: the family rule, the eligibility rule (≥ 30 activities, ≥ 5 in each class), the 90% overwritten-plan threshold (set after looking at BHD, see E2), the row-cleaning rules, and the fixed 10 × 5-fold family split.
+
+**Mismatches.** None.
+
+**Side note.** `rr17_dslib_etl.py` also writes `outputs/dslib_projects.csv`, which is neither committed nor in `.gitignore`.
+
+How this was done: the commands and the short script for check 10 were written with an AI assistant (Claude). Shira ran every command on her machine. For steps 5 and 7 the numbers were read from the output files by the assistant and compared with the list above. Checks 8, 9, 11 and 12 were done by Shira by hand in Excel and a text editor.
