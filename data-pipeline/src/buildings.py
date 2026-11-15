@@ -40,6 +40,17 @@ OWN_UNKNOWN: dict[str, str] = {
     "trial for me": "15 labels, no WBS/task/resource names to classify by — excluded",
 }
 
+# Projects that stay in the corpus but whose labels carry a known doubt (decision entry D1, 15.11.2026).
+# Keys are corpus ids. Results are also reported without them, as sensitivity analyses fixed in advance.
+FLAGGED_PROJECTS: dict[str, str] = {
+    "dslib::C2023-04": "29 of 30 activities are exactly 20% longer than planned (E2c); listed in the DSLIB "
+                       "release notes among projects whose tracking was corrected",
+    "own::Update 01-09-2010": "Medor: the planned durations come from a plan revised after work started; "
+                              "4 of 16 labelled activities affected (E2b, section 8)",
+    "own::rehab-2": "planned start equals actual start in 100% of activities; the label rests on the planned "
+                    "durations having been kept, and no earlier version exists to test that (E2, E2b)",
+}
+
 DSLIB_BUILDING_GROUP = "buildings"   # rr17_dslib_etl.sector_group: residential / commercial / institutional
 DSLIB_AUTHENTIC_FLAG = "G"           # DSLIB_Analysis_Sheet tracking authenticity
 

@@ -357,3 +357,154 @@ python3 -c "import json;r=json.load(open('outputs/e2c_eligibility.json'));print(
 # 13 {'grew': (17, 5), 'tolerance': (12, 5), 'ratio_A': (23, 5), 'ratio_B': (20, 5)}
 ```
 By hand, in `outputs/dslib_labeled_tasks.csv`: in C2016-16 every `actual_start` equals `baseline_start` and every `actual_duration_wd` equals `planned_duration_wd`; in C2023-04 `actual_duration_wd` is 1.2 × `planned_duration_wd` on 29 of 30 rows.
+
+---
+
+## D1 — 15.11.2026 — Decisions before the freeze
+
+**Why this entry.** We asked the advisor two questions before freezing a test set: whether the proposed freeze is acceptable, and which label to prefer. Her answer, in translation: with so little data every decision is problematic; she accepts any reasonable decision, on condition that it is documented in the pipeline together with what it means for the results and the limits on their validity. This entry is that documentation. It was written before the draw of the frozen set and before any E3 result.
+
+**Who decided.** Roi and Shira took all the decisions below together, on 15.11.2026.
+
+### 1. Primary label and metric: `grew`, within-project AUC
+
+- Decision: the primary label stays `grew` (actual duration longer than planned), defined per corpus as in E1–E2b. The headline is the within-project AUC: median over the eligible projects, with a bootstrap confidence interval over projects.
+- Alternatives considered: the tolerance label as primary; the continuous ratio (actual / planned duration) as primary.
+- Numbers (E2c, no model): eligible DSLIB projects 17 with `grew`, 12 with the tolerance label, 20 with the ratio (rule B). Expected eligible projects in a frozen set of 15: 6.0, 4.2 and 7.0.
+- Reason: the ratio adds 3 eligible projects, and about one in the frozen set. Against that, it would break the comparison with E1–E2b and need a new quality gate, a new top-10% table and re-scored baselines.
+- What it means for the results: `grew` keeps very small overruns. In DSLIB, 26% of the overruns are of one working day or less (E2). So part of what the model is scored on is rounding, not delay. Sensitivity S1 answers this.
+
+### 2. Sensitivity S1: the tolerance label
+
+- Decision: every headline result is also reported with the tolerance label: overrun of more than 20% and at least 2 working days.
+- The advisor wrote "more than 20% and at least a number of working days". The number 2 is ours: an overrun of a single day can come from rounding, and 26% of the DSLIB overruns are of one working day or less (E2).
+- Reading rule, fixed now: if the comparison between the model and the best baseline gives a different conclusion under `grew` and under S1, both are reported and the document says that the conclusion depends on the label definition.
+
+### 3. Secondary metric: C-index on the continuous ratio
+
+- Decision: next to the AUC we report the concordance index inside each project: of the pairs of activities with different ratios, the share the model ranks in the right order. It is computed from the same model scores; no extra model is trained for it.
+- Eligibility for it: ≥ 30 activities and ≥ 125 comparable pairs (rule B of E2c). 20 DSLIB and 5 BHD projects.
+- It is reported next to the headline and never replaces it.
+
+### 4. Eligibility for the within-project AUC: unchanged
+
+≥ 30 activities and ≥ 5 in each class. With `grew`: 17 DSLIB and 5 BHD projects (E2c).
+
+### 5. Running activities that already passed their planned duration (item 3): in the main analysis
+
+- Decision: a BHD activity that was still running at the data date, and had by then been running longer than its planned duration, enters the main analysis with `grew` = 1.
+- Alternatives considered: leave them out, as in E1–E2b; use them in a sensitivity analysis only.
+- Numbers: 1,731 such activities in the 7 BHD projects, of which 1,439 are in CCA (129 trial 104, 130 TRIAL 37, PORTO MATROUH 22, rehab-2 122, jungle 7, Medor 0). BHD goes from 4,844 to 6,575 activities and its `grew` rate from 63.3% to 72.9%. CCA alone goes from 1,533 to 2,972 activities (79.7% → 89.5%). jungle becomes eligible, so BHD has 6 eligible projects instead of 5. Another 1,126 running activities have not yet passed their planned duration and stay without a label.
+- What it means for the results: each added label is certain. But only overruns are added. The running activities that will finish within plan cannot be labelled, so the running part of a project enters the data as 100% overruns. A model can recognise that part through the planned position of an activity. The within-project AUC of BHD projects, CCA above all, can therefore be higher than the model deserves.
+- Sensitivity S2, fixed now: the same analysis without these activities. That is the population of E1–E2b, so S2 is the result that can be compared with the earlier experiments; the main result cannot.
+- Under S1 a running activity counts only if the time already elapsed passes the tolerance threshold. In the C-index running activities are left out, because only a lower bound of their ratio is known.
+- DSLIB has no such activities (completed projects).
+
+### 6. Flagged projects: kept, listed in code, with sensitivity analyses
+
+- Decision: three projects stay in the corpus and are listed in `buildings.FLAGGED_PROJECTS` with the reason for each, so results can be reported with and without them.
+  - DSLIB C2023-04: 29 of 30 activities are exactly 20% longer than planned (E2c). It is on the DSLIB list of projects whose tracking was corrected.
+  - BHD Medor (`Update 01-09-2010`): planned durations taken from a plan revised after work started (E2b, section 8).
+  - BHD rehab-2: planned start equals actual start in 100% of activities; 42% of the BHD rows of E2b.
+- Sensitivity S3, fixed now: E3 is trained once more without C2023-04. The result with the project is the primary one. If the two are close, the document says the project does not matter; if not, the difference is reported as a limitation.
+- Sensitivity S4, fixed now: the BHD development results are also reported without rehab-2.
+- Alternative considered for C2023-04: drop it by a new rule. Rejected, because the rule would be written after seeing the project.
+
+### 7. Risk bands: by rank inside the project
+
+- Decision: the bands shown to the user (low / medium / high) are set by the rank of an activity inside its project, not by a fixed probability. Reason: the probability level differs a lot between corpora (E1), so a fixed threshold marks almost everything in one project and almost nothing in another.
+- The cut-offs are fixed in the E3 plan entry, before E3 results, and are never tuned on the frozen set.
+
+### 8. If the new model does not pass the quality gate: open
+
+Not decided. It will be decided with the advisor after E3 and before the frozen evaluation. The frozen set is not touched until this is settled.
+
+### 9. The freeze
+
+- Decision: whole DSLIB families are drawn in seeded random order until the set holds ≥ 15 projects. The draw is accepted if it holds ≥ 6 projects eligible under decision 4; otherwise the next seed is tried, and every rejected attempt is recorded. BHD is not frozen: it has 7 projects and all are needed for development. The 13 DSLIB projects of E2c are dropped before the draw.
+- Code: `src/freeze_test_set.py` makes the draw once and never rewrites it. `src/frozen.py` gives `development_only()` and `assert_no_frozen()`; every later script that trains, tunes, calibrates, sets thresholds or compares variants must use them.
+- What it means for the results: see the list written into `outputs/frozen_test_set.json`. In short: the final number rests on about 6 projects, all from DSLIB; the frozen families were already seen in E1–E2c; the draw is conditioned on eligibility.
+
+### Order of work from here
+
+This entry → the draw → the E3 plan entry (variants, tuning grid, band cut-offs) → E3 → E4 → meeting with the advisor → one evaluation on the frozen set.
+
+### Limits on validity that hold whatever E3 shows
+
+- Few projects: 22 eligible in all, about 6 of them frozen. Confidence intervals will be wide.
+- The final number describes DSLIB-like projects. For BHD-like projects there is no frozen evidence.
+- BHD labels are measured against the plan as exported, which is not always the original plan (E2b, section 8).
+- Decisions 1–7 were taken after E1–E2c had been seen. None was taken after an E3 result.
+
+**How this entry was checked.** The numbers of decisions 1–4 come from `outputs/e2c_eligibility.json` (rerun by Roi). The numbers of decision 5 were computed with an AI assistant and have not been rerun by Roi or Shira yet. The entry was drafted with an AI assistant from the decisions Roi and Shira took.
+
+Verify the numbers of decision 5 (from `data-pipeline`, with `data_bhd`):
+```
+python3 - <<'EOF'
+import sys; sys.path.insert(0, "src")
+import pandas as pd
+from e2_data_audit import WORK_TYPES, read_bhd
+clean = pd.read_csv("outputs/corpus_v3_clean.csv")
+total = 0
+for p in sorted(clean.loc[clean.source == "own", "project"].unique()):
+    b = read_bhd(p.removeprefix("own::"))
+    k = b[b.task_type.isin(WORK_TYPES) & (b.planned_hr > 0) & b.running_overrun_known]
+    total += len(k); print(p, len(k))
+print(total)   # 1731, of which CCA 1439
+EOF
+```
+
+---
+
+## F1 — 15.11.2026 — The frozen test set
+
+**What was done.** The draw of decision 9 (entry D1) was made once. D1 and the code of the draw were committed before it.
+
+**Run.**
+```
+python3 src/freeze_test_set.py        # first run wrote outputs/frozen_test_set.json; every later run only checks it
+python3 -m pytest -q tests/test_freeze.py
+```
+Needs `outputs/corpus_v3_clean.csv`, `outputs/dslib_labeled_tasks.csv` and the E2b/E2c outputs. It does not need `data_bhd`. No model is trained and no model result is read.
+
+**Result.** Seed 42, first attempt, no rejected attempt.
+
+| | Frozen | Left for development |
+|---|---|---|
+| DSLIB projects | 19 | 25 |
+| DSLIB families | 14 | 19 |
+| Activities | 941 | 1,564 |
+| `grew` rate | 18.7% | 20.5% |
+| Eligible, `grew` (the primary rule) | 8 | 9 |
+| Eligible, tolerance label | 5 | 7 |
+| Eligible, ratio rule B | 9 | 11 |
+
+Frozen projects: C2013-09, C2013-13, C2013-14, C2013-17, C2015-08, C2015-30, C2015-32, C2016-06, C2016-07, C2016-11, C2016-12, C2016-13, C2016-14, C2016-15, C2016-29, C2016-30, C2016-31, C2016-32, C2023-04.
+Eligible among them (primary rule): C2013-09, C2015-08, C2015-30, C2016-07, C2016-11, C2016-12, C2016-13, C2016-14.
+
+Development keeps the 7 BHD projects (5 eligible; 6 once the running overruns of decision 5 are added). So development has 14 or 15 eligible projects in all.
+
+**Things to know about this draw.**
+- It holds 19 projects, not 15. The last family drawn is the five-project family C2016-11..15, and families are never split.
+- It took 8 of the 17 eligible DSLIB projects. The simulation of E2c expected 6. Development is therefore thinner than expected: 9 eligible DSLIB projects instead of about 11. The draw is not repeated: choosing among draws would be a decision made on the frozen set.
+- Four of the eight eligible frozen projects (C2016-11, 12, 13 and 14) belong to one family, the five-project family C2016-11..15. They are counted as four projects, but they are not four independent pieces of evidence: the eight eligible projects come from five families. The final report has to say so. Decision (Roi and Shira, 15.11.2026, after the draw and before any E3 result): the final report also gives the result with that family counted once (the median of its four projects).
+- Two flagged or single-ratio projects fell in the frozen set: C2023-04 and C2016-06. Neither is eligible for the within-project metric, so the headline does not use them.
+- Consequence for sensitivity S3 (entry D1): C2023-04 is now outside every training set, so "train once more without C2023-04" has nothing to compare. S3 becomes: every frozen-set result that pools activities (pooled AUC, calibration, base rate) is reported with and without C2023-04. Roi and Shira agreed to this change on 15.11.2026, after the draw and before any E3 result.
+
+**Corrections to D1, made after the draw. No decision changed.**
+- Decision 5 says that sensitivity S2 "is the population of E1–E2b". More exactly: S2 uses the labelling of E1–E2b (completed activities only), so it is the result closest to the earlier experiments. The projects still differ: the 13 DSLIB projects of E2c are dropped and the frozen projects are held out.
+- The sentence "Who decided" in D1 was reworded after the draw, to say that Roi and Shira took all the decisions together.
+
+**Rules from now on.**
+- Every script that trains, tunes, calibrates, sets thresholds or compares variants works on `development_only(df)` and calls `assert_no_frozen()` before fitting.
+- The frozen projects are read once, by the final evaluation, after the meeting with the advisor.
+- E1, E2, E2b and E2c stay as they are. They were run before the freeze and saw these projects; that is recorded in the limits written into `outputs/frozen_test_set.json`.
+
+**How this was checked.** The script and this entry were written with an AI assistant. The script has unit tests, including one that checks the stored file (no family on both sides, no dropped project, at least 15 projects and 6 eligible). A second run of the script recomputes the draw and reports whether it is identical to the file. Neither Roi nor Shira has rerun it yet.
+
+**Verify yourself.**
+```
+python3 src/freeze_test_set.py        # frozen set on file: 19 projects; recomputed draw is IDENTICAL
+python3 -c "import json;r=json.load(open('outputs/frozen_test_set.json'));print(r['seed_used'],r['attempt'],r['frozen']['n_projects'],r['frozen']['n_eligible_grew'],r['development']['dslib']['n_eligible_grew'])"
+# 42 0 19 8 9
+```
