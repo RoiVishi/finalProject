@@ -1,0 +1,93 @@
+{
+ "rule": "rank by planned position (rel_position); no model",
+ "eligibility": ">= 30 activities and >= 5 in each class",
+ "running_overruns_total": 1731,
+ "summary": {
+  "median_auc_completed_only": 0.485,
+  "median_auc_with_running_overruns": 0.59,
+  "projects_eligible_in_both": 5,
+  "projects_where_the_rule_improves": 5,
+  "gain_min_median_max": [
+   0.037,
+   0.08,
+   0.13
+  ],
+  "projects_below_0_5_completed_only": [
+   "own::129 trial",
+   "own::130 TRIAL",
+   "own::rehab-2"
+  ]
+ },
+ "per_project": [
+  {
+   "project": "own::129 trial",
+   "completed": 766,
+   "completed_grew_rate": 0.601,
+   "running_overruns": 104,
+   "median_position_completed": 0.58,
+   "median_position_running_overruns": 0.8,
+   "auc_completed_only": 0.375,
+   "auc_with_running_overruns": 0.455
+  },
+  {
+   "project": "own::130 TRIAL",
+   "completed": 82,
+   "completed_grew_rate": 0.878,
+   "running_overruns": 37,
+   "median_position_completed": 0.72,
+   "median_position_running_overruns": 0.84,
+   "auc_completed_only": 0.485,
+   "auc_with_running_overruns": 0.587
+  },
+  {
+   "project": "own::CCA R03 dt 24Oct11SC",
+   "completed": 1533,
+   "completed_grew_rate": 0.797,
+   "running_overruns": 1439,
+   "median_position_completed": 0.28,
+   "median_position_running_overruns": 0.38,
+   "auc_completed_only": 0.579,
+   "auc_with_running_overruns": 0.709
+  },
+  {
+   "project": "own::PORTO MATROUH",
+   "completed": 392,
+   "completed_grew_rate": 0.094,
+   "running_overruns": 22,
+   "median_position_completed": 0.26,
+   "median_position_running_overruns": 0.35,
+   "auc_completed_only": 0.649,
+   "auc_with_running_overruns": 0.724
+  },
+  {
+   "project": "own::Update 01-09-2010",
+   "completed": 11,
+   "completed_grew_rate": 0.182,
+   "running_overruns": 0,
+   "median_position_completed": 0.08,
+   "median_position_running_overruns": null,
+   "auc_completed_only": null,
+   "auc_with_running_overruns": null
+  },
+  {
+   "project": "own::rehab-2",
+   "completed": 2035,
+   "completed_grew_rate": 0.617,
+   "running_overruns": 122,
+   "median_position_completed": 0.29,
+   "median_position_running_overruns": 0.41,
+   "auc_completed_only": 0.415,
+   "auc_with_running_overruns": 0.452
+  },
+  {
+   "project": "own::update of jungle 20-07-2010",
+   "completed": 25,
+   "completed_grew_rate": 0.6,
+   "running_overruns": 7,
+   "median_position_completed": 0.1,
+   "median_position_running_overruns": 0.14,
+   "auc_completed_only": null,
+   "auc_with_running_overruns": 0.593
+  }
+ ]
+}
