@@ -223,3 +223,40 @@ EOF
 ```
 
 **Still open (E3).** Hyper-parameters are still the v6 ones, tuned on pooled AUC (item 8 asks for a within-project metric). The numbers in this log are typed; the final document will generate them from the JSON files (item 11). Each extra look at the same 66 projects adds to the item-9 risk, so the frozen test set should be chosen before E3.
+
+---
+
+## Data check — 15.11.2026 — DSLIB source, version and release notes (item 11)
+
+**Question.** Is there a newer DSLIB release with more projects? Where exactly does our copy come from? Did any of the corrections listed in the DSLIB release notes touch projects in our corpus?
+
+**Source of our copy.**
+- DSLIB is published on GitHub: https://github.com/mariovanhoucke/DSLIB-Dynamic-Scheduling-Empirical-Project-Library/releases. The `Readme.rtf` inside our zip points there.
+- Our copy is release v3.4 (tag `DSLIB_v3.4`, `git ls-remote` hash c6d75c8), zip md5 `2db1614c3229759c62daf57e84912ff3`. The files inside the zip are dated 21.8–1.9.2026, so it was downloaded around 1.9.2026 (Roi to confirm the exact date).
+- The Readme says that when a new release is published, the previous one is removed. So v3.4 may not stay downloadable, and the tag, the md5 and the download date must be recorded in the download script and in the document.
+
+**Is there a newer release?** No. On 15.11.2026 the tags are v3.0, v3.1, v3.2, v3.3 and v3.4. v3.4 is the latest.
+- v3.4 contains 231 projects (Readme). The "28 new projects" in the release notes were added in v3.0 compared with v2 (203 in December 2024 + 28 = 231). v3.1–v3.4 only corrected existing projects.
+- So DSLIB has no further projects to add. Our corpus uses 57 of the 231 (the building projects, `outputs/project_families.json`), 44 after removing the 13 projects flagged on 15.11.2026 (entry pending).
+
+**Release notes against our corpus.** Sheet "Updates" of `DSLIB_Analysis_Sheet.xlsx`, compared with the 57 DSLIB projects in `outputs/project_families.json`:
+- v3.4 rescheduled 16 projects to resolve resource conflicts, so their planned dates changed. None of the 16 is in our corpus.
+- v3.2 and v3.3 corrected the tracking periods (actual progress) of other projects. Four of them are in our corpus: C2023-01, C2023-04, C2023-07, C2023-08. We use v3.4, so we have the corrected versions.
+- C2023-07 and C2023-08 are two of the 13 projects flagged on 15.11.2026 (planned dates equal to actual dates in ≥ 90% of activities). The release notes say their progress data were corrected in v3.2: in C2023-07 the status date of the last tracking period was changed; in C2023-08 the last tracking period is not the end of the project, so several activities remain not started. This supports removing them.
+- Sheet "Known Problems" lists one project (2011-06, "cannot be rescheduled"). It is not in our corpus.
+
+**Decision.** No new DSLIB data to add. Record the release tag, md5 and download date in the download script and in the document (item 11).
+
+How this was checked: with an AI assistant, on our copy of the zip and on the public GitHub tags. Not yet checked by hand.
+
+Verify yourself (from `data-pipeline`, with DSLIB unzipped to `~/data_dslib`):
+```
+git ls-remote --tags https://github.com/mariovanhoucke/DSLIB-Dynamic-Scheduling-Empirical-Project-Library   # latest: DSLIB_v3.4
+python3 - <<'EOF'
+import json, os, openpyxl
+ours = {k.split("::")[1] for k in json.load(open("outputs/project_families.json")) if k.startswith("dslib::")}
+wb = openpyxl.load_workbook(os.path.expanduser("~/data_dslib/DSLIB 3.4/DSLIB_Analysis_Sheet.xlsx"), read_only=True, data_only=True)
+updated = {r[0] for r in wb["Updates"].iter_rows(values_only=True) if r[0] and str(r[0]).startswith("C20")}
+print(len(ours), sorted(updated & ours))   # 57 ['C2023-01', 'C2023-04', 'C2023-07', 'C2023-08']
+EOF
+```
