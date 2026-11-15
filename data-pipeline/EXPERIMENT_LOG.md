@@ -187,9 +187,39 @@ What this shows:
 - In the 60–80% deciles the difference reverses (96 vs 80 hours), but there are few running activities there.
 
 **(8) BHD versions of the same project (item 2).** Two corpus projects have earlier versions in the raw data, with the same task codes, where every activity is not started:
-- `update of jungle 20-07-2010` vs `baseline of jungle`: for the 73 completed activities, the planned duration in days and in hours is the same in 100% of cases, but the planned start is the same in only 47%.
-- `Update 01-09-2010` vs `medor_003`: 16 completed activities, everything the same in 100%. Against another draft, `schedule of Medor`, durations agree on 75%.
-- Reading: in these two projects the planned **durations** of completed activities are the original ones, while the planned **dates** were moved in the update. So `grew` (a duration comparison) is valid there and `is_late` (finish date vs planned finish) would not be.
-- This is evidence for two projects only. Jumaira (E2) shows the opposite case, where durations too were overwritten.
+- `update of jungle 20-07-2010` vs `baseline of jungle` (the same P6 project: proj_id 764, same guid): for the 73 completed activities, the planned duration in days and in hours is the same in 100% of cases, but the planned start is the same in only 47%.
+  - The baseline has 923 activities, data date 21.6.2010 (the planned project start) and no actual dates.
+  - It was added to the P6 database on 27.6.2010 at 10:16, and every activity has update_date 27.6.2010 10:17. So here update_date records the import, not an edit.
+  - The first actual start in the update is 21.6.2010.
+- `Update 01-09-2010` vs two earlier drafts, which are one P6 project exported at two moments (proj_id 766, same guid, add_date 29.6.2010). Neither draft has actual dates.
+  - `schedule of Medor`: 76 activities, every update_date is 6.7.2010, planned project start 10.7.2010.
+  - `medor_003`: 69 activities, every update_date is 23.8.2010, planned project start 7.7.2010. The first actual start in the update is also 7.7.2010.
+  - Between the drafts, 7 activities were removed, and 26 of the 69 shared activities have a different planned duration. All 26 are shorter in `medor_003`.
+  - The 16 completed activities of the update have the planned duration of `medor_003` in 16 of 16 cases, and that of `schedule of Medor` in 12 of 16 (A1330, A1370, A1390 and A1410 differ).
+- *Correction (15.11.2026, from Shira's check).* The first version of this entry said that in both projects the planned durations of the completed activities "are the original ones". That was too strong for jungle and wrong for Medor.
+  - jungle: the planned durations did not change between the two versions we have (data dates 21.6 and 20.7.2010), while the planned dates moved. So `grew` (a duration comparison) is valid against the earliest version we have, and `is_late` (finish date vs planned finish) would not be. The baseline's data date and its lack of actual dates fit a start-of-project plan, but they do not prove that it is the original plan.
+  - Medor: `medor_003` is a plan that was revised about six weeks after work started, and the update takes its planned durations from it. So 4 of the 16 labelled activities are measured against a duration that was shortened after the start. `schedule of Medor` is the earliest version we have, not necessarily the original.
+  - Caveat: update_date changes on every edit and on import, so it dates the last change and says nothing about what was changed. The order of the two Medor drafts rests on update_date and on the planned project start moving to the actual start date.
+- **Decision (Roi and Shira, 15.11.2026).** Medor stays in the corpus and is flagged, like rehab-2. It has 11 activities in the cleaned corpus (0.2% of the BHD rows) and is too small for the within-project metric. The 90% rule of E2 does not apply to it.
+- **General limitation for BHD.** In BHD, `grew` compares the actual duration with the planned duration as it stood at the export. That is not guaranteed to be the original plan.
+  - Earlier versions exist for only 2 of the 7 BHD projects in the cleaned corpus. In one of them (Medor) the plan was revised after the start. For the other 5 this cannot be checked.
+  - rehab-2 is the largest case: 2,035 of the 4,844 BHD activities in the cleaned corpus (42%). Its planned start equals the actual start in 100% of activities (E2), so its label rests on the assumption that the planned durations were kept. There is no earlier version to test that.
+  - Jumaira (E2) shows the opposite case, where durations too were overwritten.
+- How the correction was checked: Shira's check was done with an AI assistant on the raw BHD tables. It was repeated separately, with different code, on Roi's copy of the raw tables, also with an AI assistant, and gave the same numbers. No one has checked these numbers by hand yet.
+
+Verify the Medor numbers yourself (from `data-pipeline`, with the raw tables in `data_bhd`):
+```
+python3 - <<'EOF'
+import pandas as pd
+rd = lambda p: pd.read_csv(f"data_bhd/Buildings Data/{p}/TASK.csv", low_memory=False)
+s, m, u = rd("schedule of Medor"), rd("medor_003"), rd("Update 01-09-2010")
+c = s.merge(m, on="task_code", suffixes=("_s", "_m"))
+diff = c[c.target_drtn_hr_cnt_s != c.target_drtn_hr_cnt_m]
+print(len(s), len(m), len(diff), (diff.target_drtn_hr_cnt_m < diff.target_drtn_hr_cnt_s).sum())   # 76 69 26 26
+d = u[u.status_code == "TK_Complete"].merge(s, on="task_code", suffixes=("", "_s")).merge(m, on="task_code", suffixes=("", "_m"))
+print(len(d), (d.target_drtn_hr_cnt == d.target_drtn_hr_cnt_m).sum(), (d.target_drtn_hr_cnt == d.target_drtn_hr_cnt_s).sum())   # 16 16 12
+print(s.update_date.str[:10].unique(), m.update_date.str[:10].unique())   # ['2010-07-06'] ['2010-08-23']
+EOF
+```
 
 **Still open (E3).** Hyper-parameters are still the v6 ones, tuned on pooled AUC (item 8 asks for a within-project metric). The numbers in this log are typed; the final document will generate them from the JSON files (item 11). Each extra look at the same 66 projects adds to the item-9 risk, so the frozen test set should be chosen before E3.
