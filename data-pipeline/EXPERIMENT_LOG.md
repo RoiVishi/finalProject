@@ -453,3 +453,58 @@ for p in sorted(clean.loc[clean.source == "own", "project"].unique()):
 print(total)   # 1731, of which CCA 1439
 EOF
 ```
+
+---
+
+## F1 — 15.11.2026 — The frozen test set
+
+**What was done.** The draw of decision 9 (entry D1) was made once. D1 and the code of the draw were committed before it.
+
+**Run.**
+```
+python3 src/freeze_test_set.py        # first run wrote outputs/frozen_test_set.json; every later run only checks it
+python3 -m pytest -q tests/test_freeze.py
+```
+Needs `outputs/corpus_v3_clean.csv`, `outputs/dslib_labeled_tasks.csv` and the E2b/E2c outputs. It does not need `data_bhd`. No model is trained and no model result is read.
+
+**Result.** Seed 42, first attempt, no rejected attempt.
+
+| | Frozen | Left for development |
+|---|---|---|
+| DSLIB projects | 19 | 25 |
+| DSLIB families | 14 | 19 |
+| Activities | 941 | 1,564 |
+| `grew` rate | 18.7% | 20.5% |
+| Eligible, `grew` (the primary rule) | 8 | 9 |
+| Eligible, tolerance label | 5 | 7 |
+| Eligible, ratio rule B | 9 | 11 |
+
+Frozen projects: C2013-09, C2013-13, C2013-14, C2013-17, C2015-08, C2015-30, C2015-32, C2016-06, C2016-07, C2016-11, C2016-12, C2016-13, C2016-14, C2016-15, C2016-29, C2016-30, C2016-31, C2016-32, C2023-04.
+Eligible among them (primary rule): C2013-09, C2015-08, C2015-30, C2016-07, C2016-11, C2016-12, C2016-13, C2016-14.
+
+Development keeps the 7 BHD projects (5 eligible; 6 once the running overruns of decision 5 are added). So development has 14 or 15 eligible projects in all.
+
+**Things to know about this draw.**
+- It holds 19 projects, not 15. The last family drawn is the five-project family C2016-11..15, and families are never split.
+- It took 8 of the 17 eligible DSLIB projects. The simulation of E2c expected 6. Development is therefore thinner than expected: 9 eligible DSLIB projects instead of about 11. The draw is not repeated: choosing among draws would be a decision made on the frozen set.
+- Four of the eight eligible frozen projects (C2016-11, 12, 13 and 14) belong to one family, the five-project family C2016-11..15. They are counted as four projects, but they are not four independent pieces of evidence: the eight eligible projects come from five families. The final report has to say so. Decision (Roi and Shira, 15.11.2026, after the draw and before any E3 result): the final report also gives the result with that family counted once (the median of its four projects).
+- Two flagged or single-ratio projects fell in the frozen set: C2023-04 and C2016-06. Neither is eligible for the within-project metric, so the headline does not use them.
+- Consequence for sensitivity S3 (entry D1): C2023-04 is now outside every training set, so "train once more without C2023-04" has nothing to compare. S3 becomes: every frozen-set result that pools activities (pooled AUC, calibration, base rate) is reported with and without C2023-04. Roi and Shira agreed to this change on 15.11.2026, after the draw and before any E3 result.
+
+**Corrections to D1, made after the draw. No decision changed.**
+- Decision 5 says that sensitivity S2 "is the population of E1–E2b". More exactly: S2 uses the labelling of E1–E2b (completed activities only), so it is the result closest to the earlier experiments. The projects still differ: the 13 DSLIB projects of E2c are dropped and the frozen projects are held out.
+- The sentence "Who decided" in D1 was reworded after the draw, to say that Roi and Shira took all the decisions together.
+
+**Rules from now on.**
+- Every script that trains, tunes, calibrates, sets thresholds or compares variants works on `development_only(df)` and calls `assert_no_frozen()` before fitting.
+- The frozen projects are read once, by the final evaluation, after the meeting with the advisor.
+- E1, E2, E2b and E2c stay as they are. They were run before the freeze and saw these projects; that is recorded in the limits written into `outputs/frozen_test_set.json`.
+
+**How this was checked.** The script and this entry were written with an AI assistant. The script has unit tests, including one that checks the stored file (no family on both sides, no dropped project, at least 15 projects and 6 eligible). A second run of the script recomputes the draw and reports whether it is identical to the file. Neither Roi nor Shira has rerun it yet.
+
+**Verify yourself.**
+```
+python3 src/freeze_test_set.py        # frozen set on file: 19 projects; recomputed draw is IDENTICAL
+python3 -c "import json;r=json.load(open('outputs/frozen_test_set.json'));print(r['seed_used'],r['attempt'],r['frozen']['n_projects'],r['frozen']['n_eligible_grew'],r['development']['dslib']['n_eligible_grew'])"
+# 42 0 19 8 9
+```
