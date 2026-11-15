@@ -1,0 +1,18 @@
+{
+ "rule": "planned start and finish both equal the actual ones on >= 90% of the project's labelled activities (the E2 rule, unchanged)",
+ "projects": [
+  "dslib::C2016-16",
+  "dslib::C2016-17",
+  "dslib::C2016-18",
+  "dslib::C2016-19",
+  "dslib::C2016-20",
+  "dslib::C2016-21",
+  "dslib::C2016-22",
+  "dslib::C2016-23",
+  "dslib::C2016-24",
+  "dslib::C2016-25",
+  "dslib::C2016-26",
+  "dslib::C2023-07",
+  "dslib::C2023-08"
+ ]
+}

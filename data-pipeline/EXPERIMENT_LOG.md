@@ -223,3 +223,100 @@ EOF
 ```
 
 **Still open (E3).** Hyper-parameters are still the v6 ones, tuned on pooled AUC (item 8 asks for a within-project metric). The numbers in this log are typed; the final document will generate them from the JSON files (item 11). Each extra look at the same 66 projects adds to the item-9 risk, so the frozen test set should be chosen before E3.
+
+---
+
+## E2c — 15.11.2026 — Data facts for the label and freeze decisions (no model)
+
+**Question.** Three things had to be known before a test set is frozen. Does the E2 rule for overwritten plans also catch DSLIB projects (item 6)? How many projects can carry a within-project metric under each candidate label, including the continuous ratio (items 6 and 9)? If whole DSLIB families are frozen until 15 projects are reached, how many eligible projects fall into the frozen set (item 9)?
+
+**Run.**
+```
+python3 src/e2c_eligibility.py                       # → outputs/e2c_eligibility.json, dslib_overwritten_projects.json (about 30 seconds)
+python3 -m pytest -q tests/test_e2c_eligibility.py   # 5 passed
+```
+Needs `data_bhd` and the E2/E2b outputs (`corpus_v3_clean.csv`, `project_families.json`). No model is trained and no model result is read. Nothing is frozen by this script.
+
+**Rules.**
+- Overwritten plans: the E2 rule, unchanged. A project is dropped when planned start and finish both equal the actual ones on ≥ 90% of its labelled activities. The threshold was fixed in E2, before DSLIB was looked at this way.
+- Ratio = actual / planned duration, in working days in both corpora. DSLIB: from the ETL. BHD: counted on each activity's own P6 calendar, a one-day activity = 1. This is not the BHD ratio summarised in E2b, which used calendar days and left out same-day activities (median 1.60).
+- Eligibility for a within-project metric. `grew`: the rule used so far (≥ 30 activities, ≥ 5 in each class). For the ratio, two candidate rules are counted: A (≥ 30 activities with a ratio) and B (A and ≥ 125 comparable pairs). A comparable pair is two activities of one project with different ratios. 125 = 5 × 25 is the fewest pairs the `grew` rule allows. Rule B was written on 15.11.2026, after looking at the ratio tables and before any model result on the ratio. It is a proposal.
+- This entry was run with the continuous ratio as the candidate label, at Roi's request. The tolerance label is counted for reference only, because its count was quoted in the question sent to the advisor.
+
+**Findings.**
+
+*1 — 13 DSLIB projects meet the overwritten-plan rule.* They are C2016-16..26 (one family, 11 projects, 267 activities, all at 100%), C2023-07 (41 activities, 100%) and C2023-08 (28 activities, 93%). Their actual dates repeat the plan, so grew = 0 by construction, as in jumaira. In C2023-08 one of the two exceptions looks like a real overrun (15 → 80 working days). The nearest project below the threshold is C2023-01 (83%); it stays.
+
+After dropping the 13:
+
+| | Projects | Activities | Families | grew rate |
+|---|---|---|---|---|
+| DSLIB | 57 → 44 | 2,841 → 2,505 | 36 → 33 | 17.5% → 19.8% |
+| BHD | 7 | 4,844 | 6 | 63.3% |
+| All | 64 → 51 | 7,685 → 7,349 | 42 → 39 | |
+
+Family counts use the E2b map. (E2 reported 44 families for the 64 cleaned projects under its Jaccard-only map; "44" in E2b is the count for all 66 projects.) The within-project results of E1–E2b do not change: the 13 projects are single-class and were never eligible.
+
+*1b — three projects where one ratio value covers ≥ 90% of the activities. Reported, not dropped.*
+- C2023-04: 29 of 30 activities are exactly 20% longer than planned (5 → 6 days, 10 → 12 days). That gives 29 of DSLIB's 496 `grew` positives from a pattern that does not look measured.
+- C2016-06: all 96 activities have exactly the planned duration, while the dates moved.
+- C2015-08: 94.6% of 186 activities have exactly the planned duration.
+
+None of them meets the overwritten-plan rule.
+
+*2 — the ratio.*
+
+| | Median | Below 1 | Exactly 1 | Above 1 |
+|---|---|---|---|---|
+| DSLIB (2,505 activities) | 1.00 | 13.4% | 66.8% | 19.8% |
+| BHD (4,833 of 4,844 activities) | 1.40 | 18.5% | 18.0% | 63.5% |
+
+In DSLIB, 112 activities have a planned duration under one working day, so their ratios are extreme (1 hour planned and 1 day actual gives 8). In BHD, 11 activities of PORTO MATROUH have no ratio, because their planned dates hold no working day of their calendar.
+
+*3 — eligible projects, after dropping the 13.*
+
+| Rule | DSLIB | BHD | Total |
+|---|---|---|---|
+| `grew` (≥ 30 activities, ≥ 5 in each class) | 17 | 5 | 22 |
+| tolerance label, same rule (reference) | 12 | 5 | 17 |
+| ratio A (≥ 30 activities) | 23 | 5 | 28 |
+| ratio B (A and ≥ 125 comparable pairs) | 20 | 5 | 25 |
+
+Rule A lets in C2016-06 (0 comparable pairs), C2023-04 (29) and C2023-01 (108). A ranking cannot be measured in those projects, so rule A is not usable as it stands. Under rule B the ratio adds C2013-04, C2013-07 and C2015-32 to the 17 projects of the `grew` rule. Each has fewer than 5 overruns, but durations that differ from the plan in both directions.
+
+*4 — freeze simulation.* Whole DSLIB families are drawn in random order until the frozen set holds ≥ 15 projects (44 projects in 33 families; 20,000 draws, seed 42). The frozen set then has 11.5 families and 15.4 projects on average.
+
+| Rule | Eligible projects in the frozen set: mean (quartiles) | Left for development: mean | Draws with ≥ 6 eligible |
+|---|---|---|---|
+| `grew` | 6.0 (5 / 6 / 7) | 11.0 | 59% |
+| tolerance (reference) | 4.2 (3 / 4 / 5) | 7.8 | 24% |
+| ratio A | 8.1 (7 / 8 / 9) | 14.9 | 89% |
+| ratio B | 7.0 (6 / 7 / 8) | 13.0 | 76% |
+
+**What this shows.**
+1. The overwritten-plan rule has to be applied to DSLIB before the freeze. Otherwise the 11-project family could fill most of a 15-project frozen set with labels that are 0 by construction.
+2. The continuous ratio raises the eligible DSLIB projects from 17 to 20 (rule B), and the expected number of eligible projects in the frozen set from 6 to 7. It does not remove the small-sample problem.
+3. Two thirds of the DSLIB activities are tied at exactly 1.0. A within-project metric on the ratio has to be computed on comparable pairs (a concordance index), not on all pairs.
+4. Whatever the label, the final within-project number will rest on about 4 to 8 frozen projects. Its confidence interval will be wide.
+
+**What choosing the ratio would change.** These points belong in the decision entry, before the freeze.
+- Metric: within-project AUC is not defined for a continuous outcome. Its counterpart is the concordance index on comparable pairs. The four baselines have to be re-scored on it, and the numbers of E1–E2b are not directly comparable with it.
+- Eligibility: rule B, or another rule written down before E3.
+- Running activities (item 3): an activity that is still running and has already passed its planned duration has only a lower bound on its ratio. A rule is needed for such activities.
+- Short activities: what to do with planned durations under one working day.
+- Target of the model: the ratio, its logarithm, or the rank inside the project. The corpora differ in level (median 1.00 vs 1.40).
+- C2023-04: keep, flag or drop. A rule would have to be written before E3.
+
+**Limits on validity.**
+- Section 4 is a simulation of the proposed procedure. The real freeze is one draw and can differ from the mean.
+- Eligibility is counted on whole projects, as in scenario A. It says nothing about scenario B.
+- The BHD counts rest on labels measured against the plan as exported (E2b, section 8).
+- The family map and its thresholds are ours (E2b); another rule would change the family counts and the simulation.
+- The script and this entry were written with an AI assistant. The script has unit tests. Neither Roi nor Shira has rerun it yet, and no number here has been checked by hand.
+
+**Verify yourself.**
+```
+python3 -c "import json;r=json.load(open('outputs/e2c_eligibility.json'));print(len(r['1_overwritten_plans']['dslib_projects_dropped']),{k:(v['dslib'],v['bhd']) for k,v in r['4_eligible_projects']['after_dropping_dslib_overwritten'].items()})"
+# 13 {'grew': (17, 5), 'tolerance': (12, 5), 'ratio_A': (23, 5), 'ratio_B': (20, 5)}
+```
+By hand, in `outputs/dslib_labeled_tasks.csv`: in C2016-16 every `actual_start` equals `baseline_start` and every `actual_duration_wd` equals `planned_duration_wd`; in C2023-04 `actual_duration_wd` is 1.2 × `planned_duration_wd` on 29 of 30 rows.
