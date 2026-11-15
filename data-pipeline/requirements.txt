@@ -8,3 +8,4 @@ joblib==1.5.3
 tabulate==0.10.0
 xgboost==3.2.0
 shap==0.51.0
+openpyxl==3.1.5  # reads the DSLIB .xlsx workbooks (rr17_dslib_etl.py)
