@@ -663,3 +663,21 @@ Verify yourself (from `data-pipeline`):
 python3 -c "import json;d=json.load(open('outputs/model_comparison.json'));print(d['champion']['inner_selection_auc']['xgboost'],d['served_model']['metrics_B_test']['roc_auc'],d['risk_bands']['selected_on'],d['risk_bands']['test_band_shares'])"
 # 0.8889 0.8452 B_cal (1609 activities) {'low': 0.489, 'medium': 0.408, 'high': 0.103}
 ```
+
+---
+
+## Code fixes — 17.11.2026 — The explanation shown to the user (items 10 and 5)
+
+No model change and no number change: this changes what the task panel (`frontend/src/tasks`) says about a prediction. The AR panel shows only the risk band of a zone, with no explanation, so it is unchanged.
+
+| Change | Advisor's item |
+|---|---|
+| The wording says what the model learned, not what causes a delay. Heading "על מה המודל התבסס (סיכון …)" instead of "למה הסיכון …"; arrows "המודל משייך לזה סיכון גבוה/נמוך יותר" instead of "מעלה/מוריד את הסיכון"; the legend says the factors describe what the model learned from earlier projects, not necessarily what will cause a delay | 10 ("the explanation describes what the model learned, not what caused the overrun") |
+| Project-level factors (`proj_span_days`, `proj_n_tasks`) are no longer listed. They are the same for every activity in a project, so they cannot say why one activity is riskier than another. When the score uses them, one line says that part of the score comes from the project as a whole and is not shown. The bars are scaled to the strongest activity-level factor | 10 ("show only activity-level factors") |
+| A factor with no value is not shown. The service always sends no float, so the panel used to show "float: unknown" as if it were a fact about the activity | 5 |
+
+Once E3 removes the project features from the model, the note will not appear. The SHAP values themselves are recomputed after E3 (item 10, first part).
+
+Tests: `frontend/src/tasks/explanationView.test.js` (7 pass; new: a factor with no value is not shown; project factors are not listed and a note is added) and `TaskViews.test.jsx` (17 pass; the new heading, and the panel with only a project factor shows the note and no listed reason). ESLint clean.
+
+How this was done: the changes and tests were written with an AI assistant (Claude); Shira and Roi chose the wording and the option of hiding project factors with one note; Shira ran the tests and ESLint on her machine.
