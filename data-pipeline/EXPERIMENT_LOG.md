@@ -508,3 +508,89 @@ python3 src/freeze_test_set.py        # frozen set on file: 19 projects; recompu
 python3 -c "import json;r=json.load(open('outputs/frozen_test_set.json'));print(r['seed_used'],r['attempt'],r['frozen']['n_projects'],r['frozen']['n_eligible_grew'],r['development']['dslib']['n_eligible_grew'])"
 # 42 0 19 8 9
 ```
+
+---
+
+## Verification — 15.11.2026 — Shira reruns E1–E2b and checks by hand
+
+**Question.** Does a second team member, on her own machine and from the raw data, get the numbers of E1, E2 and E2b? Do the main facts hold when read directly from the raw files, without the experiment scripts? Are the data decisions acceptable to her?
+
+**Environment.** Shira's MacBook (Apple silicon), Python 3.12.4 (Roi: 3.13), a fresh `.venv` in `data-pipeline` with `pip install -r requirements.txt pytest`. Code: `main` at f42cc68 (E2b merged). On macOS, xgboost also needs the OpenMP runtime (`brew install libomp`); without it `import xgboost` fails. This is not yet in the README.
+
+**A. Reproduction (Shira ran every command herself).**
+
+| Step | Expected (Roi) | Result |
+|---|---|---|
+| 1. Raw data | BHD commit 862936f (fresh `git clone` from GitHub); DSLIB3.4.zip md5 `2db1614c…` | same |
+| 2. ETL | `labeled_tasks.csv` md5 `2101f307…`; `dslib_labeled_tasks.csv` md5 `ff118182…` | same (bit for bit) |
+| 3. Corpus v3 | 66 projects, 9,250 activities | same |
+| 4. E1 | full B 0.874 / 0.769; project-only B 0.816 / 0.500 | 0.8736 / 0.7688; 0.8163 / 0.5000 |
+| 5. E2 | BHD 30,368 / 6,227 / 3,046 / 1,731 / 21,095; jumaira 100%, cairo alex-road 91%; 64 projects, 7,685 activities, 44 families | same (cairo 0.913) |
+| 6. Calendars | `pytest tests/test_p6_calendar.py`: 2 passed | 2 passed |
+| 7. E2b | R3 within: clean 0.552, successors 0.533, duration 0.525; clean − successors −0.002 [−0.023, +0.049]; clean − duration +0.042 [−0.012, +0.084]; agreement BHD 98.9%, DSLIB 89.4% | same |
+
+After steps 2–7, `git status` showed no change in any committed output (`etl_summary.json`, `dslib_etl_summary.json`, `corpus_v3_summary.json`, `advisor_checks.json`, `e2_data_audit.json`, `project_families.json`, `e2b_followups.json`). So all outputs of E1–E2b reproduce exactly under Python 3.12 as well as 3.13.
+
+**B. Independent checks (from the raw files, without the experiment scripts).**
+- 8. jumaira `TASK.csv`, the 1,350 activities with all four dates: planned start and finish equal the actual ones in 100%. PORTO MATROUH: 11 of 422 (2.6%). Checked by hand in Excel.
+- 9. CCA, share of work activities with all four dates by planned-position decile: 1.0, 1.0, 0.83, 0.28, 0.03, then about 0. Checked by hand in Excel.
+- 10. Planned-duration rule, within-project AUC computed directly on `corpus_v3_clean.csv` (rank formula, no model, no experiment script): 22 eligible projects, median 0.5249.
+- 11. `130 TRIAL/CALENDAR.csv`, calendar 991: 23.7.2010 (serial 40382) is a worked exception 08:00–16:00; 10.9.2010 (40431) is a holiday. Checked by hand.
+- 12. `e2b_label_disagreements_sample.csv`: working days counted by hand on several rows (not rows 7 and 18); the counts match the file.
+
+**C. Decisions (items 13–17).** Read and accepted by Shira: the family rule, the eligibility rule (≥ 30 activities, ≥ 5 in each class), the 90% overwritten-plan threshold (set after looking at BHD, see E2), the row-cleaning rules, and the fixed 10 × 5-fold family split.
+
+**Mismatches.** None.
+
+**Side note.** `rr17_dslib_etl.py` also writes `outputs/dslib_projects.csv`, which is neither committed nor in `.gitignore`.
+
+How this was done: the commands and the short script for check 10 were written with an AI assistant (Claude). Shira ran every command on her machine. For steps 5 and 7 the numbers were read from the output files by the assistant and compared with the list above. Checks 8, 9, 11 and 12 were done by Shira by hand in Excel and a text editor.
+
+---
+
+## D2 — 15.11.2026 — Decision 5 of D1 reversed: the running overruns move to a sensitivity analysis
+
+**Why.** Decision 5 of D1 put the BHD activities that were still running at the data date, and had already run longer than planned, into the main analysis with `grew` = 1. D1 itself noted the risk: only overruns can be added this way, so the running part of a project enters the data as 100% overruns. In her review of D1, Shira proposed a way to measure that risk without a model, and ran it.
+
+**The check.** Take a rule that knows nothing about an activity except where it sits in the plan: rank by planned position (`rel_position`). Measure its within-project AUC twice, with the usual eligibility rule: on the completed activities only, and with the running overruns added. If the rule improves just because those activities were added, the gain comes from how they are labelled and not from any ability to predict.
+
+```
+python3 src/d2_position_rule_check.py                 # → outputs/d2_position_rule_check.json (a few seconds)
+python3 -m pytest -q tests/test_d2_position_rule.py   # 3 passed
+```
+BHD only; needs `data_bhd`. No model is trained. BHD is not frozen, so the frozen test set is not touched.
+
+| Project | Completed only | With the running overruns | Running overruns added |
+|---|---|---|---|
+| 129 trial | 0.375 | 0.455 | 104 |
+| 130 TRIAL | 0.485 | 0.587 | 37 |
+| CCA | 0.579 | 0.709 | 1,439 |
+| PORTO MATROUH | 0.649 | 0.724 | 22 |
+| rehab-2 | 0.415 | 0.452 | 122 |
+| jungle | not eligible | 0.593 | 7 |
+| Medor | not eligible | not eligible | 0 |
+| Median | 0.485 | 0.590 | |
+
+**What it shows.**
+1. The position rule improves in all 5 projects that are eligible both ways, by 0.04 to 0.13 (median 0.08). The median over the eligible projects moves from 0.485 to 0.590. The rule learned nothing; the added activities sit later in the plan (in every project their median planned position is above that of the completed ones) and all of them are labelled as overruns.
+2. `rel_position` is a model feature. A model could collect the same gain. A gain of about 0.1 is larger than every difference between a model and a baseline measured so far (E2b: at most 0.05).
+3. The completed-only data are not free of bias either; theirs goes the other way. The rule is below 0.5 in three of the five projects (0.375, 0.415, 0.485): among completed activities, the later ones overran less. This is the survivorship effect of item 3 (E2b, section 9: in the late part only the fast activities had finished). The direction is not the same in every project, so it is harder for a model tested on a new project to use. Neither version is unbiased, and one snapshot per project cannot show where the truth lies.
+
+**Decision (Roi and Shira, 15.11.2026).**
+- Main analysis: completed activities only, as in E1–E2b.
+- Sensitivity S2, redefined: the same analysis with the 1,731 running overruns labelled `grew` = 1. The numbers of decision 5 in D1 describe this sensitivity analysis.
+- Reading rule, fixed now: if the model beats the best baseline only in the version with the running activities, the document says that the advantage probably comes from the link between planned position and the label, and reports it as a limitation.
+- In the main analysis BHD has 5 eligible projects (jungle is eligible only in S2).
+
+**When this was decided.** After the draw of the frozen set (F1) and before any E3 result. The draw did not depend on decision 5: BHD is not frozen, and eligibility in the draw was counted on DSLIB only.
+
+**Proposal for the E3 plan entry, not decided here.** Add "rank by planned position" to the baselines of E3, in the main analysis and in S2. Then a model has to beat it too, and this check becomes a permanent part of the comparison.
+
+**Limits on validity.**
+- The check shows that the labelling can inflate a score that uses the planned position. It does not show how much a model would gain; that is what S2 in E3 measures.
+- It covers BHD only, 5 projects, with `grew` in calendar days.
+- The same link exists in scenario B and in E4 (the updating model), where the split follows time. E4 has to deal with it in its own plan.
+
+**How this was checked.** Shira ran the check with an AI assistant. It was repeated separately on Roi's side, also with an AI assistant, with different code (a library AUC instead of the rank formula), and gave the same numbers. The script in the repository has unit tests. No number here has been checked by hand yet.
+
+**Verify yourself.** `python3 src/d2_position_rule_check.py` prints the table above. Its last line starts with `{"median_auc_completed_only": 0.485, "median_auc_with_running_overruns": 0.59`.
