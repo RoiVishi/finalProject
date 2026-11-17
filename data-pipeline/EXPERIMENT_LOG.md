@@ -597,7 +597,7 @@ BHD only; needs `data_bhd`. No model is trained. BHD is not frozen, so the froze
 
 ---
 
-## Verification — 17.11.2026 — Shira reruns the freeze (F1) after the merge
+## Verification — 17.11.2026 — Shira reruns the freeze (F1) and the D2 check after the merge
 
 **Why.** PR #58 (D1, F1) was merged before Shira had rerun it. This entry records her check after the merge. Nothing was changed.
 
@@ -610,6 +610,8 @@ BHD only; needs `data_bhd`. No model is trained. BHD is not frozen, so the froze
 | `python3 src/e2c_eligibility.py` | eligible under `grew`: DSLIB 17, BHD 5 | same |
 | `python3 src/freeze_test_set.py` | frozen set on file: 19 projects; recomputed draw is IDENTICAL | same |
 | `python3 -m pytest -q tests/test_freeze.py tests/test_e2c_eligibility.py` | 11 passed | 11 passed |
+| `python3 src/d2_position_rule_check.py` (D2) | the table of D2: median 0.485 completed only, 0.590 with the running overruns | same |
+| `python3 -m pytest -q tests/test_d2_position_rule.py` (D2) | 3 passed | 3 passed |
 
 **Hand checks.**
 - Families: in `outputs/project_families.json`, C2016-11 is in family F24 and C2013-09 in F05. Every project of F24 (C2016-11 to C2016-15) and of F05 is in the frozen list of `outputs/frozen_test_set.json`, and none is in the development list.
