@@ -706,3 +706,32 @@ Verify yourself (from `data-pipeline`, after the ETL and E2/E2c outputs exist):
 python src/build_corpus_v4.py        # total: 51 projects, 7349 activities
 python -m pytest -q tests/test_corpus_v4.py   # 4 passed
 ```
+
+---
+
+## Check — 17.11.2026 — E4 feasibility: are the DSLIB tracking periods usable as as-of snapshots? (item 2)
+
+**Question.** Item 2: the temporal split uses information that was not known at time T. E4 would answer it by training and scoring on the schedule as it stood at T. That needs snapshots: what was known at each date, with nothing from later. Before planning E4, do our data have such snapshots, and are they clean? No model is trained and no model result is read.
+
+**Data.** BHD has one Primavera export per project, so it has no earlier states; E4 is not possible there and item 2 stays a documented limitation for BHD. DSLIB has tracking periods (TP1…TPn, one sheet each in the raw workbook), already read by the ETL into `outputs/dslib_snapshots.csv`. Checked: the 25 development DSLIB projects of corpus v4 (44 minus the 19 frozen; `frozen.frozen_projects()`).
+
+**Checks and results** (`outputs/e4_feasibility.json`, per project):
+- Status dates increase with the TP number in all 25 projects. Median gap between TPs per project: 17 to 62 days (mostly about a month).
+- No activity has an actual start later than its TP status date (0 rows).
+- Percent complete never goes down from one TP to the next (0 cases).
+- Actual start stays the same from TP to TP, except C2023-01 (6.7% of its started activities).
+- "Finished" rows whose computed end (start + actual working days, Mon–Fri) falls after the status date: about 0, except C2015-35 (9.3%) and C2023-01 (10.8%). The end date is an approximation (holidays ignored), so part of this may be the calendar.
+- Activities still running in some TP whose duration there already equals the final one (a sign the TP was filled in afterwards): 6 of 341. Five are in C2013-12 (5 of 7, 71%); its TPs look rebuilt after the fact. The sixth is one activity in C2015-31 that stayed at 90% for six TPs with no added days.
+
+**Result.** E4 looks feasible on DSLIB. Exclude C2013-12; flag C2023-01 and C2015-35. Four projects (C2016-27/28/33/34) have no activity running at any TP before the last, so they give no information on the last check.
+
+**Limits.** These checks show that the TPs are consistent and contain no visible future information. They do not show that the TPs were recorded live during the project; a TP rebuilt carefully afterwards would pass them. The frozen projects were not checked.
+
+**Correction to the status document for the meeting.** A first, unsaved version of this check reported "0.8% of running activities" (99.2% clean). The script counts once per activity and gives 6 of 341 (1.8%), or 1 of 334 (0.3%) without C2013-12. The first number came from a different count that was not kept, so the script's numbers replace it.
+
+How this was done: the checks and the script were written with an AI assistant (Claude). It was run on the data in Shira's copy of the repository. Not yet checked by hand: the next step is a spot check in the raw workbooks (C2013-12, C2023-01 and two projects drawn at random).
+
+Verify yourself (from `data-pipeline`, after the DSLIB ETL and `build_corpus_v4.py`):
+```
+cd src && python3 e4_feasibility.py   # projects: 25 … {'activities': 341, 'equal': 6, 'share': 0.0176}
+```
