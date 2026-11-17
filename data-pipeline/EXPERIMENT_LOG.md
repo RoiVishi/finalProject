@@ -681,3 +681,28 @@ Once E3 removes the project features from the model, the note will not appear. T
 Tests: `frontend/src/tasks/explanationView.test.js` (7 pass; new: a factor with no value is not shown; project factors are not listed and a note is added) and `TaskViews.test.jsx` (17 pass; the new heading, and the panel with only a project factor shows the note and no listed reason). ESLint clean.
 
 How this was done: the changes and tests were written with an AI assistant (Claude); Shira and Roi chose the wording and the option of hiding project factors with one note; Shira ran the tests and ESLint on her machine.
+
+---
+
+## Code fixes — 17.11.2026 — Corpus v4: the cleaning rules move into the pipeline (item 6)
+
+**Why.** The cleaning the advisor asked for in item 6 (work activities only, the same definition as DSLIB) existed only inside experiment scripts: `e2_data_audit.py` (E2) wrote `corpus_v3_clean.csv`, and `e2c_eligibility.py` (E2c) found the 13 DSLIB projects with overwritten plans. The official training (`train_compare.py`) still reads the uncleaned `corpus_v3_buildings.csv` (66 projects). E3 has to train on the cleaned rows.
+
+**What was added.**
+- `src/clean_rules.py`: the three rules in one place, each with its reason. (1) BHD: work activities only (TT_Task, TT_Rsrc). (2) Planned duration > 0 (BHD planned hours, DSLIB planned working days). (3) A project is dropped when its planned start and finish both equal the actual ones on ≥ 90% of its activities; the 90% threshold was set in E2 after looking at BHD, and applied to DSLIB unchanged in E2c. The rules were written anew, not copied from the experiment scripts, so the check below is a real cross-check.
+- `src/build_corpus_v4.py`: builds `outputs/corpus_v4.csv` (not in git) from corpus v3 with these rules, and writes `outputs/corpus_v4_summary.json` (committed: rows left after each rule, dropped projects). E3 reads corpus v4.
+- `etl.py`, corpus v3 and the experiment scripts are not changed, so E1–E2c and their md5 checks still reproduce.
+
+**Result.** 51 projects, 7,349 activities (DSLIB 44 / 2,505, `grew` 19.8%; BHD 7 / 4,844, `grew` 63.3%). Dropped: jumaira, cairo alex-road, and DSLIB C2016-16..26, C2023-07, C2023-08.
+
+**Tests.** `tests/test_corpus_v4.py`, 4 passed: three on small made-up data (the 90% rule: 9 of 10 dropped, 8 of 10 kept; BHD milestone and 0-hour rows out; DSLIB 0-day rows out, dates compared by day), and one on the real outputs: corpus v4 equals the E2 corpus minus the 13 DSLIB projects of E2c, row for row (skipped in CI, where the data are absent). Ruff 0.15.11 (the CI version) clean.
+
+**Not yet.** `train_compare.py` still reads corpus v3. The switch to v4 comes with the next change (families and the frozen-set guard in `train_compare.py`).
+
+How this was done: the code and tests were written with an AI assistant (Claude); Shira and Roi chose the design (a separate step, `etl.py` untouched); Shira ran the build, the tests and ruff on her machine.
+
+Verify yourself (from `data-pipeline`, after the ETL and E2/E2c outputs exist):
+```
+python src/build_corpus_v4.py        # total: 51 projects, 7349 activities
+python -m pytest -q tests/test_corpus_v4.py   # 4 passed
+```
