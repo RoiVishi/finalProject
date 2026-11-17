@@ -12,10 +12,14 @@ Regression (delay_days): not trained for v6 — DSLIB has no comparable delay-da
 the regressor was never served (PRED-11 gate failed in v3–v5).
 
 Two leakage-aware evaluation scenarios (RR-4):
-  A) cross-project GroupShuffleSplit — "new, unseen project"
+  A) cross-project GroupShuffleSplit — "new, unseen project". This is the scenario that
+     matches the product (the customer's project is new; no activity of it is in training),
+     and its within-project AUC is the headline (advisor feedback 8.11.2026, item 1).
   B) within-project temporal split by rel_position (train on the earlier
-     TEMPORAL_CUT share of each project's timeline, test on the rest) —
-     "live project mid-execution"; this is the primary deployment claim.
+     TEMPORAL_CUT share of each project's timeline, test on the rest). NOT a deployment
+     claim: the model has seen part of the tested project, and proj_span_days / proj_n_tasks
+     let it recognise the project (E1: within-project AUC 0.769 -> 0.650 without them). Kept
+     only as "what happens when the model is rebuilt on a running project" (item 1d).
 
 Hyperparameter tuning (RR-5, protocol fixed 7.9.26 — RR-19): GridSearchCV with
 GroupKFold on EACH scenario's OWN training set. Until 7.9.26 the grid was searched once
