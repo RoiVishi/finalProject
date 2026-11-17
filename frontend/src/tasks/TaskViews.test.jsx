@@ -231,7 +231,7 @@ describe('stale predictions (KAN-26)', () => {
     // the panel explains the CURRENT plan and says so when it differs from the row
     fireEvent.click(screen.getByText('פעילות a').closest('button'));
     const panel = screen.getByRole('complementary');
-    expect(await within(panel).findByText('למה הסיכון גבוה')).toBeTruthy();
+    expect(await within(panel).findByText('על מה המודל התבסס (סיכון גבוה)')).toBeTruthy();
     expect(within(panel).getByText(/חושבה עכשיו לפי התוכנית הנוכחית/)).toBeTruthy();
   });
 });
@@ -241,7 +241,7 @@ describe('explanation panel (PRED-3, NFR-USE-1)', () => {
     const { calls } = setup('engineer');
     fireEvent.click(await screen.findByText('פעילות a'));
     const panel = screen.getByRole('complementary');
-    expect(await within(panel).findByText('למה הסיכון בינוני')).toBeTruthy();
+    expect(await within(panel).findByText('על מה המודל התבסס (סיכון בינוני)')).toBeTruthy();
     const reasons = [...panel.querySelectorAll('.why-reason')];
     expect(reasons.map((r) => r.querySelector('.why-label').textContent)).toEqual(['משך מתוכנן', 'משימות במורד השרשרת']);
     expect(reasons.map((r) => r.querySelector('.why-arrow').textContent)).toEqual(['↑', '↓']);
@@ -271,7 +271,7 @@ describe('explanation panel (PRED-3, NFR-USE-1)', () => {
     expect((await within(panel).findByRole('alert')).textContent).toContain('שירות החיזוי אינו זמין');
     fail = false;
     fireEvent.click(within(panel).getByText('ניסיון נוסף'));
-    expect(await within(panel).findByText('למה הסיכון בינוני')).toBeTruthy();
+    expect(await within(panel).findByText('על מה המודל התבסס (סיכון בינוני)')).toBeTruthy();
     expect(calls.filter((c) => c[1] === '/tasks/a/explanation')).toHaveLength(2);
   });
 
@@ -284,7 +284,7 @@ describe('explanation panel (PRED-3, NFR-USE-1)', () => {
     expect(calls.some((c) => c[1] === '/tasks/c/explanation')).toBe(false);
   });
 
-  it('notes the transfer-prior caveat and a project-level top reason', async () => {
+  it('notes the transfer-prior caveat; project factors are not listed, only noted', async () => {
     setup('owner', {
       explain: () => explained('low', {
         reliability: 'low_transfer_prior',
@@ -293,8 +293,10 @@ describe('explanation panel (PRED-3, NFR-USE-1)', () => {
     });
     fireEvent.click(await screen.findByText('פעילות c'));
     const panel = screen.getByRole('complementary');
-    expect(await within(panel).findByText('למה הסיכון נמוך')).toBeTruthy();
+    expect(await within(panel).findByText('על מה המודל התבסס (סיכון נמוך)')).toBeTruthy();
     expect(within(panel).getByText(/נשען בעיקר על פרויקטים אחרים/)).toBeTruthy();
-    expect(within(panel).getByText(/נוגעת לפרויקט כולו/)).toBeTruthy();
+    expect(within(panel).getByText(/ממאפייני הפרויקט כולו, שאינם מוצגים כאן/)).toBeTruthy();
+    expect(panel.querySelectorAll('.why-reason')).toHaveLength(0);
+    expect(panel.textContent).not.toMatch(/81 ימים/);
   });
 });

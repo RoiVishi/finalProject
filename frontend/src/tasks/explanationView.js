@@ -11,8 +11,14 @@
  *    CURRENT plan, so after an edit it can differ from the cached band on the
  *    row (KAN-26 stale); the panel then says that it was just recalculated.
  *  - Honesty notes: a project-history caveat when the service flags the number
- *    as a transfer prior, and a note when the strongest reason is about the
- *    project as a whole rather than the activity (book, risk R21).
+ *    as a transfer prior.
+ *  - What the model learned, not what causes a delay (advisor feedback
+ *    8.11.2026, item 10): activity-level factors are the main list; factors of
+ *    the project as a whole (same value for every activity, so they cannot rank
+ *    activities) are not shown; the view only notes that part of the score
+ *    comes from the project as a whole (`project_hidden`).
+ *  - A factor with no value is not shown: the service sends no float, so a
+ *    "float: unknown" line would read as a fact about the activity (item 5).
  */
 
 /** Machine-readable abstain reasons (ai-service REQUIRED_FEATURES / ABSTAIN_LOW_HISTORY). */
@@ -67,9 +73,11 @@ export function explanationView(expl, cached = {}) {
       notes: [],
     };
   }
-  const items = (expl.contributions ?? []).filter((c) => typeof c.contribution === 'number');
-  const top = Math.max(...items.map((c) => Math.abs(c.contribution)), 0) || 1;
-  const reasons = items.map((c) => ({
+  const items = (expl.contributions ?? [])
+    .filter((c) => typeof c.contribution === 'number' && c.value !== null && c.value !== undefined);
+  const activity = items.filter((c) => !PROJECT_LEVEL.has(c.feature));
+  const top = Math.max(...activity.map((c) => Math.abs(c.contribution)), 0) || 1;
+  const reasons = activity.map((c) => ({
     feature: c.feature,
     label: cleanLabel(c.label),
     value: valueText(c.feature, c.value),
@@ -81,6 +89,6 @@ export function explanationView(expl, cached = {}) {
   const notes = [];
   if (cached.freshness === 'stale' || (cached.band && cached.band !== band)) notes.push('recalculated');
   if (expl.reliability === 'low_transfer_prior') notes.push('transfer_prior');
-  if (reasons[0] && PROJECT_LEVEL.has(reasons[0].feature)) notes.push('project_level');
+  if (items.some((c) => PROJECT_LEVEL.has(c.feature))) notes.push('project_hidden');
   return { state: 'explained', band, reasons, notes };
 }
