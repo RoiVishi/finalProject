@@ -637,3 +637,29 @@ Nothing here trains a model or changes a result. Each fix is listed with the adv
 Not done yet for item 11: an automatic download script with hash checks. The README commands are the ones Shira ran on 15.11.
 
 How this was done: the changes were written with an AI assistant (Claude) and reviewed by Shira and Roi together.
+
+## Check — 17.11.2026 — Item 7 confirmed from the existing outputs (no new run)
+
+**Question.** Are the advisor's statements in item 7 about the numbers, the calibration and the thresholds of the served model (v6) right? This reads `outputs/model_comparison.json` as committed; nothing is trained or rerun.
+
+**Result.** All confirmed.
+
+| Advisor's statement | In `model_comparison.json` |
+|---|---|
+| 0.889 is not a test score | `champion.inner_selection_auc.xgboost` = 0.8889, "roc_auc on the inner temporal slice of B TRAIN". The served model's test AUC (`served_model.metrics_B_test.roc_auc`) is 0.8452 |
+| XGBoost and Random Forest are tied | `champion.delta_auc_vs_runner_up` = 0.0002 |
+| Thresholds and calibration were set on the same slice | `risk_bands.selected_on` = B_cal (1,609 activities); t1 = argmax F1 on B_cal, t2 = its 90% quantile ("high = top 10%"); calibration: Platt on the latest slice of B train |
+| 87% / 62% without a base rate | recall 0.868, precision 0.617 at the decision threshold; base rate on B test 0.364 (from `served_model.by_source_B_test`), so lift 1.7 |
+| About half of the activities are flagged | band shares on test: low 0.489, medium 0.408, high 0.103 |
+| "0.7 means about 70%" does not hold | by band, predicted vs observed: medium 0.678 vs 0.576, high 0.869 vs 0.779 (low 0.101 vs 0.098) |
+| DSLIB is under-estimated in the low band | DSLIB low 0.116 vs 0.153 (medium 0.433 vs 0.377) |
+
+**Decision.** Item 7 is confirmed. The fixes are planned: calibration and thresholds out of fold on the family folds in E3, risk bands by rank inside the project (D1, decision 7), and the corrected numbers in the document.
+
+How this was checked: the command was written with an AI assistant (Claude); Shira ran it on her machine and compared the printed values with the advisor's text.
+
+Verify yourself (from `data-pipeline`):
+```
+python3 -c "import json;d=json.load(open('outputs/model_comparison.json'));print(d['champion']['inner_selection_auc']['xgboost'],d['served_model']['metrics_B_test']['roc_auc'],d['risk_bands']['selected_on'],d['risk_bands']['test_band_shares'])"
+# 0.8889 0.8452 B_cal (1609 activities) {'low': 0.489, 'medium': 0.408, 'high': 0.103}
+```
