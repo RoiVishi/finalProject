@@ -620,3 +620,20 @@ BHD only; needs `data_bhd`. No model is trained. BHD is not frozen, so the froze
 **Mismatches.** None.
 
 How this was done: the commands were given by an AI assistant (Claude). Shira ran them on her machine and compared the printed results with the expected ones. The two hand checks were done by Shira, reading the files in the terminal and in Excel.
+
+---
+
+## Code fixes — 17.11.2026 — Small fixes before E3 (no model change, no number changes)
+
+Nothing here trains a model or changes a result. Each fix is listed with the advisor's item it answers.
+
+| Change | File | Advisor's item |
+|---|---|---|
+| Scenario B is no longer described as "the primary deployment claim". The docstring now says scenario A matches the product and carries the headline, and that B is kept only as "what happens when the model is rebuilt on a running project", with the E1 numbers (within-project AUC 0.769 → 0.650 without the project features) | `src/train_compare.py` | 1 (d); the advisor quoted the old sentence |
+| The data download in the quick start now pins BHD to commit 862936f in `data_bhd` (the folder the scripts read), and names the DSLIB source: GitHub release tag `DSLIB_v3.4`, zip md5 `2db1614c3229759c62daf57e84912ff3`, and the warning that an old release is removed when a new one is published. Before, it cloned the latest BHD into `data` | `README.md` | 11 (exact download instructions, versions, hashes) |
+| The environment: Python 3.11 or newer (pandas 3.0.2 has no build for older versions; checked on 3.12 and 3.13), a virtual environment, and on macOS `brew install libomp` (without it `import xgboost` fails). Both problems came up in Shira's rerun of 15.11 | `README.md` | 11 (reproducibility) |
+| `outputs/dslib_projects.csv`, written by `rr17_dslib_etl.py`, is now ignored like the other DSLIB-derived tables | `.gitignore` | none (housekeeping) |
+
+Not done yet for item 11: an automatic download script with hash checks. The README commands are the ones Shira ran on 15.11.
+
+How this was done: the changes were written with an AI assistant (Claude) and reviewed by Shira and Roi together.

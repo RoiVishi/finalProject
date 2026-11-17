@@ -20,9 +20,16 @@ docker compose up --build        # מרים db + ai-service + backend
 
 # אימון מחדש מלא (משחזר את כל המספרים, seed 42):
 cd data-pipeline
+# נדרש Python 3.11 ומעלה (pandas 3.0.2 לא קיים לגרסאות ישנות יותר; נבדק על 3.12 ו-3.13)
+# ב-Mac: קודם brew install libomp, אחרת import xgboost נכשל
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-git clone --depth 1 https://github.com/EverseDevelopment/Buildings.Historical.Data.git data
-python src/etl.py "data/Buildings Data"                 # כולל התווית grew
+# BHD: הגרסה שעליה נבנו כל התוצאות (commit 862936f), לתיקייה data_bhd שכל הסקריפטים מחפשים
+git clone https://github.com/EverseDevelopment/Buildings.Historical.Data.git data_bhd
+git -C data_bhd checkout 862936f
+# DSLIB 3.4: מ-https://github.com/mariovanhoucke/DSLIB-Dynamic-Scheduling-Empirical-Project-Library/releases
+#   (תגית DSLIB_v3.4, md5 של ה-zip: 2db1614c3229759c62daf57e84912ff3; גרסה ישנה נמחקת כשיוצאת חדשה)
+python src/etl.py "data_bhd/Buildings Data"             # כולל התווית grew
 python src/rr17_dslib_etl.py "<DSLIB 3.4 dir>"          # מבני DSLIB (גנט) — הקבצים המקוריים לא בגיט
 python src/build_corpus_v3.py    # corpus v3: מבנים בלבד (src/buildings.py) — 66 פרויקטים
 python src/train_compare.py      # השוואה + כיול + ספי סיכון + שער + registry vN (X נבנה רק מ-plan_time() — PRED-14)
