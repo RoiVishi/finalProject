@@ -594,3 +594,27 @@ BHD only; needs `data_bhd`. No model is trained. BHD is not frozen, so the froze
 **How this was checked.** Shira ran the check with an AI assistant. It was repeated separately on Roi's side, also with an AI assistant, with different code (a library AUC instead of the rank formula), and gave the same numbers. The script in the repository has unit tests. No number here has been checked by hand yet.
 
 **Verify yourself.** `python3 src/d2_position_rule_check.py` prints the table above. Its last line starts with `{"median_auc_completed_only": 0.485, "median_auc_with_running_overruns": 0.59`.
+
+---
+
+## Verification — 17.11.2026 — Shira reruns the freeze (F1) after the merge
+
+**Why.** PR #58 (D1, F1) was merged before Shira had rerun it. This entry records her check after the merge. Nothing was changed.
+
+**Environment.** Shira's MacBook, Python 3.12.4, the `.venv` of the E1–E2b verification. Code: `main` after PR #59.
+
+**Run (Shira ran every command herself).**
+
+| Command | Expected | Result |
+|---|---|---|
+| `python3 src/e2c_eligibility.py` | eligible under `grew`: DSLIB 17, BHD 5 | same |
+| `python3 src/freeze_test_set.py` | frozen set on file: 19 projects; recomputed draw is IDENTICAL | same |
+| `python3 -m pytest -q tests/test_freeze.py tests/test_e2c_eligibility.py` | 11 passed | 11 passed |
+
+**Hand checks.**
+- Families: in `outputs/project_families.json`, C2016-11 is in family F24 and C2013-09 in F05. Every project of F24 (C2016-11 to C2016-15) and of F05 is in the frozen list of `outputs/frozen_test_set.json`, and none is in the development list.
+- C2015-30 (frozen, eligible): in `outputs/dslib_labeled_tasks.csv` it has 40 activities, 9 with `grew` = 1 and 31 with `grew` = 0.
+
+**Mismatches.** None.
+
+How this was done: the commands were given by an AI assistant (Claude). Shira ran them on her machine and compared the printed results with the expected ones. The two hand checks were done by Shira, reading the files in the terminal and in Excel.
