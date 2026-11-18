@@ -735,3 +735,29 @@ Verify yourself (from `data-pipeline`, after the DSLIB ETL and `build_corpus_v4.
 ```
 cd src && python3 e4_feasibility.py   # projects: 25 … {'activities': 341, 'equal': 6, 'share': 0.0176}
 ```
+
+---
+
+## Verification — 18.11.2026 — Roi reruns corpus v4 and the E4 feasibility check
+
+**Why.** Both were written and run on 17.11 on Shira's side only. This entry records the rerun on the second machine. Nothing was changed.
+
+**Environment.** Roi's MacBook, Python 3.13.0, the `.venv` of the earlier runs. Code: `main` at 17873d0 (after PR #66).
+
+**Run (Roi ran every command himself).**
+
+| Command | Expected | Result |
+|---|---|---|
+| `python src/build_corpus_v4.py` | 51 projects, 7,349 activities (DSLIB 44 / 2,505, `grew` 19.8%; BHD 7 / 4,844, `grew` 63.3%); 15 projects dropped | same |
+| `python -m pytest -q tests/test_corpus_v4.py` | 4 passed, including the row-for-row comparison with the E2 corpus | 4 passed |
+| `cd src && python3 e4_feasibility.py` | 25 projects; running activities whose duration already equals the final one: 6 of 341 (5 in C2013-12, 1 in C2015-31) | same, and the same table per project |
+
+After the run, `outputs/corpus_v4_summary.json` and `outputs/e4_feasibility.json` are identical to the committed files (md5 `ffad78fd4228c0c6b394d986b1b4875c` and `6858d587b744545a746294153c44a0f5`), and no tracked file under `data-pipeline` differs from `main`.
+
+**Mismatches.** None.
+
+**Still open.**
+- The E4 feasibility check has not been checked by hand. The next step is unchanged: a spot check in the raw workbooks (C2013-12, C2023-01 and two projects drawn at random).
+- Of the work of 17.11, the item 7 check, the small fixes and the explanation-panel tests have been run on Shira's side only.
+
+How this was done: the commands were given by an AI assistant (Claude). Roi ran them on his machine and sent the output; the assistant compared it with the expected values and compared the md5 of the two output files with the committed ones. The assistant had also rerun both scripts on 17.11 in a separate copy of the repository, with identical outputs; that is a rerun by the assistant, not a check by a second person.
