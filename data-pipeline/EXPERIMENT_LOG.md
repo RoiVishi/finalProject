@@ -781,3 +781,25 @@ How this was done: the commands were given by an AI assistant (Claude). Roi ran 
 **Consequence.** In the table of 15.11, Medor (in the row "Medor and jungle") and, in the row "E2c", the overwritten-plan rule and C2023-04 move from "not yet checked by hand" to "checked by hand on a sample". The AI document for the advisor should say "checked by hand on a sample" for Medor, not "verified in a separate check". Still not checked by hand: jungle, the E2c eligibility counts and the 1,731 running activities.
 
 How this was done: an AI assistant (Claude) said which files, rows and columns to open and what values to expect. Shira opened the files and read the values herself. The raw files were closed without saving.
+
+---
+
+## Verification — 18.11.2026 — Shira checks the E4 feasibility check by hand
+
+**Why.** The E4 feasibility check (entry of 17.11) was rerun by Roi on 18.11 but not checked by hand. Its key test is whether an activity still running in a tracking period (TP) already shows its final duration there, which would mean the TP was filled in afterwards. This entry records Shira's spot check in the raw DSLIB workbooks. Nothing was changed.
+
+**Files.** Copies of the raw workbooks from `DSLIB3.4.zip` (`DSLIB 3.4/Excel/`). In each TP sheet: C1 = status date, column L = actual start, M = actual duration, U = percent complete. The two ordinary projects were drawn at random (seed 18112026) from the 19 development projects that have running activities, excluding C2013-12 and C2023-01.
+
+**Checks (Shira opened the workbooks in Excel and read the values herself).**
+
+| Project | Activity (row) | In the mid TP | In the last TP | Expected | Result |
+|---|---|---|---|---|---|
+| C2013-12 (excluded) | 9 Funderingswanden (row 14) | TP2: status date 9.11.2010, start 2.11.2010, duration 17d, 61% | TP5: 17d, 100% | 6 working days had passed, yet the final 17 days are already recorded: the TP was filled in afterwards | same |
+| C2015-04 | 38 Elektriciteit (row 43) | TP6: status date 27.9.2013, start 9.9.2013, duration 15d, 50% | TP8: 30d, 100% | duration at the TP equals the 15 working days elapsed, below the final 30 | same |
+| C2013-08 | 10 Montage houten kit (row 15) | TP3: status date 27.2.2012, start 27.2.2012, duration 1d, 10% | TP13: 12d, 100% | 1 day on the first day, below the final 12 | same |
+
+**Mismatches.** None. The check finds the rebuilt TP of C2013-12 and passes the two ordinary projects, as the script did.
+
+**Not checked by hand.** C2023-01 (flagged; the script found that actual starts change between TPs, e.g. activity 21 "Lift") and the other checks of the script (status-date order, percent complete never going down, finished dates), which were only run by the script on two machines.
+
+How this was done: an AI assistant (Claude) drew the two projects, copied the four workbooks out of the zip, and said which sheets and cells to open and what to expect. Shira opened the workbooks and read the values herself. The workbooks were closed without saving.
