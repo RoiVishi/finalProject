@@ -803,3 +803,47 @@ How this was done: an AI assistant (Claude) said which files, rows and columns t
 **Not checked by hand.** C2023-01 (flagged; the script found that actual starts change between TPs, e.g. activity 21 "Lift") and the other checks of the script (status-date order, percent complete never going down, finished dates), which were only run by the script on two machines.
 
 How this was done: an AI assistant (Claude) drew the two projects, copied the four workbooks out of the zip, and said which sheets and cells to open and what to expect. Shira opened the workbooks and read the values herself. The workbooks were closed without saving.
+
+---
+
+## Verification — 18.11.2026 — Roi recomputes the D2 check and the running-overrun counts in Excel
+
+**Why.** Entry D2 says "No number here has been checked by hand yet", and Shira's entry of 18.11 lists the 1,731 running activities as still unchecked. This entry records Roi's recomputation in Excel, from copies of the raw `TASK.csv` files and without any of our code. Nothing was changed.
+
+**Method.** A copy of each raw `TASK.csv` was opened in Excel and helper columns were added next to the data. The rules are those of `e2_data_audit.read_bhd`:
+- work activity: `task_type` TT_Task or TT_Rsrc, `target_drtn_hr_cnt` > 0;
+- planned days = planned finish day − planned start day; `grew` = 1 when the actual days (finish day − start day) are more than the planned days, for activities with all four dates;
+- running overrun: `status_code` TK_Active and (data date − actual start day) > planned days;
+- AUC of the position rule by counting pairs instead of a library function: for every activity with `grew` = 0, the number of `grew` = 1 activities with a later planned start day (a tie counts 0.5), summed and divided by the number of pairs.
+
+**Check 1 — 130 TRIAL, the whole D2 calculation** (data date 10.11.2010, 453 rows).
+
+| Quantity | Script (D2) | In Excel |
+|---|---|---|
+| Completed work activities, `grew` = 1 / `grew` = 0 | 82 (72 / 10) | 72 / 10 |
+| Running overruns | 37 | 37 |
+| Position rule, completed only | 0.485 | 349 of 720 pairs = 0.485 |
+| Position rule, with the running overruns | 0.587 | 639.5 of 1,090 pairs = 0.587 |
+
+**Check 2 — the count of running overruns** (one helper column per file).
+
+| Project | Data date (read in `PROJECT.csv`) | Script | In Excel |
+|---|---|---|---|
+| 130 TRIAL | 10.11.2010 | 37 | 37 |
+| 129 trial | 31.10.2010 | 104 | 104 |
+| PORTO MATROUH | 16.5.2012 | 22 | 22 |
+| Medor (Update 01-09-2010) | 1.9.2010 | 0 | 0 |
+
+In Medor the two running activities (rows 15 and 16) show 0 and not an empty cell: they started 6 days and 1 day before the data date and are planned for 11 days. So the 0 is a result and not a formula that did not run.
+
+**Mismatches.** None. In two files the first count was 0 because the formula had not been filled down; after it was filled down, a row known to be a running overrun showed 1 and the count matched.
+
+**What this covers, and what it does not.**
+- The D2 calculation was recomputed for one of the five eligible projects.
+- The running-overrun count was recomputed for four of the seven projects: 163 of the 1,731 activities (9%). Not checked: CCA (1,439, 83% of the total), rehab-2 (122) and jungle (7).
+- Roi read the data date of each of the four projects himself in its `PROJECT.csv` (`last_recalc_date`); they are the dates the script uses.
+- The median over projects was not recomputed.
+
+**Consequence.** For the status document: the position-rule check (D2) is "recomputed by hand for one project (130 TRIAL)", and the running activities are "counted by hand in four of seven projects, not including CCA". Still not checked by hand, in addition to this: jungle, the E2c eligibility counts, C2023-01 and the other checks of the E4 script.
+
+How this was done: an AI assistant (Claude) wrote the Excel formulas and gave the expected values; it had first run the same formulas on the seven files with LibreOffice and obtained the script's counts. Roi opened copies of the raw files, entered the formulas and read the results himself. The assistant then explained to Roi what each helper column computes. The copies were kept outside the repository; the raw files were not opened.
