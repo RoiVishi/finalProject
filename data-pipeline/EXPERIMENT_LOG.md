@@ -761,3 +761,23 @@ After the run, `outputs/corpus_v4_summary.json` and `outputs/e4_feasibility.json
 - Of the work of 17.11, the item 7 check, the small fixes and the explanation-panel tests have been run on Shira's side only.
 
 How this was done: the commands were given by an AI assistant (Claude). Roi ran them on his machine and sent the output; the assistant compared it with the expected values and compared the md5 of the two output files with the committed ones. The assistant had also rerun both scripts on 17.11 in a separate copy of the repository, with identical outputs; that is a rerun by the assistant, not a check by a second person.
+
+---
+
+## Verification — 18.11.2026 — Shira checks Medor and E2c by hand
+
+**Why.** In the summary of 15.11 ("what was verified and what not"), the Medor numbers (E2b, section 8) and the E2c facts had been reproduced only by reruns with an AI assistant, never read by a person in the files. This entry records Shira's spot check. Nothing was changed.
+
+**Checks (Shira opened the files in Excel and read the values herself).**
+
+| What | File | Expected | Result |
+|---|---|---|---|
+| Medor, activity A1330, planned duration (`target_drtn_hr_cnt`) | `data_bhd/Buildings Data/schedule of Medor/TASK.csv` and `.../medor_003/TASK.csv` (row 6 in both) | 80 hours in the first plan, 64 in the revised one | 80 and 64 |
+| C2016-16 (one of the 13 projects dropped by the overwritten-plan rule) | `outputs/dslib_labeled_tasks.csv`, rows 5943–5966 | `actual_start` = `baseline_start` and `actual_duration_wd` = `planned_duration_wd` | same, on the rows checked (start, middle and end of the project) |
+| C2023-04 (flagged) | `outputs/dslib_labeled_tasks.csv`, rows 14335–14364 | `actual_duration_wd` = 1.2 × `planned_duration_wd` (29 of 30 rows) | same, on the rows checked |
+
+**Mismatches.** None.
+
+**Consequence.** In the table of 15.11, Medor (in the row "Medor and jungle") and, in the row "E2c", the overwritten-plan rule and C2023-04 move from "not yet checked by hand" to "checked by hand on a sample". The AI document for the advisor should say "checked by hand on a sample" for Medor, not "verified in a separate check". Still not checked by hand: jungle, the E2c eligibility counts and the 1,731 running activities.
+
+How this was done: an AI assistant (Claude) said which files, rows and columns to open and what values to expect. Shira opened the files and read the values herself. The raw files were closed without saving.
